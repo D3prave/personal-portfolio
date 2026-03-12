@@ -119,20 +119,9 @@ function App() {
       return;
     }
 
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
     const revealElements = Array.from(document.querySelectorAll<HTMLElement>(".reveal"));
 
     if (revealElements.length === 0) {
-      return;
-    }
-
-    if (prefersReducedMotion) {
-      revealElements.forEach((element) => {
-        element.style.setProperty("--reveal-progress", "1");
-        element.classList.add("is-visible");
-      });
       return;
     }
 
@@ -154,8 +143,11 @@ function App() {
 
     const render = () => {
       const viewportHeight = window.innerHeight;
-      const startLine = viewportHeight * 0.98;
-      const travelDistance = viewportHeight * 0.62;
+      const startLine = viewportHeight * 1.04;
+      const travelDistance = viewportHeight * 0.56;
+      const isNearPageEnd =
+        window.scrollY + window.innerHeight >=
+        document.documentElement.scrollHeight - 6;
 
       revealItems.forEach((item) => {
         const { element, delayOffset } = item;
@@ -170,7 +162,9 @@ function App() {
           0,
           1,
         );
-        const easedProgress = smoothstep(adjustedProgress);
+        const finalProgress =
+          isNearPageEnd && bounds.top < viewportHeight ? 1 : adjustedProgress;
+        const easedProgress = smoothstep(finalProgress);
 
         item.element.style.setProperty(
           "--reveal-progress",
@@ -180,12 +174,103 @@ function App() {
         if (easedProgress > 0.02) {
           item.element.classList.add("is-visible");
         }
+
+        if (easedProgress > 0.88) {
+          item.element.classList.add("is-reveal-ready");
+        }
       });
 
       animationFrame = 0;
     };
 
     const queueRender = () => {
+      if (animationFrame !== 0) {
+        return;
+      }
+
+      animationFrame = window.requestAnimationFrame(render);
+    };
+
+    queueRender();
+    window.addEventListener("scroll", queueRender, { passive: true });
+    window.addEventListener("resize", queueRender);
+    window.addEventListener("lenis-scroll", queueRender);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      window.removeEventListener("scroll", queueRender);
+      window.removeEventListener("resize", queueRender);
+      window.removeEventListener("lenis-scroll", queueRender);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const cellNodes = Array.from(
+      document.querySelectorAll<HTMLElement>(".cell-node-shell"),
+    );
+
+    if (cellNodes.length === 0) {
+      return;
+    }
+
+    let animationFrame = 0;
+    let currentProgress = 0;
+    let targetProgress = 0;
+
+    const readScrollProgress = () => {
+      const scrollableHeight =
+        document.documentElement.scrollHeight - window.innerHeight;
+
+      if (scrollableHeight <= 0) {
+        return 0;
+      }
+
+      return clamp(window.scrollY / scrollableHeight, 0, 1);
+    };
+
+    const render = () => {
+      const delta = targetProgress - currentProgress;
+
+      if (Math.abs(delta) < 0.0015) {
+        currentProgress = targetProgress;
+      } else {
+        currentProgress += delta * 0.18;
+      }
+
+      cellNodes.forEach((node, index) => {
+        const revealProgress = clamp(
+          currentProgress * 2.2 - index * 0.075 + 0.12,
+          0,
+          1,
+        );
+        const driftY =
+          Math.sin(currentProgress * 8 + index * 0.72) * 9 * revealProgress;
+        const shimmer = clamp(
+          currentProgress * 1.5 - index * 0.045 + 0.08,
+          0,
+          1,
+        );
+
+        node.style.setProperty("--cell-scroll-reveal", revealProgress.toFixed(3));
+        node.style.setProperty("--cell-scroll-drift-y", `${driftY.toFixed(2)}px`);
+        node.style.setProperty("--cell-scroll-shimmer", shimmer.toFixed(3));
+      });
+
+      if (Math.abs(targetProgress - currentProgress) >= 0.0015) {
+        animationFrame = window.requestAnimationFrame(render);
+        return;
+      }
+
+      animationFrame = 0;
+    };
+
+    const queueRender = () => {
+      targetProgress = readScrollProgress();
+
       if (animationFrame !== 0) {
         return;
       }
