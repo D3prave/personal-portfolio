@@ -78,27 +78,37 @@ npm run preview
 Recommended: Cloudflare Pages
 
 - Why: best free fit for this site, very fast global edge delivery, simple GitHub integration, and a free `*.pages.dev` URL.
-- Current official limits include 500 builds per month on the Free plan and deployment to Cloudflare's globally distributed network.
+- Cloudflare Pages supports both private and public GitHub repositories.
+- The repo pins Node.js with [`.node-version`](/Users/deprave/Documents/PersonalWebsite/.node-version) and adds Cloudflare static headers in [`public/_headers`](/Users/deprave/Documents/PersonalWebsite/public/_headers).
 - Build settings for this repo:
   - Framework preset: `Vite`
   - Build command: `npm run build`
   - Build output directory: `dist`
+  - Production branch: `main`
+  - Root directory: leave empty
 
-Basic flow:
+Repository prep:
 
 ```bash
-git init -b main
 git add .
 git commit -m "Initial portfolio site"
+git remote add origin git@github.com:YOUR_USERNAME/personal-portfolio.git
+git push -u origin main
 ```
 
-Then:
+Cloudflare Pages setup:
 
-1. Create a new GitHub repository.
-2. Add it as `origin`.
-3. Push `main`.
-4. In Cloudflare Pages, choose `Create application` -> `Pages` -> `Connect to Git`.
-5. Select the GitHub repository and use the build settings above.
+1. In Cloudflare, go to `Workers & Pages`.
+2. Select `Create application` -> `Pages` -> `Connect to Git`.
+3. Authorize the GitHub app and select your repository.
+4. Choose `main` as the production branch.
+5. Use the build settings above.
+6. Save and deploy.
+
+Important:
+
+- You must push at least one branch to GitHub before Cloudflare can select the production branch.
+- If you ever want stricter Cloudflare-managed project config in-repo, add a `wrangler.toml` later. For this static site, the Git-integrated dashboard setup is the simpler option.
 
 Alternative: GitHub Pages
 
@@ -109,7 +119,8 @@ Alternative: GitHub Pages
 Useful docs:
 
 - Cloudflare Pages Git integration: [developers.cloudflare.com/pages/get-started/git-integration/](https://developers.cloudflare.com/pages/get-started/git-integration/)
-- Cloudflare Pages limits: [developers.cloudflare.com/pages/platform/limits/](https://developers.cloudflare.com/pages/platform/limits/)
+- Cloudflare Pages headers: [developers.cloudflare.com/pages/configuration/headers/](https://developers.cloudflare.com/pages/configuration/headers/)
+- Cloudflare Pages build image and Node pinning: [developers.cloudflare.com/pages/configuration/build-image/](https://developers.cloudflare.com/pages/configuration/build-image/)
 - GitHub Pages limits: [docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits)
 
 ## GitHub Profile Notes

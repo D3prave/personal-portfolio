@@ -7,7 +7,7 @@ interface ContactSectionProps {
 
 export function ContactSection({ contact }: ContactSectionProps) {
   return (
-    <section className="section" id={contact.id}>
+    <section className="section section-reveal reveal" id={contact.id}>
       <div className="container">
         <SectionIntro
           eyebrow={contact.eyebrow}

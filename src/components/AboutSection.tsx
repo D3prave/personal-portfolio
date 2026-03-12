@@ -7,7 +7,7 @@ interface AboutSectionProps {
 
 export function AboutSection({ about }: AboutSectionProps) {
   return (
-    <section className="section" id={about.id}>
+    <section className="section section-reveal reveal" id={about.id}>
       <div className="container">
         <SectionIntro
           eyebrow={about.eyebrow}
