@@ -549,11 +549,9 @@ textarea:focus-visible {
   --cell-shift-x: 0px;
   --cell-shift-y: 0px;
   --cell-tilt: 0deg;
-  --cell-scroll-reveal: clamp(
-    0,
-    calc(var(--page-scroll, 0) * 1.72 - var(--cell-order, 0) * 0.086 + 0.2),
-    1
-  );
+  --cell-scroll-reveal: 0;
+  --cell-scroll-drift-y: 0px;
+  --cell-scroll-shimmer: 0;
   transform: translate(-50%, -50%);
   animation: cellDrift 18s ease-in-out infinite;
   animation-delay: var(--cell-delay, 0s);
@@ -602,23 +600,29 @@ textarea:focus-visible {
     inset 0 1px 0 rgba(255, 255, 255, 0.03),
     0 16px 30px rgba(2, 6, 23, 0.08);
   opacity: calc(
-    0.04 +
-    var(--cell-scroll-reveal, 0) * 0.82 +
-    var(--cell-react, 0) * 0.18
+    0.02 +
+    var(--cell-scroll-reveal, 0) * 0.72 +
+    var(--cell-react, 0) * 0.22 +
+    var(--cell-scroll-shimmer, 0) * 0.08
   );
   transform: translate3d(
       0,
-      calc((1 - var(--cell-scroll-reveal, 0)) * 22px),
+      calc(
+        (1 - var(--cell-scroll-reveal, 0)) * 34px +
+        var(--cell-scroll-drift-y, 0px)
+      ),
       0
     )
     scale(
       calc(
-        0.58 +
-        var(--cell-scroll-reveal, 0) * 0.42 +
+        0.42 +
+        var(--cell-scroll-reveal, 0) * 0.58 +
         var(--cell-react, 0) * 0.08
       )
     );
-  filter: saturate(calc(1 + var(--cell-react, 0) * 0.9));
+  filter:
+    blur(calc((1 - var(--cell-scroll-reveal, 0)) * 6px))
+    saturate(calc(0.72 + var(--cell-scroll-reveal, 0) * 0.48 + var(--cell-react, 0) * 0.4));
   animation:
     cellFloat 12s ease-in-out infinite,
     cellPhase 9.5s ease-in-out infinite;
@@ -663,7 +667,11 @@ body[data-motion-mode="experimental"] .cell-node {
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.05);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent);
-  opacity: calc(0.65 + var(--cell-react, 0) * 0.45);
+  opacity: calc(
+    0.08 +
+    var(--cell-scroll-reveal, 0) * 0.74 +
+    var(--cell-react, 0) * 0.18
+  );
   transition: opacity 200ms ease;
 }
 
@@ -677,10 +685,18 @@ body[data-motion-mode="experimental"] .cell-node {
   border-radius: 50%;
   background: rgba(125, 211, 252, 0.78);
   box-shadow: 0 0 calc(10px + var(--cell-react, 0) * 24px) rgba(125, 211, 252, 0.28);
-  transform: scale(calc(1 + var(--cell-react, 0) * 0.65));
+  transform: scale(
+    calc(
+      0.3 +
+      var(--cell-scroll-reveal, 0) * 0.7 +
+      var(--cell-react, 0) * 0.4
+    )
+  );
+  opacity: calc(0.18 + var(--cell-scroll-reveal, 0) * 0.82);
   transition:
     transform 200ms ease,
-    box-shadow 200ms ease;
+    box-shadow 200ms ease,
+    opacity 200ms ease;
 }
 
 .cell-node--warm {
@@ -2847,6 +2863,19 @@ body[data-motion-mode="experimental"] .quick-link {
     saturate(calc(0.74 + var(--reveal-progress, 1) * 0.26));
 }
 
+.hover-spotlight.reveal:not(.is-reveal-ready),
+.quick-link.reveal:not(.is-reveal-ready),
+.signal-card.reveal:not(.is-reveal-ready),
+.stat-card.reveal:not(.is-reveal-ready),
+.hero-scroll-hint.reveal:not(.is-reveal-ready) {
+  pointer-events: none;
+}
+
+.hover-spotlight.reveal:not(.is-reveal-ready)::before {
+  opacity: 0 !important;
+  transform: scale(0.88) !important;
+}
+
 .hero-visual {
   min-height: 22.5rem;
   padding: 1.15rem 1.2rem;
@@ -3662,38 +3691,8 @@ body[data-motion-mode="experimental"] .quick-link {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ambient-field,
-  .cursor-comet,
-  .cursor-trail {
-    display: none;
-  }
-
   html {
     scroll-behavior: auto;
-  }
-
-  .cell-field {
-    display: block;
-    opacity: 0.44;
-  }
-
-  .ambient-field__ring,
-  .ambient-field__flare,
-  .hero-panel::after,
-  .site-shell::before,
-  .site-shell::after,
-  body::after,
-  .cell-field::after,
-  .cell-node,
-  .cell-node-shell,
-  .hero-scroll-icon::before {
-    animation: none !important;
-  }
-
-  .reveal,
-  .section-intro::after,
-  .cell-node {
-    transition-duration: 140ms !important;
   }
 }
 
