@@ -130,6 +130,30 @@
   --reveal-blur-max: 0px;
 }
 
+:root[data-browser="safari"][data-motion-mode="cinematic"] {
+  --mode-grid-opacity: 0.12;
+  --mode-drift-factor: 0.94;
+  --mode-flare-strength: 0.58;
+  --mode-trail-opacity: 0.05;
+  --mode-ring-opacity: 0.34;
+  --reveal-offset-x: -42px;
+  --reveal-offset-y: 72px;
+  --reveal-rotate: -1.5deg;
+  --reveal-scale-base: 0.91;
+}
+
+:root[data-browser="safari"][data-motion-mode="experimental"] {
+  --mode-grid-opacity: 0.11;
+  --mode-drift-factor: 0.9;
+  --mode-flare-strength: 0.42;
+  --mode-trail-opacity: 0;
+  --mode-ring-opacity: 0.16;
+  --reveal-offset-x: 28px;
+  --reveal-offset-y: 24px;
+  --reveal-rotate: 2deg;
+  --reveal-scale-base: 0.9;
+}
+
 *,
 *::before,
 *::after {
@@ -2882,6 +2906,28 @@ body[data-motion-mode="experimental"] .quick-link {
   animation: none;
 }
 
+:root[data-browser="safari"] body[data-motion-mode="cinematic"] {
+  background:
+    radial-gradient(circle at 16% 14%, rgba(246, 193, 119, 0.1), transparent 24%),
+    radial-gradient(
+      circle at 78% 10%,
+      hsl(var(--section-hue) 88% 72% / calc(0.08 + var(--section-depth, 0) * 0.12)),
+      transparent 26%
+    ),
+    linear-gradient(180deg, #060b15 0%, #0b1527 44%, #0e1b31 100%);
+}
+
+:root[data-browser="safari"] body[data-motion-mode="experimental"] {
+  background:
+    radial-gradient(
+      circle at 18% 10%,
+      hsl(var(--section-hue) 92% 70% / calc(0.1 + var(--section-depth, 0) * 0.12)),
+      transparent 20%
+    ),
+    radial-gradient(circle at 86% 18%, rgba(246, 193, 119, 0.1), transparent 20%),
+    linear-gradient(180deg, #040913 0%, #07101d 42%, #050b15 100%);
+}
+
 :root[data-browser="safari"] .cell-field::before {
   filter: none;
   opacity: calc(0.5 + var(--pointer-speed, 0) * 0.16);
@@ -2906,6 +2952,19 @@ body[data-motion-mode="experimental"] .quick-link {
   box-shadow: 0 0 calc(8px + var(--cell-react, 0) * 14px) rgba(125, 211, 252, 0.22);
 }
 
+:root[data-browser="safari"][data-motion-mode="cinematic"] .cell-node-shell {
+  animation-duration: 26s;
+}
+
+:root[data-browser="safari"][data-motion-mode="cinematic"] .cell-node {
+  animation: cellFloat 14s ease-in-out infinite;
+}
+
+:root[data-browser="safari"][data-motion-mode="experimental"] .cell-node-shell,
+:root[data-browser="safari"][data-motion-mode="experimental"] .cell-node {
+  animation: none;
+}
+
 :root[data-browser="safari"] .ambient-field::before,
 :root[data-browser="safari"] .ambient-field::after {
   filter: none;
@@ -2917,6 +2976,11 @@ body[data-motion-mode="experimental"] .quick-link {
 
 :root[data-browser="safari"] .ambient-field__ring--two,
 :root[data-browser="safari"] .ambient-field__ring--three {
+  display: none;
+}
+
+:root[data-browser="safari"][data-motion-mode="experimental"] .ambient-field__ring--one,
+:root[data-browser="safari"][data-motion-mode="experimental"] .ambient-field__flare {
   display: none;
 }
 
@@ -2934,6 +2998,10 @@ body[data-motion-mode="experimental"] .quick-link {
     var(--pointer-speed, 0) * 0.08 +
     var(--click-energy, 0) * 0.12
   );
+}
+
+:root[data-browser="safari"][data-motion-mode="experimental"] .site-shell::after {
+  display: none;
 }
 
 :root[data-browser="safari"] .cursor-trail {
@@ -2960,6 +3028,21 @@ body[data-motion-mode="experimental"] .quick-link {
 
 :root[data-browser="safari"] .motion-mode-switcher {
   background: rgba(10, 16, 28, 0.92);
+}
+
+:root[data-browser="safari"][data-motion-mode="cinematic"] .site-nav,
+:root[data-browser="safari"][data-motion-mode="cinematic"] .theme-toggle,
+:root[data-browser="safari"][data-motion-mode="cinematic"] .motion-mode-switcher {
+  background: rgba(11, 17, 30, 0.92);
+}
+
+:root[data-browser="safari"][data-motion-mode="experimental"] .site-nav,
+:root[data-browser="safari"][data-motion-mode="experimental"] .theme-toggle,
+:root[data-browser="safari"][data-motion-mode="experimental"] .motion-mode-switcher {
+  background: rgba(6, 12, 24, 0.94);
+  box-shadow:
+    inset 0 0 0 1px rgba(125, 211, 252, 0.05),
+    0 12px 24px rgba(2, 6, 23, 0.2);
 }
 
 :root[data-browser="safari"][data-theme="light"] .site-header {
