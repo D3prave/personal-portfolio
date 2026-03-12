@@ -18,7 +18,7 @@ export function ProjectsSection({
     : "projects-grid projects-grid--standard";
 
   return (
-    <section className="section" id={section.id}>
+    <section className="section section-reveal reveal" id={section.id}>
       <div className="container">
         <SectionIntro
           eyebrow={section.eyebrow}

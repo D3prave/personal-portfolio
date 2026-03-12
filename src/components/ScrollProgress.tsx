@@ -21,6 +21,7 @@ export function ScrollProgress() {
 
     const applyProgress = (value: number) => {
       barRef.current?.style.setProperty("--scroll-progress", value.toString());
+      document.documentElement.style.setProperty("--page-scroll", value.toString());
     };
 
     const render = () => {

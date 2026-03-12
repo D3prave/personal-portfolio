@@ -19,6 +19,7 @@ export function Header({
 }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeHref, setActiveHref] = useState(navigation[0]?.href ?? "#about");
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -52,6 +53,10 @@ export function Header({
       setActiveHref((currentHref) =>
         currentHref === nextHref ? currentHref : nextHref,
       );
+      setIsScrolled((currentState) => {
+        const nextState = window.scrollY > 10;
+        return currentState === nextState ? currentState : nextState;
+      });
       animationFrame = 0;
     };
 
@@ -78,7 +83,7 @@ export function Header({
   }, [navigation]);
 
   return (
-    <header className="site-header">
+    <header className={`site-header ${isScrolled ? "is-scrolled" : ""}`}>
       <div className="container header-inner">
         <SmoothAnchor
           className="brand-link brand-block"
