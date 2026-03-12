@@ -29,6 +29,7 @@ export function CellField() {
               width: cell.size,
               height: cell.size,
               "--cell-delay": cell.delay,
+              "--cell-order": index,
             } as CSSProperties
           }
         >
