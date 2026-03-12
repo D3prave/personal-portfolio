@@ -96,6 +96,20 @@ function readInitialMotionMode(): MotionMode {
   return "core";
 }
 
+function isSafariBrowser() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const { userAgent, vendor } = window.navigator;
+
+  return (
+    vendor.includes("Apple") &&
+    /Safari/i.test(userAgent) &&
+    !/Chrome|CriOS|Chromium|Edg|OPR|Opera|Firefox|FxiOS/i.test(userAgent)
+  );
+}
+
 function App() {
   const [theme, setTheme] = useState<"dark" | "light">(() => {
     if (typeof window === "undefined") {
@@ -113,6 +127,19 @@ function App() {
       : "dark";
   });
   const [motionMode, setMotionMode] = useState<MotionMode>(readInitialMotionMode);
+
+  useEffect(() => {
+    const browser = isSafariBrowser() ? "safari" : "";
+
+    if (browser) {
+      document.documentElement.dataset.browser = browser;
+      document.body.dataset.browser = browser;
+      return;
+    }
+
+    delete document.documentElement.dataset.browser;
+    delete document.body.dataset.browser;
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") {
