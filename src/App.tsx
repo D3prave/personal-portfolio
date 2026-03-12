@@ -74,8 +74,8 @@ function interpolateHue(from: number, to: number, progress: number) {
   return (from + delta * progress + 360) % 360;
 }
 
-function smoothstep(progress: number) {
-  return progress * progress * (3 - 2 * progress);
+function smootherstep(progress: number) {
+  return progress * progress * progress * (progress * (progress * 6 - 15) + 10);
 }
 
 function readInitialMotionMode(): MotionMode {
@@ -120,225 +120,83 @@ function App() {
     }
 
     const revealElements = Array.from(document.querySelectorAll<HTMLElement>(".reveal"));
-
-    if (revealElements.length === 0) {
-      return;
-    }
-
     const revealItems = revealElements.map((element) => {
       const rawDelay = window
         .getComputedStyle(element)
         .getPropertyValue("--reveal-delay")
         .trim();
       const delayMs = rawDelay.endsWith("ms") ? Number.parseFloat(rawDelay) : 0;
-      const delayOffset = clamp(delayMs / 420, 0, 0.28);
+      const delayOffset = clamp(delayMs / 640, 0, 0.18);
 
       return {
         element,
         delayOffset,
+        top: 0,
+        height: 0,
+        progress: 0,
+        writtenProgress: -1,
+        isReady: false,
       };
     });
 
-    let animationFrame = 0;
-
-    const render = () => {
-      const viewportHeight = window.innerHeight;
-      const startLine = viewportHeight * 1.04;
-      const travelDistance = viewportHeight * 0.56;
-      const isNearPageEnd =
-        window.scrollY + window.innerHeight >=
-        document.documentElement.scrollHeight - 6;
-
-      revealItems.forEach((item) => {
-        const { element, delayOffset } = item;
-        const bounds = element.getBoundingClientRect();
-        const baseProgress = clamp(
-          (startLine - bounds.top) / (travelDistance + bounds.height * 0.12),
-          0,
-          1,
-        );
-        const adjustedProgress = clamp(
-          (baseProgress - delayOffset) / (1 - delayOffset || 1),
-          0,
-          1,
-        );
-        const finalProgress =
-          isNearPageEnd && bounds.top < viewportHeight ? 1 : adjustedProgress;
-        const easedProgress = smoothstep(finalProgress);
-
-        item.element.style.setProperty(
-          "--reveal-progress",
-          easedProgress.toFixed(3),
-        );
-
-        if (easedProgress > 0.02) {
-          item.element.classList.add("is-visible");
-        }
-
-        if (easedProgress > 0.88) {
-          item.element.classList.add("is-reveal-ready");
-        }
-      });
-
-      animationFrame = 0;
-    };
-
-    const queueRender = () => {
-      if (animationFrame !== 0) {
-        return;
-      }
-
-      animationFrame = window.requestAnimationFrame(render);
-    };
-
-    queueRender();
-    window.addEventListener("scroll", queueRender, { passive: true });
-    window.addEventListener("resize", queueRender);
-    window.addEventListener("lenis-scroll", queueRender);
-
-    return () => {
-      window.cancelAnimationFrame(animationFrame);
-      window.removeEventListener("scroll", queueRender);
-      window.removeEventListener("resize", queueRender);
-      window.removeEventListener("lenis-scroll", queueRender);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const cellNodes = Array.from(
-      document.querySelectorAll<HTMLElement>(".cell-node-shell"),
-    );
-
-    if (cellNodes.length === 0) {
-      return;
-    }
-
-    let animationFrame = 0;
-    let currentProgress = 0;
-    let targetProgress = 0;
-
-    const readScrollProgress = () => {
-      const scrollableHeight =
-        document.documentElement.scrollHeight - window.innerHeight;
-
-      if (scrollableHeight <= 0) {
-        return 0;
-      }
-
-      return clamp(window.scrollY / scrollableHeight, 0, 1);
-    };
-
-    const render = () => {
-      const delta = targetProgress - currentProgress;
-
-      if (Math.abs(delta) < 0.0015) {
-        currentProgress = targetProgress;
-      } else {
-        currentProgress += delta * 0.18;
-      }
-
-      cellNodes.forEach((node, index) => {
-        const revealProgress = clamp(
-          currentProgress * 2.2 - index * 0.075 + 0.12,
-          0,
-          1,
-        );
-        const driftY =
-          Math.sin(currentProgress * 8 + index * 0.72) * 9 * revealProgress;
-        const shimmer = clamp(
-          currentProgress * 1.5 - index * 0.045 + 0.08,
-          0,
-          1,
-        );
-
-        node.style.setProperty("--cell-scroll-reveal", revealProgress.toFixed(3));
-        node.style.setProperty("--cell-scroll-drift-y", `${driftY.toFixed(2)}px`);
-        node.style.setProperty("--cell-scroll-shimmer", shimmer.toFixed(3));
-      });
-
-      if (Math.abs(targetProgress - currentProgress) >= 0.0015) {
-        animationFrame = window.requestAnimationFrame(render);
-        return;
-      }
-
-      animationFrame = 0;
-    };
-
-    const queueRender = () => {
-      targetProgress = readScrollProgress();
-
-      if (animationFrame !== 0) {
-        return;
-      }
-
-      animationFrame = window.requestAnimationFrame(render);
-    };
-
-    queueRender();
-    window.addEventListener("scroll", queueRender, { passive: true });
-    window.addEventListener("resize", queueRender);
-    window.addEventListener("lenis-scroll", queueRender);
-
-    return () => {
-      window.cancelAnimationFrame(animationFrame);
-      window.removeEventListener("scroll", queueRender);
-      window.removeEventListener("resize", queueRender);
-      window.removeEventListener("lenis-scroll", queueRender);
-    };
-  }, []);
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    document.documentElement.style.colorScheme = theme;
-    window.localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  useEffect(() => {
-    document.documentElement.dataset.motionMode = motionMode;
-    document.body.dataset.motionMode = motionMode;
-    window.localStorage.setItem(MOTION_MODE_STORAGE_KEY, motionMode);
-  }, [motionMode]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const sections = Array.from(
+    const sectionElements = Array.from(
       document.querySelectorAll<HTMLElement>("main .section"),
     );
-
-    if (sections.length === 0) {
-      return;
-    }
-
+    const sections = sectionElements.map((element) => ({
+      element,
+      top: 0,
+      height: 0,
+      center: 0,
+      progress: -1,
+    }));
+    const cellItems = Array.from(
+      document.querySelectorAll<HTMLElement>(".cell-node-shell"),
+    ).map((node) => ({
+      node,
+      reveal: -1,
+      driftY: Number.NaN,
+      shimmer: -1,
+    }));
+    const rootStyle = document.documentElement.style;
+    let isMounted = true;
     let animationFrame = 0;
+    let measureFrame = 0;
+    let viewportHeight = window.innerHeight;
+    let scrollableHeight = Math.max(
+      document.documentElement.scrollHeight - viewportHeight,
+      1,
+    );
+    let currentProgress = 0;
+    let targetProgress = 0;
     let currentDepth = 0;
     let targetDepth = 0;
     let currentHue = sectionHueStops[0];
     let targetHue = currentHue;
+    let writtenPageProgress = -1;
+    let writtenDepth = -1;
+    let writtenHue = Number.NaN;
 
-    const updateTargets = () => {
-      const viewportHeight = window.innerHeight;
+    const updateSectionTargets = (scrollY: number) => {
+      if (sections.length === 0) {
+        return;
+      }
+
       const viewportMid = viewportHeight * 0.54;
-      const viewportCenter = window.scrollY + viewportMid;
-      const centers: number[] = [];
+      const viewportCenter = scrollY + viewportMid;
 
-      sections.forEach((section, index) => {
-        const bounds = section.getBoundingClientRect();
+      sections.forEach((section) => {
+        const sectionTop = section.top - scrollY;
         const progress = clamp(
-          (viewportHeight * 0.94 - bounds.top) /
-            (bounds.height + viewportHeight * 0.72),
+          (viewportHeight * 0.94 - sectionTop) /
+            (section.height + viewportHeight * 0.72),
           0,
           1,
         );
 
-        section.style.setProperty("--section-progress", progress.toFixed(3));
-        centers[index] = bounds.top + window.scrollY + bounds.height * 0.5;
+        if (Math.abs(progress - section.progress) > 0.0025) {
+          section.element.style.setProperty("--section-progress", progress.toFixed(3));
+          section.progress = progress;
+        }
       });
 
       if (sections.length === 1) {
@@ -347,23 +205,23 @@ function App() {
         return;
       }
 
-      if (viewportCenter <= centers[0]) {
+      if (viewportCenter <= sections[0].center) {
         targetDepth = 0;
         targetHue = sectionHueStops[0];
         return;
       }
 
-      const lastIndex = centers.length - 1;
+      const lastIndex = sections.length - 1;
 
-      if (viewportCenter >= centers[lastIndex]) {
+      if (viewportCenter >= sections[lastIndex].center) {
         targetDepth = 1;
         targetHue = sectionHueStops[lastIndex % sectionHueStops.length];
         return;
       }
 
       for (let index = 0; index < lastIndex; index += 1) {
-        const start = centers[index];
-        const end = centers[index + 1];
+        const start = sections[index].center;
+        const end = sections[index + 1].center;
 
         if (viewportCenter < start || viewportCenter > end) {
           continue;
@@ -386,32 +244,128 @@ function App() {
     };
 
     const render = () => {
+      const scrollY = window.scrollY;
+      const pageProgress =
+        scrollableHeight <= 0 ? 0 : clamp(scrollY / scrollableHeight, 0, 1);
+      const startLine = viewportHeight * 1.22;
+      const travelDistance = viewportHeight * 0.48;
+      const isNearPageEnd =
+        scrollY + viewportHeight >= document.documentElement.scrollHeight - 6;
+      let hasPendingAnimation = false;
+
+      if (Math.abs(pageProgress - writtenPageProgress) > 0.0008) {
+        rootStyle.setProperty("--page-scroll", pageProgress.toFixed(4));
+        writtenPageProgress = pageProgress;
+      }
+
+      revealItems.forEach((item) => {
+        const { delayOffset, height, top } = item;
+        const topInViewport = top - scrollY;
+        const baseProgress = clamp(
+          (startLine - topInViewport) / (travelDistance + height * 0.12),
+          0,
+          1,
+        );
+        const adjustedProgress = clamp(
+          (baseProgress - delayOffset) / (1 - delayOffset || 1),
+          0,
+          1,
+        );
+        const finalProgress =
+          isNearPageEnd && topInViewport < viewportHeight ? 1 : adjustedProgress;
+        const targetRevealProgress = smootherstep(finalProgress);
+        const revealDelta = targetRevealProgress - item.progress;
+        const revealFollow = targetRevealProgress > 0.82 ? 0.18 : 0.28;
+
+        if (Math.abs(revealDelta) < 0.0012) {
+          item.progress = targetRevealProgress;
+        } else {
+          item.progress += revealDelta * revealFollow;
+          hasPendingAnimation = true;
+        }
+
+        if (Math.abs(item.progress - item.writtenProgress) > 0.0008) {
+          item.element.style.setProperty("--reveal-progress", item.progress.toFixed(3));
+          item.writtenProgress = item.progress;
+        }
+
+        const nextReady = item.progress > 0.94;
+
+        if (nextReady !== item.isReady) {
+          item.element.classList.toggle("is-reveal-ready", nextReady);
+          item.isReady = nextReady;
+        }
+      });
+
+      targetProgress = pageProgress;
+
+      const cellDelta = targetProgress - currentProgress;
+
+      if (Math.abs(cellDelta) < 0.0015) {
+        currentProgress = targetProgress;
+      } else {
+        currentProgress += cellDelta * 0.18;
+        hasPendingAnimation = true;
+      }
+
+      cellItems.forEach((item, index) => {
+        const revealProgress = clamp(
+          currentProgress * 2.95 - index * 0.055 + 0.22,
+          0,
+          1,
+        );
+        const driftY =
+          Math.sin(currentProgress * 8 + index * 0.72) * 9 * revealProgress;
+        const shimmer = clamp(
+          currentProgress * 1.82 - index * 0.036 + 0.14,
+          0,
+          1,
+        );
+
+        if (Math.abs(revealProgress - item.reveal) > 0.0012) {
+          item.node.style.setProperty("--cell-scroll-reveal", revealProgress.toFixed(3));
+          item.reveal = revealProgress;
+        }
+
+        if (Math.abs(driftY - item.driftY) > 0.08) {
+          item.node.style.setProperty("--cell-scroll-drift-y", `${driftY.toFixed(2)}px`);
+          item.driftY = driftY;
+        }
+
+        if (Math.abs(shimmer - item.shimmer) > 0.0012) {
+          item.node.style.setProperty("--cell-scroll-shimmer", shimmer.toFixed(3));
+          item.shimmer = shimmer;
+        }
+      });
+
+      updateSectionTargets(scrollY);
+
       const depthDelta = targetDepth - currentDepth;
       const hueDelta = ((targetHue - currentHue + 540) % 360) - 180;
-      let hasPendingAnimation = false;
 
       if (Math.abs(depthDelta) < 0.0015) {
         currentDepth = targetDepth;
       } else {
-        currentDepth += depthDelta * 0.14;
+        currentDepth += depthDelta * 0.12;
         hasPendingAnimation = true;
       }
 
       if (Math.abs(hueDelta) < 0.08) {
         currentHue = targetHue;
       } else {
-        currentHue = (currentHue + hueDelta * 0.12 + 360) % 360;
+        currentHue = (currentHue + hueDelta * 0.1 + 360) % 360;
         hasPendingAnimation = true;
       }
 
-      document.documentElement.style.setProperty(
-        "--section-depth",
-        currentDepth.toFixed(3),
-      );
-      document.documentElement.style.setProperty(
-        "--section-hue",
-        currentHue.toFixed(2),
-      );
+      if (Math.abs(currentDepth - writtenDepth) > 0.0008) {
+        rootStyle.setProperty("--section-depth", currentDepth.toFixed(3));
+        writtenDepth = currentDepth;
+      }
+
+      if (Number.isNaN(writtenHue) || Math.abs(currentHue - writtenHue) > 0.04) {
+        rootStyle.setProperty("--section-hue", currentHue.toFixed(2));
+        writtenHue = currentHue;
+      }
 
       if (hasPendingAnimation) {
         animationFrame = window.requestAnimationFrame(render);
@@ -422,8 +376,6 @@ function App() {
     };
 
     const queueRender = () => {
-      updateTargets();
-
       if (animationFrame !== 0) {
         return;
       }
@@ -431,18 +383,75 @@ function App() {
       animationFrame = window.requestAnimationFrame(render);
     };
 
-    queueRender();
+    const measureLayout = () => {
+      const scrollY = window.scrollY;
+      viewportHeight = window.innerHeight;
+      scrollableHeight = Math.max(
+        document.documentElement.scrollHeight - viewportHeight,
+        1,
+      );
+
+      revealItems.forEach((item) => {
+        const bounds = item.element.getBoundingClientRect();
+        item.top = bounds.top + scrollY;
+        item.height = bounds.height;
+      });
+
+      sections.forEach((section) => {
+        const bounds = section.element.getBoundingClientRect();
+        section.top = bounds.top + scrollY;
+        section.height = bounds.height;
+        section.center = section.top + bounds.height * 0.5;
+      });
+
+      measureFrame = 0;
+      queueRender();
+    };
+
+    const scheduleMeasure = () => {
+      if (measureFrame !== 0) {
+        return;
+      }
+
+      measureFrame = window.requestAnimationFrame(measureLayout);
+    };
+
+    scheduleMeasure();
     window.addEventListener("scroll", queueRender, { passive: true });
-    window.addEventListener("resize", queueRender);
+    window.addEventListener("resize", scheduleMeasure);
+    window.addEventListener("load", scheduleMeasure);
     window.addEventListener("lenis-scroll", queueRender);
 
+    if ("fonts" in document) {
+      void (document as Document & { fonts: FontFaceSet }).fonts.ready.then(() => {
+        if (isMounted) {
+          scheduleMeasure();
+        }
+      });
+    }
+
     return () => {
+      isMounted = false;
       window.cancelAnimationFrame(animationFrame);
+      window.cancelAnimationFrame(measureFrame);
       window.removeEventListener("scroll", queueRender);
-      window.removeEventListener("resize", queueRender);
+      window.removeEventListener("resize", scheduleMeasure);
+      window.removeEventListener("load", scheduleMeasure);
       window.removeEventListener("lenis-scroll", queueRender);
     };
   }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    window.localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  useEffect(() => {
+    document.documentElement.dataset.motionMode = motionMode;
+    document.body.dataset.motionMode = motionMode;
+    window.localStorage.setItem(MOTION_MODE_STORAGE_KEY, motionMode);
+  }, [motionMode]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -659,11 +668,19 @@ function App() {
     const supportsHover = window.matchMedia(
       "(hover: hover) and (pointer: fine)",
     ).matches;
-    const cellNodes = Array.from(
+    const cellItems = Array.from(
       document.querySelectorAll<HTMLElement>(".cell-node-shell"),
-    );
+    ).map((node) => ({
+      node,
+      centerX: 0,
+      centerY: 0,
+      react: -1,
+      shiftX: Number.NaN,
+      shiftY: Number.NaN,
+      tilt: Number.NaN,
+    }));
 
-    if (prefersReducedMotion || !supportsHover || cellNodes.length === 0) {
+    if (prefersReducedMotion || !supportsHover || cellItems.length === 0) {
       return;
     }
 
@@ -672,12 +689,9 @@ function App() {
     let frame = 0;
 
     const render = () => {
-      cellNodes.forEach((node) => {
-        const bounds = node.getBoundingClientRect();
-        const centerX = bounds.left + bounds.width * 0.5;
-        const centerY = bounds.top + bounds.height * 0.5;
-        const deltaX = pointerX - centerX;
-        const deltaY = pointerY - centerY;
+      cellItems.forEach((item) => {
+        const deltaX = pointerX - item.centerX;
+        const deltaY = pointerY - item.centerY;
         const distance = Math.hypot(deltaX, deltaY);
         const proximity = clamp(1 - distance / modeConfig.radius, 0, 1);
         const strength = proximity * proximity;
@@ -686,16 +700,29 @@ function App() {
         const shift = strength * modeConfig.push;
         const tilt = strength * modeConfig.tilt;
 
-        node.style.setProperty("--cell-react", strength.toFixed(3));
-        node.style.setProperty(
-          "--cell-shift-x",
-          `${(normalizedX * shift).toFixed(2)}px`,
-        );
-        node.style.setProperty(
-          "--cell-shift-y",
-          `${(normalizedY * shift).toFixed(2)}px`,
-        );
-        node.style.setProperty("--cell-tilt", `${(normalizedX * tilt).toFixed(3)}deg`);
+        if (Math.abs(strength - item.react) > 0.0012) {
+          item.node.style.setProperty("--cell-react", strength.toFixed(3));
+          item.react = strength;
+        }
+
+        const shiftX = normalizedX * shift;
+        const shiftY = normalizedY * shift;
+        const tiltValue = normalizedX * tilt;
+
+        if (Math.abs(shiftX - item.shiftX) > 0.08) {
+          item.node.style.setProperty("--cell-shift-x", `${shiftX.toFixed(2)}px`);
+          item.shiftX = shiftX;
+        }
+
+        if (Math.abs(shiftY - item.shiftY) > 0.08) {
+          item.node.style.setProperty("--cell-shift-y", `${shiftY.toFixed(2)}px`);
+          item.shiftY = shiftY;
+        }
+
+        if (Math.abs(tiltValue - item.tilt) > 0.05) {
+          item.node.style.setProperty("--cell-tilt", `${tiltValue.toFixed(3)}deg`);
+          item.tilt = tiltValue;
+        }
       });
 
       frame = 0;
@@ -715,20 +742,26 @@ function App() {
       queueRender();
     };
 
+    const measureCells = () => {
+      cellItems.forEach((item) => {
+        item.centerX = item.node.offsetLeft;
+        item.centerY = item.node.offsetTop;
+      });
+
+      queueRender();
+    };
+
+    measureCells();
     queueRender();
     window.addEventListener("pointermove", handlePointerMove, { passive: true });
-    window.addEventListener("scroll", queueRender, { passive: true });
-    window.addEventListener("resize", queueRender);
-    window.addEventListener("lenis-scroll", queueRender);
+    window.addEventListener("resize", measureCells);
 
     return () => {
       window.cancelAnimationFrame(frame);
       window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("scroll", queueRender);
-      window.removeEventListener("resize", queueRender);
-      window.removeEventListener("lenis-scroll", queueRender);
+      window.removeEventListener("resize", measureCells);
 
-      cellNodes.forEach((node) => {
+      cellItems.forEach(({ node }) => {
         node.style.removeProperty("--cell-react");
         node.style.removeProperty("--cell-shift-x");
         node.style.removeProperty("--cell-shift-y");
