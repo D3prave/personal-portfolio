@@ -92,7 +92,7 @@
   --reveal-rotate: 0deg;
   --reveal-scale-base: 0.9;
   --reveal-blur-max: 14px;
-  --reveal-transition: 40ms;
+  --reveal-transition: 90ms;
 }
 
 :root[data-motion-mode="cinematic"] {
@@ -106,7 +106,7 @@
   --reveal-rotate: -3deg;
   --reveal-scale-base: 0.86;
   --reveal-blur-max: 18px;
-  --reveal-transition: 55ms;
+  --reveal-transition: 140ms;
 }
 
 :root[data-motion-mode="experimental"] {
@@ -120,7 +120,7 @@
   --reveal-rotate: 5deg;
   --reveal-scale-base: 0.82;
   --reveal-blur-max: 10px;
-  --reveal-transition: 24ms;
+  --reveal-transition: 70ms;
 }
 
 *,
@@ -1124,9 +1124,8 @@ body[data-motion-mode="experimental"] .section::before {
   display: block;
   width: 100%;
   height: 100%;
-  --scroll-progress: 0;
   transform-origin: left center;
-  transform: scaleX(var(--scroll-progress));
+  transform: scaleX(var(--page-scroll, 0));
   background: linear-gradient(
     90deg,
     hsl(var(--section-hue) 88% 72% / 0.9),
@@ -2849,18 +2848,13 @@ body[data-motion-mode="experimental"] .quick-link {
   filter:
     blur(calc((1 - var(--reveal-progress, 0)) * var(--reveal-blur-max, 10px)))
     saturate(calc(0.74 + var(--reveal-progress, 0) * 0.26));
-  transition:
-    opacity var(--reveal-transition, 180ms) cubic-bezier(0.22, 1, 0.36, 1),
-    transform var(--reveal-transition, 180ms) cubic-bezier(0.22, 1, 0.36, 1),
-    filter var(--reveal-transition, 180ms) cubic-bezier(0.22, 1, 0.36, 1);
+  backface-visibility: hidden;
   will-change: opacity, transform, filter;
 }
 
-.reveal.is-visible {
-  opacity: calc(var(--reveal-progress, 1) * var(--reveal-progress, 1));
-  filter:
-    blur(calc((1 - var(--reveal-progress, 1)) * 2px))
-    saturate(calc(0.74 + var(--reveal-progress, 1) * 0.26));
+.reveal.is-reveal-ready {
+  filter: none;
+  will-change: auto;
 }
 
 .hover-spotlight.reveal:not(.is-reveal-ready),
