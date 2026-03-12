@@ -123,6 +123,13 @@
   --reveal-transition: 70ms;
 }
 
+:root[data-browser="safari"] {
+  --mode-grid-opacity: 0.14;
+  --mode-flare-strength: 0.82;
+  --mode-trail-opacity: 0.12;
+  --reveal-blur-max: 0px;
+}
+
 *,
 *::before,
 *::after {
@@ -2855,6 +2862,121 @@ body[data-motion-mode="experimental"] .quick-link {
 .reveal.is-reveal-ready {
   filter: none;
   will-change: auto;
+}
+
+/* Safari gets a flatter rendering path to preserve the same design language
+   without the blur-heavy compositing stack that causes stutter. */
+:root[data-browser="safari"] body::before {
+  -webkit-mask-image: none;
+  mask-image: none;
+  opacity: calc(0.22 + var(--page-scroll, 0) * 0.16 + var(--pointer-speed, 0) * 0.08);
+}
+
+:root[data-browser="safari"] body::after {
+  filter: blur(8px);
+  opacity: calc(
+    0.42 +
+    var(--pointer-speed, 0) * 0.14 +
+    var(--click-energy, 0) * 0.18
+  );
+  animation: none;
+}
+
+:root[data-browser="safari"] .cell-field::before {
+  filter: none;
+  opacity: calc(0.5 + var(--pointer-speed, 0) * 0.16);
+}
+
+:root[data-browser="safari"] .cell-field::after {
+  opacity: calc(0.08 + var(--page-scroll, 0) * 0.1);
+  animation: none;
+}
+
+:root[data-browser="safari"] .cell-node {
+  filter: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 10px 18px rgba(2, 6, 23, 0.08);
+  transition:
+    transform 180ms ease,
+    opacity 220ms ease;
+}
+
+:root[data-browser="safari"] .cell-node::after {
+  box-shadow: 0 0 calc(8px + var(--cell-react, 0) * 14px) rgba(125, 211, 252, 0.22);
+}
+
+:root[data-browser="safari"] .ambient-field::before,
+:root[data-browser="safari"] .ambient-field::after {
+  filter: none;
+}
+
+:root[data-browser="safari"] .ambient-field__flare {
+  filter: blur(6px);
+}
+
+:root[data-browser="safari"] .ambient-field__ring--two,
+:root[data-browser="safari"] .ambient-field__ring--three {
+  display: none;
+}
+
+:root[data-browser="safari"] .site-shell::before {
+  filter: blur(10px);
+  opacity: calc(0.24 + var(--section-depth, 0) * 0.22);
+  animation: none;
+}
+
+:root[data-browser="safari"] .site-shell::after {
+  filter: none;
+  opacity: calc(
+    0.03 +
+    var(--page-scroll, 0) * 0.12 +
+    var(--pointer-speed, 0) * 0.08 +
+    var(--click-energy, 0) * 0.12
+  );
+}
+
+:root[data-browser="safari"] .cursor-trail {
+  display: none;
+}
+
+:root[data-browser="safari"] .cursor-comet {
+  box-shadow: 0 0 calc(10px + var(--pointer-speed, 0) * 16px) hsl(var(--section-hue) 95% 74% / 0.34);
+}
+
+:root[data-browser="safari"] .site-header,
+:root[data-browser="safari"] .motion-mode-switcher {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:root[data-browser="safari"] .site-header {
+  background: rgba(7, 11, 21, 0.88);
+}
+
+:root[data-browser="safari"] .site-header.is-scrolled {
+  background: rgba(7, 11, 21, 0.94);
+}
+
+:root[data-browser="safari"] .motion-mode-switcher {
+  background: rgba(10, 16, 28, 0.92);
+}
+
+:root[data-browser="safari"][data-theme="light"] .site-header {
+  background: rgba(239, 245, 251, 0.92);
+}
+
+:root[data-browser="safari"][data-theme="light"] .site-header.is-scrolled {
+  background: rgba(239, 245, 251, 0.96);
+}
+
+:root[data-browser="safari"][data-theme="light"] .motion-mode-switcher {
+  background: rgba(255, 255, 255, 0.94);
+}
+
+:root[data-browser="safari"] .reveal {
+  filter: none;
+  will-change: transform, opacity;
 }
 
 .hover-spotlight.reveal:not(.is-reveal-ready),

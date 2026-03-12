@@ -37,16 +37,18 @@ export function Header({
 
   useEffect(() => {
     let animationFrame = 0;
+    const sectionEntries = navigation.map((item) => ({
+      href: item.href,
+      section: document.querySelector<HTMLElement>(item.href),
+    }));
 
     const updateActiveItem = () => {
       const scrollPosition = window.scrollY + 140;
       let nextHref = navigation[0]?.href ?? "#about";
 
-      navigation.forEach((item) => {
-        const section = document.querySelector<HTMLElement>(item.href);
-
-        if (section && section.offsetTop <= scrollPosition) {
-          nextHref = item.href;
+      sectionEntries.forEach((entry) => {
+        if (entry.section && entry.section.offsetTop <= scrollPosition) {
+          nextHref = entry.href;
         }
       });
 
