@@ -38,6 +38,24 @@ const pointerConfig = {
   },
 } as const;
 
+const safariPointerConfig = {
+  core: pointerConfig.core,
+  cinematic: {
+    follow: 0.14,
+    drift: 22,
+    soft: -0.24,
+    medium: 0.34,
+    strong: 0.58,
+  },
+  experimental: {
+    follow: 0.22,
+    drift: 24,
+    soft: -0.12,
+    medium: 0.3,
+    strong: 0.56,
+  },
+} as const;
+
 const cellConfig = {
   core: {
     radius: 260,
@@ -53,6 +71,20 @@ const cellConfig = {
     radius: 390,
     push: 18,
     tilt: 11,
+  },
+} as const;
+
+const safariCellConfig = {
+  core: cellConfig.core,
+  cinematic: {
+    radius: 248,
+    push: 7,
+    tilt: 3,
+  },
+  experimental: {
+    radius: 238,
+    push: 8,
+    tilt: 4,
   },
 } as const;
 
@@ -127,9 +159,10 @@ function App() {
       : "dark";
   });
   const [motionMode, setMotionMode] = useState<MotionMode>(readInitialMotionMode);
+  const [isSafari] = useState(isSafariBrowser);
 
   useEffect(() => {
-    const browser = isSafariBrowser() ? "safari" : "";
+    const browser = isSafari ? "safari" : "";
 
     if (browser) {
       document.documentElement.dataset.browser = browser;
@@ -139,7 +172,7 @@ function App() {
 
     delete document.documentElement.dataset.browser;
     delete document.body.dataset.browser;
-  }, []);
+  }, [isSafari]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -566,7 +599,7 @@ function App() {
       return;
     }
 
-    const currentModeConfig = pointerConfig[motionMode];
+    const currentModeConfig = (isSafari ? safariPointerConfig : pointerConfig)[motionMode];
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
@@ -681,14 +714,14 @@ function App() {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("resize", handleResize);
     };
-  }, [motionMode]);
+  }, [isSafari, motionMode]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
 
-    const modeConfig = cellConfig[motionMode];
+    const modeConfig = (isSafari ? safariCellConfig : cellConfig)[motionMode];
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
@@ -795,7 +828,7 @@ function App() {
         node.style.removeProperty("--cell-tilt");
       });
     };
-  }, [motionMode]);
+  }, [isSafari, motionMode]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -840,7 +873,7 @@ function App() {
 
       createRipple(event.clientX, event.clientY, 1);
 
-      if (motionMode === "experimental") {
+      if (motionMode === "experimental" && !isSafari) {
         createRipple(event.clientX, event.clientY, 1.25);
       }
 
@@ -858,7 +891,7 @@ function App() {
       window.clearTimeout(clickTimeout);
       document.documentElement.style.setProperty("--click-energy", "0");
     };
-  }, [motionMode]);
+  }, [isSafari, motionMode]);
 
   return (
     <div className={`site-shell motion-mode-${motionMode}`}>
