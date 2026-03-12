@@ -68,6 +68,16 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
+function interpolateHue(from: number, to: number, progress: number) {
+  const delta = ((to - from + 540) % 360) - 180;
+
+  return (from + delta * progress + 360) % 360;
+}
+
+function smoothstep(progress: number) {
+  return progress * progress * (3 - 2 * progress);
+}
+
 function readInitialMotionMode(): MotionMode {
   if (typeof window === "undefined") {
     return "core";
@@ -144,13 +154,14 @@ function App() {
 
     const render = () => {
       const viewportHeight = window.innerHeight;
-      const startLine = viewportHeight * 0.92;
-      const travelDistance = viewportHeight * 0.46;
+      const startLine = viewportHeight * 0.98;
+      const travelDistance = viewportHeight * 0.62;
 
-      revealItems.forEach(({ element, delayOffset }) => {
+      revealItems.forEach((item) => {
+        const { element, delayOffset } = item;
         const bounds = element.getBoundingClientRect();
         const baseProgress = clamp(
-          (startLine - bounds.top) / (travelDistance + bounds.height * 0.22),
+          (startLine - bounds.top) / (travelDistance + bounds.height * 0.12),
           0,
           1,
         );
@@ -159,11 +170,15 @@ function App() {
           0,
           1,
         );
+        const easedProgress = smoothstep(adjustedProgress);
 
-        element.style.setProperty("--reveal-progress", adjustedProgress.toFixed(3));
+        item.element.style.setProperty(
+          "--reveal-progress",
+          easedProgress.toFixed(3),
+        );
 
-        if (adjustedProgress > 0.02) {
-          element.classList.add("is-visible");
+        if (easedProgress > 0.02) {
+          item.element.classList.add("is-visible");
         }
       });
 
@@ -217,12 +232,16 @@ function App() {
     }
 
     let animationFrame = 0;
+    let currentDepth = 0;
+    let targetDepth = 0;
+    let currentHue = sectionHueStops[0];
+    let targetHue = currentHue;
 
-    const render = () => {
+    const updateTargets = () => {
       const viewportHeight = window.innerHeight;
       const viewportMid = viewportHeight * 0.54;
-      let closestIndex = 0;
-      let closestDistance = Number.POSITIVE_INFINITY;
+      const viewportCenter = window.scrollY + viewportMid;
+      const centers: number[] = [];
 
       sections.forEach((section, index) => {
         const bounds = section.getBoundingClientRect();
@@ -234,28 +253,92 @@ function App() {
         );
 
         section.style.setProperty("--section-progress", progress.toFixed(3));
-
-        const centerOffset = Math.abs(bounds.top + bounds.height * 0.5 - viewportMid);
-
-        if (centerOffset < closestDistance) {
-          closestDistance = centerOffset;
-          closestIndex = index;
-        }
+        centers[index] = bounds.top + window.scrollY + bounds.height * 0.5;
       });
 
-      const depth =
-        sections.length > 1 ? closestIndex / (sections.length - 1) : 0;
+      if (sections.length === 1) {
+        targetDepth = 0;
+        targetHue = sectionHueStops[0];
+        return;
+      }
 
-      document.documentElement.style.setProperty("--section-depth", depth.toFixed(3));
+      if (viewportCenter <= centers[0]) {
+        targetDepth = 0;
+        targetHue = sectionHueStops[0];
+        return;
+      }
+
+      const lastIndex = centers.length - 1;
+
+      if (viewportCenter >= centers[lastIndex]) {
+        targetDepth = 1;
+        targetHue = sectionHueStops[lastIndex % sectionHueStops.length];
+        return;
+      }
+
+      for (let index = 0; index < lastIndex; index += 1) {
+        const start = centers[index];
+        const end = centers[index + 1];
+
+        if (viewportCenter < start || viewportCenter > end) {
+          continue;
+        }
+
+        const localProgress = clamp(
+          (viewportCenter - start) / (end - start || 1),
+          0,
+          1,
+        );
+
+        targetDepth = (index + localProgress) / lastIndex;
+        targetHue = interpolateHue(
+          sectionHueStops[index % sectionHueStops.length],
+          sectionHueStops[(index + 1) % sectionHueStops.length],
+          localProgress,
+        );
+        return;
+      }
+    };
+
+    const render = () => {
+      const depthDelta = targetDepth - currentDepth;
+      const hueDelta = ((targetHue - currentHue + 540) % 360) - 180;
+      let hasPendingAnimation = false;
+
+      if (Math.abs(depthDelta) < 0.0015) {
+        currentDepth = targetDepth;
+      } else {
+        currentDepth += depthDelta * 0.14;
+        hasPendingAnimation = true;
+      }
+
+      if (Math.abs(hueDelta) < 0.08) {
+        currentHue = targetHue;
+      } else {
+        currentHue = (currentHue + hueDelta * 0.12 + 360) % 360;
+        hasPendingAnimation = true;
+      }
+
+      document.documentElement.style.setProperty(
+        "--section-depth",
+        currentDepth.toFixed(3),
+      );
       document.documentElement.style.setProperty(
         "--section-hue",
-        sectionHueStops[closestIndex % sectionHueStops.length].toString(),
+        currentHue.toFixed(2),
       );
+
+      if (hasPendingAnimation) {
+        animationFrame = window.requestAnimationFrame(render);
+        return;
+      }
 
       animationFrame = 0;
     };
 
     const queueRender = () => {
+      updateTargets();
+
       if (animationFrame !== 0) {
         return;
       }

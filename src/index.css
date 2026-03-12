@@ -88,11 +88,11 @@
   --mode-trail-opacity: 0.24;
   --mode-ring-opacity: 0.86;
   --reveal-offset-x: 0px;
-  --reveal-offset-y: 40px;
+  --reveal-offset-y: 76px;
   --reveal-rotate: 0deg;
-  --reveal-scale-base: 0.97;
-  --reveal-blur-max: 8px;
-  --reveal-transition: 160ms;
+  --reveal-scale-base: 0.9;
+  --reveal-blur-max: 14px;
+  --reveal-transition: 40ms;
 }
 
 :root[data-motion-mode="cinematic"] {
@@ -101,12 +101,12 @@
   --mode-flare-strength: 1.22;
   --mode-trail-opacity: 0.18;
   --mode-ring-opacity: 1;
-  --reveal-offset-x: -34px;
-  --reveal-offset-y: 56px;
-  --reveal-rotate: -1.4deg;
-  --reveal-scale-base: 0.954;
-  --reveal-blur-max: 14px;
-  --reveal-transition: 220ms;
+  --reveal-offset-x: -78px;
+  --reveal-offset-y: 108px;
+  --reveal-rotate: -3deg;
+  --reveal-scale-base: 0.86;
+  --reveal-blur-max: 18px;
+  --reveal-transition: 55ms;
 }
 
 :root[data-motion-mode="experimental"] {
@@ -115,12 +115,12 @@
   --mode-flare-strength: 1.48;
   --mode-trail-opacity: 0.34;
   --mode-ring-opacity: 1.14;
-  --reveal-offset-x: 26px;
-  --reveal-offset-y: 18px;
-  --reveal-rotate: 2.2deg;
-  --reveal-scale-base: 0.936;
-  --reveal-blur-max: 6px;
-  --reveal-transition: 120ms;
+  --reveal-offset-x: 64px;
+  --reveal-offset-y: 32px;
+  --reveal-rotate: 5deg;
+  --reveal-scale-base: 0.82;
+  --reveal-blur-max: 10px;
+  --reveal-transition: 24ms;
 }
 
 *,
@@ -549,6 +549,11 @@ textarea:focus-visible {
   --cell-shift-x: 0px;
   --cell-shift-y: 0px;
   --cell-tilt: 0deg;
+  --cell-scroll-reveal: clamp(
+    0,
+    calc(var(--page-scroll, 0) * 1.72 - var(--cell-order, 0) * 0.086 + 0.2),
+    1
+  );
   transform: translate(-50%, -50%);
   animation: cellDrift 18s ease-in-out infinite;
   animation-delay: var(--cell-delay, 0s);
@@ -596,8 +601,23 @@ textarea:focus-visible {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.03),
     0 16px 30px rgba(2, 6, 23, 0.08);
-  opacity: calc(0.72 + var(--cell-react, 0) * 0.45);
-  transform: translate3d(0, 0, 0) scale(calc(1 + var(--cell-react, 0) * 0.1));
+  opacity: calc(
+    0.04 +
+    var(--cell-scroll-reveal, 0) * 0.82 +
+    var(--cell-react, 0) * 0.18
+  );
+  transform: translate3d(
+      0,
+      calc((1 - var(--cell-scroll-reveal, 0)) * 22px),
+      0
+    )
+    scale(
+      calc(
+        0.58 +
+        var(--cell-scroll-reveal, 0) * 0.42 +
+        var(--cell-react, 0) * 0.08
+      )
+    );
   filter: saturate(calc(1 + var(--cell-react, 0) * 0.9));
   animation:
     cellFloat 12s ease-in-out infinite,
@@ -605,7 +625,7 @@ textarea:focus-visible {
   animation-delay: var(--cell-delay, 0s), var(--cell-delay, 0s);
   transition:
     transform 180ms ease,
-    opacity 180ms ease,
+    opacity 220ms ease,
     filter 180ms ease;
   will-change: transform, opacity;
 }
@@ -2796,7 +2816,7 @@ body[data-motion-mode="experimental"] .quick-link {
 
 .reveal {
   --reveal-progress: 0;
-  opacity: var(--reveal-progress, 0);
+  opacity: calc(var(--reveal-progress, 0) * var(--reveal-progress, 0));
   transform:
     translate3d(
       calc(var(--reveal-offset-x) * (1 - var(--reveal-progress, 0))),
@@ -2810,7 +2830,9 @@ body[data-motion-mode="experimental"] .quick-link {
         var(--reveal-progress, 0) * (1 - var(--reveal-scale-base))
       )
     );
-  filter: blur(calc((1 - var(--reveal-progress, 0)) * var(--reveal-blur-max, 10px)));
+  filter:
+    blur(calc((1 - var(--reveal-progress, 0)) * var(--reveal-blur-max, 10px)))
+    saturate(calc(0.74 + var(--reveal-progress, 0) * 0.26));
   transition:
     opacity var(--reveal-transition, 180ms) cubic-bezier(0.22, 1, 0.36, 1),
     transform var(--reveal-transition, 180ms) cubic-bezier(0.22, 1, 0.36, 1),
@@ -2819,8 +2841,10 @@ body[data-motion-mode="experimental"] .quick-link {
 }
 
 .reveal.is-visible {
-  opacity: var(--reveal-progress, 1);
-  filter: blur(calc((1 - var(--reveal-progress, 1)) * 2px));
+  opacity: calc(var(--reveal-progress, 1) * var(--reveal-progress, 1));
+  filter:
+    blur(calc((1 - var(--reveal-progress, 1)) * 2px))
+    saturate(calc(0.74 + var(--reveal-progress, 1) * 0.26));
 }
 
 .hero-visual {
@@ -3357,9 +3381,12 @@ body[data-motion-mode="experimental"] .quick-link {
 
   .ambient-field__flare,
   .ambient-field__ring--three,
-  .ambient-field__ring--two,
-  .cell-field {
+  .ambient-field__ring--two {
     display: none;
+  }
+
+  .cell-field {
+    opacity: 0.52;
   }
 
   .header-tools {
@@ -3467,11 +3494,15 @@ body[data-motion-mode="experimental"] .quick-link {
 
 @media (hover: none), (pointer: coarse) {
   .ambient-field,
-  .cell-field,
   .site-shell::after,
   .cursor-comet,
   .cursor-trail {
     display: none;
+  }
+
+  .cell-field {
+    display: block;
+    opacity: 0.48;
   }
 
   .stat-card::before,
@@ -3632,7 +3663,6 @@ body[data-motion-mode="experimental"] .quick-link {
 
 @media (prefers-reduced-motion: reduce) {
   .ambient-field,
-  .cell-field,
   .cursor-comet,
   .cursor-trail {
     display: none;
@@ -3642,11 +3672,28 @@ body[data-motion-mode="experimental"] .quick-link {
     scroll-behavior: auto;
   }
 
-  *,
-  *::before,
-  *::after {
+  .cell-field {
+    display: block;
+    opacity: 0.44;
+  }
+
+  .ambient-field__ring,
+  .ambient-field__flare,
+  .hero-panel::after,
+  .site-shell::before,
+  .site-shell::after,
+  body::after,
+  .cell-field::after,
+  .cell-node,
+  .cell-node-shell,
+  .hero-scroll-icon::before {
     animation: none !important;
-    transition: none !important;
+  }
+
+  .reveal,
+  .section-intro::after,
+  .cell-node {
+    transition-duration: 140ms !important;
   }
 }
 
