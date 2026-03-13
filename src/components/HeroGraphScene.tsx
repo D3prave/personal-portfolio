@@ -1,10 +1,58 @@
 const nodes = [
-  { label: "Backends", x: 18, y: 24, tone: "accent" },
-  { label: "Data", x: 48, y: 13, tone: "muted" },
-  { label: "Graphs", x: 81, y: 24, tone: "warm" },
-  { label: "APIs", x: 20, y: 69, tone: "accent" },
-  { label: "ML", x: 50, y: 82, tone: "warm" },
-  { label: "Products", x: 82, y: 66, tone: "muted" },
+  {
+    id: "backends",
+    label: "Backends",
+    x: 18,
+    y: 24,
+    tone: "accent",
+    markerOffsetX: "1.3rem",
+    markerOffsetY: "1.15rem",
+  },
+  {
+    id: "data",
+    label: "Data",
+    x: 48,
+    y: 13,
+    tone: "muted",
+    markerOffsetX: "1.7rem",
+    markerOffsetY: "0.8rem",
+  },
+  {
+    id: "graphs",
+    label: "Graphs",
+    x: 81,
+    y: 24,
+    tone: "warm",
+    markerOffsetX: "1.7rem",
+    markerOffsetY: "1.2rem",
+  },
+  {
+    id: "apis",
+    label: "APIs",
+    x: 20,
+    y: 69,
+    tone: "accent",
+    markerOffsetX: "1.1rem",
+    markerOffsetY: "1.7rem",
+  },
+  {
+    id: "ml",
+    label: "ML",
+    x: 50,
+    y: 82,
+    tone: "warm",
+    markerOffsetX: "0rem",
+    markerOffsetY: "1.7rem",
+  },
+  {
+    id: "products",
+    label: "Products",
+    x: 82,
+    y: 66,
+    tone: "muted",
+    markerOffsetX: "1.75rem",
+    markerOffsetY: "0.9rem",
+  },
 ] as const;
 
 const edges = [
@@ -63,29 +111,30 @@ export function HeroGraphScene() {
             );
           })}
 
-          {nodes.map((node, index) => (
-            <circle
-              key={node.label}
-              className={`hero-graph-node hero-graph-node--${node.tone}`}
-              cx={node.x}
-              cy={node.y}
-              r="1.9"
-              style={{ ["--graph-delay" as string]: `${index * 180}ms` }}
-            />
-          ))}
         </svg>
 
         {nodes.map((node, index) => (
-          <div
-            key={node.label}
-            className={`hero-node-chip hero-node-chip--${node.tone}`}
-            style={{
-              left: `${node.x}%`,
-              top: `${node.y}%`,
-              ["--float-delay" as string]: `${index * 180}ms`,
-            }}
-          >
-            {node.label}
+          <div key={node.id}>
+            <div
+              className={`hero-node-marker hero-node-marker--${node.tone} hero-node-marker--${node.id}`}
+              style={{
+                left: `calc(${node.x}% + ${node.markerOffsetX})`,
+                top: `calc(${node.y}% + ${node.markerOffsetY})`,
+                ["--marker-delay" as string]: `${index * 180}ms`,
+              }}
+              aria-hidden="true"
+            />
+
+            <div
+              className={`hero-node-chip hero-node-chip--${node.tone} hero-node-chip--${node.id}`}
+              style={{
+                left: `${node.x}%`,
+                top: `${node.y}%`,
+                ["--float-delay" as string]: `${index * 180}ms`,
+              }}
+            >
+              {node.label}
+            </div>
           </div>
         ))}
 
