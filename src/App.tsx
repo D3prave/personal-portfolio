@@ -11,6 +11,12 @@ import { ProjectsSection } from "./components/ProjectsSection";
 import { ScrollProgress } from "./components/ScrollProgress";
 import { SkillsSection } from "./components/SkillsSection";
 import { portfolio } from "./data/portfolio";
+import {
+  hasCoarsePointer,
+  isConstrainedPerformanceEnvironment,
+  isSafariBrowser,
+  prefersReducedMotion,
+} from "./utils/performance";
 
 const MOTION_MODE_STORAGE_KEY = "motion-mode";
 
@@ -128,20 +134,6 @@ function readInitialMotionMode(): MotionMode {
   return "core";
 }
 
-function isSafariBrowser() {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  const { userAgent, vendor } = window.navigator;
-
-  return (
-    vendor.includes("Apple") &&
-    /Safari/i.test(userAgent) &&
-    !/Chrome|CriOS|Chromium|Edg|OPR|Opera|Firefox|FxiOS/i.test(userAgent)
-  );
-}
-
 function App() {
   const [theme, setTheme] = useState<"dark" | "light">(() => {
     if (typeof window === "undefined") {
@@ -160,19 +152,49 @@ function App() {
   });
   const [motionMode, setMotionMode] = useState<MotionMode>(readInitialMotionMode);
   const [isSafari] = useState(isSafariBrowser);
+  const [isConstrainedPerformance] = useState(isConstrainedPerformanceEnvironment);
 
   useEffect(() => {
     const browser = isSafari ? "safari" : "";
+    const performance = isConstrainedPerformance ? "constrained" : "";
 
     if (browser) {
       document.documentElement.dataset.browser = browser;
       document.body.dataset.browser = browser;
+    } else {
+      delete document.documentElement.dataset.browser;
+      delete document.body.dataset.browser;
+    }
+
+    if (performance) {
+      document.documentElement.dataset.performance = performance;
+      document.body.dataset.performance = performance;
       return;
     }
 
-    delete document.documentElement.dataset.browser;
-    delete document.body.dataset.browser;
-  }, [isSafari]);
+    delete document.documentElement.dataset.performance;
+    delete document.body.dataset.performance;
+  }, [isConstrainedPerformance, isSafari]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    const applyVisibilityState = () => {
+      const pageVisibility = document.visibilityState === "hidden" ? "hidden" : "visible";
+
+      document.documentElement.dataset.pageVisibility = pageVisibility;
+      document.body.dataset.pageVisibility = pageVisibility;
+    };
+
+    applyVisibilityState();
+    document.addEventListener("visibilitychange", applyVisibilityState);
+
+    return () => {
+      document.removeEventListener("visibilitychange", applyVisibilityState);
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -180,6 +202,9 @@ function App() {
     }
 
     const revealElements = Array.from(document.querySelectorAll<HTMLElement>(".reveal"));
+    const sectionElements = Array.from(
+      document.querySelectorAll<HTMLElement>("main .section"),
+    );
     const revealItems = revealElements.map((element) => {
       const rawDelay = window
         .getComputedStyle(element)
@@ -198,10 +223,6 @@ function App() {
         isReady: false,
       };
     });
-
-    const sectionElements = Array.from(
-      document.querySelectorAll<HTMLElement>("main .section"),
-    );
     const sections = sectionElements.map((element) => ({
       element,
       top: 0,
@@ -518,14 +539,12 @@ function App() {
       return;
     }
 
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+    const reducedMotion = prefersReducedMotion();
     const supportsHover = window.matchMedia(
       "(hover: hover) and (pointer: fine)",
     ).matches;
 
-    if (prefersReducedMotion || !supportsHover) {
+    if (isConstrainedPerformance || reducedMotion || !supportsHover) {
       return;
     }
 
@@ -592,7 +611,7 @@ function App() {
         element.removeEventListener("pointerleave", handlePointerLeave);
       });
     };
-  }, []);
+  }, [isConstrainedPerformance]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -600,9 +619,7 @@ function App() {
     }
 
     const currentModeConfig = (isSafari ? safariPointerConfig : pointerConfig)[motionMode];
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+    const reducedMotion = prefersReducedMotion();
     const supportsHover = window.matchMedia(
       "(hover: hover) and (pointer: fine)",
     ).matches;
@@ -657,7 +674,7 @@ function App() {
 
     applyPointer(currentX, currentY, 0);
 
-    if (prefersReducedMotion || !supportsHover) {
+    if (isConstrainedPerformance || reducedMotion || !supportsHover) {
       return;
     }
 
@@ -714,7 +731,7 @@ function App() {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("resize", handleResize);
     };
-  }, [isSafari, motionMode]);
+  }, [isConstrainedPerformance, isSafari, motionMode]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -722,12 +739,10 @@ function App() {
     }
 
     const modeConfig = (isSafari ? safariCellConfig : cellConfig)[motionMode];
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    const supportsHover = window.matchMedia(
-      "(hover: hover) and (pointer: fine)",
-    ).matches;
+    const reducedMotion = prefersReducedMotion();
+    const supportsHover =
+      !hasCoarsePointer() &&
+      window.matchMedia("(hover: hover) and (pointer: fine)").matches;
     const cellItems = Array.from(
       document.querySelectorAll<HTMLElement>(".cell-node-shell"),
     ).map((node) => ({
@@ -740,7 +755,12 @@ function App() {
       tilt: Number.NaN,
     }));
 
-    if (prefersReducedMotion || !supportsHover || cellItems.length === 0) {
+    if (
+      isConstrainedPerformance ||
+      reducedMotion ||
+      !supportsHover ||
+      cellItems.length === 0
+    ) {
       return;
     }
 
@@ -828,22 +848,20 @@ function App() {
         node.style.removeProperty("--cell-tilt");
       });
     };
-  }, [isSafari, motionMode]);
+  }, [isConstrainedPerformance, isSafari, motionMode]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
 
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    const supportsHover = window.matchMedia(
-      "(hover: hover) and (pointer: fine)",
-    ).matches;
+    const reducedMotion = prefersReducedMotion();
+    const supportsHover =
+      !hasCoarsePointer() &&
+      window.matchMedia("(hover: hover) and (pointer: fine)").matches;
     const cellField = document.querySelector<HTMLElement>(".cell-field");
 
-    if (prefersReducedMotion || !supportsHover || !cellField) {
+    if (isConstrainedPerformance || reducedMotion || !supportsHover || !cellField) {
       return;
     }
 
@@ -891,12 +909,12 @@ function App() {
       window.clearTimeout(clickTimeout);
       document.documentElement.style.setProperty("--click-energy", "0");
     };
-  }, [isSafari, motionMode]);
+  }, [isConstrainedPerformance, isSafari, motionMode]);
 
   return (
     <div className={`site-shell motion-mode-${motionMode}`}>
-      <CellField />
-      <AmbientField />
+      {isConstrainedPerformance ? null : <CellField />}
+      {isConstrainedPerformance ? null : <AmbientField />}
       <ScrollProgress />
       <Header
         brand={portfolio.brand}
@@ -937,8 +955,12 @@ function App() {
         <ContactSection contact={portfolio.contactSection} />
       </main>
 
-      <div className="cursor-comet" aria-hidden="true" />
-      <div className="cursor-trail" aria-hidden="true" />
+      {isConstrainedPerformance ? null : (
+        <>
+          <div className="cursor-comet" aria-hidden="true" />
+          <div className="cursor-trail" aria-hidden="true" />
+        </>
+      )}
 
       <footer className="footer">
         <div className="container footer-inner">

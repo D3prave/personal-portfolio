@@ -1,5 +1,10 @@
 import { ReactLenis, useLenis } from "lenis/react";
 import type { ReactNode } from "react";
+import { shouldUseNativeScroll } from "../utils/performance";
+
+interface SmoothScrollProviderProps {
+  children: ReactNode;
+}
 
 function LenisEventBridge() {
   useLenis(() => {
@@ -13,13 +18,13 @@ function LenisEventBridge() {
   return null;
 }
 
-interface SmoothScrollProviderProps {
-  children: ReactNode;
-}
-
 export function SmoothScrollProvider({
   children,
 }: SmoothScrollProviderProps) {
+  if (shouldUseNativeScroll()) {
+    return <>{children}</>;
+  }
+
   return (
     <ReactLenis
       root

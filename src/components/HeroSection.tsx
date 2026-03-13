@@ -7,7 +7,10 @@ interface HeroSectionProps {
   contactLinks: ContactItem[];
 }
 
-export function HeroSection({ hero, contactLinks }: HeroSectionProps) {
+export function HeroSection({
+  hero,
+  contactLinks,
+}: HeroSectionProps) {
   return (
     <section className="hero section" id="top">
       <div className="container hero-grid">
