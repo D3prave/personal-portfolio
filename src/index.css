@@ -3409,6 +3409,96 @@ body[data-motion-mode="experimental"] .quick-link {
   fill: rgba(246, 193, 119, 0.92);
 }
 
+.hero-node-marker {
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 0.32rem;
+  transform: translate(-50%, -50%) rotate(45deg);
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  background: linear-gradient(
+    135deg,
+    rgba(125, 211, 252, 0.42),
+    rgba(125, 211, 252, 0.14)
+  );
+  box-shadow:
+    0 0 0 1px rgba(125, 211, 252, 0.06),
+    0 0 20px rgba(125, 211, 252, 0.2),
+    0 10px 22px rgba(2, 6, 23, 0.14);
+  animation: markerBeacon 5.6s ease-in-out infinite;
+  animation-delay: var(--marker-delay, 0ms);
+  z-index: 4;
+}
+
+.hero-node-marker::before,
+.hero-node-marker::after {
+  content: "";
+  position: absolute;
+}
+
+.hero-node-marker::before {
+  inset: -0.42rem;
+  border: 1px solid rgba(125, 211, 252, 0.1);
+  border-radius: 999px;
+  transform: rotate(-45deg);
+  opacity: 0.8;
+}
+
+.hero-node-marker::after {
+  inset: 0.23rem;
+  border-radius: 0.18rem;
+  background: rgba(237, 242, 251, 0.96);
+  box-shadow: 0 0 16px rgba(125, 211, 252, 0.28);
+}
+
+:root[data-page-visibility="hidden"] .hero-visual .hero-node-marker {
+  animation-play-state: paused;
+}
+
+.hero-node-marker--warm {
+  border-color: rgba(246, 193, 119, 0.22);
+  background: linear-gradient(
+    135deg,
+    rgba(246, 193, 119, 0.42),
+    rgba(246, 193, 119, 0.14)
+  );
+  box-shadow:
+    0 0 0 1px rgba(246, 193, 119, 0.06),
+    0 0 20px rgba(246, 193, 119, 0.18),
+    0 10px 22px rgba(2, 6, 23, 0.14);
+}
+
+.hero-node-marker--warm::before {
+  border-color: rgba(246, 193, 119, 0.1);
+}
+
+.hero-node-marker--warm::after {
+  background: rgba(255, 244, 229, 0.96);
+  box-shadow: 0 0 16px rgba(246, 193, 119, 0.24);
+}
+
+.hero-node-marker--muted {
+  border-color: rgba(191, 204, 222, 0.18);
+  background: linear-gradient(
+    135deg,
+    rgba(191, 204, 222, 0.38),
+    rgba(191, 204, 222, 0.12)
+  );
+  box-shadow:
+    0 0 0 1px rgba(191, 204, 222, 0.05),
+    0 0 18px rgba(191, 204, 222, 0.14),
+    0 10px 22px rgba(2, 6, 23, 0.14);
+}
+
+.hero-node-marker--muted::before {
+  border-color: rgba(191, 204, 222, 0.08);
+}
+
+.hero-node-marker--muted::after {
+  background: rgba(240, 245, 252, 0.96);
+  box-shadow: 0 0 14px rgba(191, 204, 222, 0.18);
+}
+
 .hero-node-chip {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -3615,6 +3705,19 @@ body[data-motion-mode="experimental"] .quick-link {
 
   50% {
     transform: scale(1.16);
+    opacity: 1;
+  }
+}
+
+@keyframes markerBeacon {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) rotate(45deg) scale(1);
+    opacity: 0.88;
+  }
+
+  50% {
+    transform: translate(-50%, calc(-50% - 3px)) rotate(45deg) scale(1.08);
     opacity: 1;
   }
 }
@@ -4095,6 +4198,11 @@ body[data-motion-mode="experimental"] .quick-link {
     text-align: center;
   }
 
+  .hero-node-marker {
+    width: 0.86rem;
+    height: 0.86rem;
+  }
+
   .timeline-topline {
     align-items: flex-start;
   }
@@ -4323,6 +4431,64 @@ body[data-motion-mode="experimental"] .quick-link {
 :root[data-theme="light"] .hero-graph-node {
   fill: rgba(255, 255, 255, 0.98);
   filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.14));
+}
+
+:root[data-theme="light"] .hero-node-marker {
+  border-color: rgba(56, 189, 248, 0.22);
+  background: linear-gradient(
+    135deg,
+    rgba(56, 189, 248, 0.34),
+    rgba(56, 189, 248, 0.12)
+  );
+  box-shadow:
+    0 0 0 1px rgba(56, 189, 248, 0.05),
+    0 0 18px rgba(56, 189, 248, 0.12),
+    0 10px 18px rgba(124, 147, 175, 0.12);
+}
+
+:root[data-theme="light"] .hero-node-marker::before {
+  border-color: rgba(56, 189, 248, 0.12);
+}
+
+:root[data-theme="light"] .hero-node-marker::after {
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.16);
+}
+
+:root[data-theme="light"] .hero-node-marker--warm {
+  border-color: rgba(246, 193, 119, 0.22);
+  background: linear-gradient(
+    135deg,
+    rgba(246, 193, 119, 0.34),
+    rgba(246, 193, 119, 0.12)
+  );
+}
+
+:root[data-theme="light"] .hero-node-marker--warm::before {
+  border-color: rgba(246, 193, 119, 0.12);
+}
+
+:root[data-theme="light"] .hero-node-marker--warm::after {
+  background: rgba(255, 251, 245, 0.98);
+  box-shadow: 0 0 12px rgba(246, 193, 119, 0.16);
+}
+
+:root[data-theme="light"] .hero-node-marker--muted {
+  border-color: rgba(124, 147, 175, 0.18);
+  background: linear-gradient(
+    135deg,
+    rgba(124, 147, 175, 0.28),
+    rgba(124, 147, 175, 0.1)
+  );
+}
+
+:root[data-theme="light"] .hero-node-marker--muted::before {
+  border-color: rgba(124, 147, 175, 0.1);
+}
+
+:root[data-theme="light"] .hero-node-marker--muted::after {
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 0 10px rgba(124, 147, 175, 0.12);
 }
 
 :root[data-theme="light"] .hero-node-chip {
