@@ -36,25 +36,157 @@ export function Header({
   }, []);
 
   useEffect(() => {
-    let animationFrame = 0;
-    const sectionEntries = navigation.map((item) => ({
-      href: item.href,
-      section: document.querySelector<HTMLElement>(item.href),
-    }));
+    const sectionEntries = navigation.reduce<
+      Array<{ href: NavItem["href"]; section: HTMLElement }>
+    >((entries, item) => {
+      const section = document.querySelector<HTMLElement>(item.href);
 
-    const updateActiveItem = () => {
+      if (section) {
+        entries.push({
+          href: item.href,
+          section,
+        });
+      }
+
+      return entries;
+    }, []);
+
+    const pickActiveHrefFromScrollPosition = () => {
       const scrollPosition = window.scrollY + 140;
       let nextHref = navigation[0]?.href ?? "#about";
 
       sectionEntries.forEach((entry) => {
-        if (entry.section && entry.section.offsetTop <= scrollPosition) {
+        if (entry.section.offsetTop <= scrollPosition) {
           nextHref = entry.href;
         }
       });
 
+      return nextHref;
+    };
+
+    if (sectionEntries.length === 0) {
+      return;
+    }
+
+    if (typeof window.IntersectionObserver === "undefined") {
+      let animationFrame = 0;
+
+      const updateActiveItem = () => {
+        const nextHref = pickActiveHrefFromScrollPosition();
+
+        setActiveHref((currentHref) =>
+          currentHref === nextHref ? currentHref : nextHref,
+        );
+        animationFrame = 0;
+      };
+
+      const handleScroll = () => {
+        if (animationFrame !== 0) {
+          return;
+        }
+
+        animationFrame = window.requestAnimationFrame(updateActiveItem);
+      };
+
+      handleScroll();
+      window.addEventListener("scroll", handleScroll, { passive: true });
+      window.addEventListener("lenis-scroll", handleScroll);
+
+      return () => {
+        if (animationFrame !== 0) {
+          window.cancelAnimationFrame(animationFrame);
+        }
+
+        window.removeEventListener("scroll", handleScroll);
+        window.removeEventListener("lenis-scroll", handleScroll);
+      };
+    }
+
+    let animationFrame = 0;
+    const visibleSections = new Map<
+      NavItem["href"],
+      {
+        ratio: number;
+        top: number;
+      }
+    >();
+    const sectionByElement = new Map(
+      sectionEntries.map((entry) => [entry.section, entry.href]),
+    );
+
+    const updateActiveItem = () => {
+      let nextHref = pickActiveHrefFromScrollPosition();
+
+      if (visibleSections.size > 0) {
+        nextHref = [...visibleSections.entries()]
+          .sort(([, left], [, right]) => {
+            if (right.ratio !== left.ratio) {
+              return right.ratio - left.ratio;
+            }
+
+            return Math.abs(left.top) - Math.abs(right.top);
+          })[0]?.[0] ?? nextHref;
+      }
+
       setActiveHref((currentHref) =>
         currentHref === nextHref ? currentHref : nextHref,
       );
+      animationFrame = 0;
+    };
+
+    const queueUpdate = () => {
+      if (animationFrame !== 0) {
+        return;
+      }
+
+      animationFrame = window.requestAnimationFrame(updateActiveItem);
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const href = sectionByElement.get(entry.target as HTMLElement);
+
+          if (!href) {
+            return;
+          }
+
+          if (entry.isIntersecting) {
+            visibleSections.set(href, {
+              ratio: entry.intersectionRatio,
+              top: entry.boundingClientRect.top,
+            });
+          } else {
+            visibleSections.delete(href);
+          }
+        });
+
+        queueUpdate();
+      },
+      {
+        rootMargin: "-18% 0px -58% 0px",
+        threshold: [0, 0.2, 0.4, 0.6, 0.8, 1],
+      },
+    );
+
+    sectionEntries.forEach((entry) => {
+      observer.observe(entry.section);
+    });
+    queueUpdate();
+
+    return () => {
+      if (animationFrame !== 0) {
+        window.cancelAnimationFrame(animationFrame);
+      }
+
+      observer.disconnect();
+    };
+  }, [navigation]);
+
+  useEffect(() => {
+    let animationFrame = 0;
+
+    const updateScrollState = () => {
       setIsScrolled((currentState) => {
         const nextState = window.scrollY > 10;
         return currentState === nextState ? currentState : nextState;
@@ -67,7 +199,7 @@ export function Header({
         return;
       }
 
-      animationFrame = window.requestAnimationFrame(updateActiveItem);
+      animationFrame = window.requestAnimationFrame(updateScrollState);
     };
 
     handleScroll();
@@ -82,7 +214,7 @@ export function Header({
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("lenis-scroll", handleScroll);
     };
-  }, [navigation]);
+  }, []);
 
   return (
     <header className={`site-header ${isScrolled ? "is-scrolled" : ""}`}>
