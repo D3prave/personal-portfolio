@@ -41,7 +41,12 @@ export function ContactSection({ contact }: ContactSectionProps) {
                 <div>
                   <p className="contact-label">{item.label}</p>
                   {item.href ? (
-                    <a className="contact-value" href={item.href}>
+                    <a
+                      className="contact-value"
+                      href={item.href}
+                      target={item.target}
+                      rel={item.rel}
+                    >
                       {item.value}
                     </a>
                   ) : (

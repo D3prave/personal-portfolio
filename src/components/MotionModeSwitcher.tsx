@@ -164,7 +164,7 @@ export function MotionModeSwitcher({
               rel={resumeCta.rel}
               onClick={closePanel}
             >
-              Resume
+              CV
             </SmoothAnchor>
           </div>
         </div>

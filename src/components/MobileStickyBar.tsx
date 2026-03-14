@@ -24,7 +24,7 @@ export function MobileStickyBar({
         target={resumeCta.target}
         rel={resumeCta.rel}
       >
-        Resume
+        CV
       </SmoothAnchor>
     </div>
   );

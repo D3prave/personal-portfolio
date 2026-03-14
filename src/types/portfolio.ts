@@ -117,6 +117,8 @@ export interface ContactItem {
   label: string;
   value: string;
   href?: string;
+  target?: "_self" | "_blank";
+  rel?: string;
   note: string;
 }
 
