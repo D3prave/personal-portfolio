@@ -1,5 +1,7 @@
 import type { PortfolioData } from "../types/portfolio";
 
+const publicAsset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\//, "")}`;
+
 export const portfolio: PortfolioData = {
   brand: "Jakub Wi\u015bniewski",
   roleLabel: "Developer focused on backend engineering, machine learning, and data analytics",
@@ -27,8 +29,8 @@ export const portfolio: PortfolioData = {
       { label: "View Experience", href: "#experience", variant: "secondary" },
     ],
     resumeCta: {
-      label: "Open Resume",
-      href: "/jakub-wisniewski-resume-placeholder.txt",
+      label: "Open CV",
+      href: publicAsset("jakub-wisniewski-cv.pdf"),
       variant: "secondary",
       target: "_blank",
       rel: "noreferrer",
@@ -491,6 +493,14 @@ export const portfolio: PortfolioData = {
     availability:
       "Available for technical conversations, collaboration, and networking.",
     contacts: [
+      {
+        label: "CV / Resume",
+        value: "Open PDF",
+        href: publicAsset("jakub-wisniewski-cv.pdf"),
+        target: "_blank",
+        rel: "noreferrer",
+        note: "PDF version of my experience and project background",
+      },
       {
         label: "Email",
         value: "jakub.wisniewski.dev@gmail.com",
