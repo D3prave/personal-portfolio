@@ -4,7 +4,6 @@ import type { PerformanceMode } from "../types/ui";
 import {
   hasCoarsePointer,
   isConstrainedPerformanceEnvironment,
-  prefersReducedMotion,
 } from "../utils/performance";
 
 interface StackCloudProps {
@@ -130,11 +129,10 @@ export function StackCloud({
   const visibleRef = useRef(true);
   const pageVisibleRef = useRef(true);
   const [isConstrained] = useState(isConstrainedPerformanceEnvironment);
-  const [isReducedMotion] = useState(prefersReducedMotion);
   const [hasCoarseInput] = useState(hasCoarsePointer);
   const isLitePerformance = performanceMode === "lite";
   const isFullPerformance = performanceMode === "full";
-  const shouldAnimate = isFullPerformance || !isReducedMotion;
+  const shouldAnimate = isFullPerformance;
   const orbitalItems = useMemo(() => createSphereLayout(items), [items]);
 
   useEffect(() => {
@@ -393,24 +391,10 @@ export function StackCloud({
       lastTickRef.current = null;
     };
 
-    const tick = (timestamp: number) => {
-      if (!visibleRef.current || !pageVisibleRef.current) {
-        lastTickRef.current = null;
-        frameRef.current = 0;
-        return;
-      }
+    const getMotionScale = () => (isLitePerformance ? 0.7 : hasCoarseInput ? 0.84 : 1);
 
-      const delta =
-        lastTickRef.current === null
-          ? 16.67
-          : clamp(timestamp - lastTickRef.current, 8, 32);
-      const deltaFactor = delta / 16.67;
-      const deltaSeconds = delta / 1000;
-      lastTickRef.current = timestamp;
-
-      const motionScale = isLitePerformance ? 0.7 : hasCoarseInput ? 0.84 : 1;
-      const pointerEase = hoverRef.current ? 0.2 : 0.08;
-      const orbitProfile = isFullPerformance
+    const getOrbitProfile = () =>
+      isFullPerformance
         ? {
             speedY: hasCoarseInput ? 0.13 : 0.18,
             wobbleXAmplitude: hasCoarseInput ? 0.055 : 0.075,
@@ -425,44 +409,18 @@ export function StackCloud({
             wobbleXSpeed: hasCoarseInput ? 0.32 : 0.38,
             wobbleYSpeed: hasCoarseInput ? 0.2 : 0.24,
           };
-      const isPausedByInteraction = hoverRef.current || dragRef.current.active;
+
+    const updateDisplayRotation = () => {
+      const motionScale = getMotionScale();
+      const orbitProfile = getOrbitProfile();
       const pointerRotationX =
-        !isPausedByInteraction && !hasCoarseInput
+        !dragRef.current.active && !hasCoarseInput
           ? pointerRef.current.y * (isLitePerformance ? 0.02 : 0.035)
           : 0;
       const pointerRotationY =
-        !isPausedByInteraction && !hasCoarseInput
+        !dragRef.current.active && !hasCoarseInput
           ? pointerRef.current.x * (isLitePerformance ? 0.032 : 0.052)
           : 0;
-      const damping = Math.pow(dragRef.current.active ? 0.86 : 0.93, deltaFactor);
-      const hoverDamping = Math.pow(0.52, deltaFactor);
-
-      pointerRef.current.x +=
-        (pointerTargetRef.current.x - pointerRef.current.x) * pointerEase;
-      pointerRef.current.y +=
-        (pointerTargetRef.current.y - pointerRef.current.y) * pointerEase;
-
-      if (!isPausedByInteraction) {
-        autoOrbitRef.current.spinY += orbitProfile.speedY * motionScale * deltaSeconds;
-        autoOrbitRef.current.wobbleX += orbitProfile.wobbleXSpeed * deltaSeconds;
-        autoOrbitRef.current.wobbleY += orbitProfile.wobbleYSpeed * deltaSeconds;
-
-        baseRotationRef.current.x += velocityRef.current.x * deltaFactor;
-        baseRotationRef.current.y += velocityRef.current.y * deltaFactor;
-        velocityRef.current.x *= damping;
-        velocityRef.current.y *= damping;
-      } else if (!dragRef.current.active) {
-        velocityRef.current.x *= hoverDamping;
-        velocityRef.current.y *= hoverDamping;
-
-        if (Math.abs(velocityRef.current.x) < 0.00005) {
-          velocityRef.current.x = 0;
-        }
-
-        if (Math.abs(velocityRef.current.y) < 0.00005) {
-          velocityRef.current.y = 0;
-        }
-      }
 
       displayRotationRef.current.x =
         baseRotationRef.current.x +
@@ -479,6 +437,46 @@ export function StackCloud({
           orbitProfile.wobbleYAmplitude *
           motionScale +
         pointerRotationY;
+    };
+
+    const tick = (timestamp: number) => {
+      if (!visibleRef.current || !pageVisibleRef.current) {
+        lastTickRef.current = null;
+        frameRef.current = 0;
+        return;
+      }
+
+      const delta =
+        lastTickRef.current === null
+          ? 16.67
+          : clamp(timestamp - lastTickRef.current, 8, 32);
+      const deltaFactor = delta / 16.67;
+      const deltaSeconds = delta / 1000;
+      lastTickRef.current = timestamp;
+
+      const motionScale = getMotionScale();
+      const pointerEase = hoverRef.current ? 0.2 : 0.08;
+      const orbitProfile = getOrbitProfile();
+      const isPausedByInteraction = dragRef.current.active;
+      const damping = Math.pow(dragRef.current.active ? 0.86 : 0.93, deltaFactor);
+
+      pointerRef.current.x +=
+        (pointerTargetRef.current.x - pointerRef.current.x) * pointerEase;
+      pointerRef.current.y +=
+        (pointerTargetRef.current.y - pointerRef.current.y) * pointerEase;
+
+      if (!isPausedByInteraction) {
+        autoOrbitRef.current.spinY += orbitProfile.speedY * motionScale * deltaSeconds;
+        autoOrbitRef.current.wobbleX += orbitProfile.wobbleXSpeed * deltaSeconds;
+        autoOrbitRef.current.wobbleY += orbitProfile.wobbleYSpeed * deltaSeconds;
+
+        baseRotationRef.current.x += velocityRef.current.x * deltaFactor;
+        baseRotationRef.current.y += velocityRef.current.y * deltaFactor;
+        velocityRef.current.x *= damping;
+        velocityRef.current.y *= damping;
+      }
+
+      updateDisplayRotation();
 
       drawScene();
       frameRef.current = window.requestAnimationFrame(tick);
@@ -560,6 +558,7 @@ export function StackCloud({
         velocityRef.current.y = velocityRef.current.y * 0.42 + rotationY * 0.58;
         dragRef.current.x = event.clientX;
         dragRef.current.y = event.clientY;
+        updateDisplayRotation();
         drawScene();
       }
     };
@@ -611,6 +610,7 @@ export function StackCloud({
         active: event.pointerType !== "touch",
       };
       canvas.setPointerCapture(event.pointerId);
+      updateDisplayRotation();
       drawScene();
       startLoop();
     };
@@ -631,6 +631,7 @@ export function StackCloud({
         pointerCanvasRef.current.active = false;
         hoveredItemIdRef.current = null;
         pointerTargetRef.current = { x: 0, y: 0 };
+        updateDisplayRotation();
         drawScene();
       }
     };
@@ -708,7 +709,6 @@ export function StackCloud({
   }, [
     hasCoarseInput,
     isConstrained,
-    isReducedMotion,
     isFullPerformance,
     isLitePerformance,
     items,

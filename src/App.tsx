@@ -25,11 +25,11 @@ type ThemeMode = "dark" | "light";
 
 const pointerConfig = {
   core: {
-    follow: 0.18,
-    drift: 24,
-    soft: -0.24,
-    medium: 0.44,
-    strong: 0.86,
+    follow: 0.15,
+    drift: 22,
+    soft: -0.22,
+    medium: 0.4,
+    strong: 0.74,
   },
   cinematic: {
     follow: 0.11,
@@ -39,11 +39,11 @@ const pointerConfig = {
     strong: 0.72,
   },
   experimental: {
-    follow: 0.29,
-    drift: 35,
-    soft: -0.18,
-    medium: 0.58,
-    strong: 1.08,
+    follow: 0.18,
+    drift: 28,
+    soft: -0.15,
+    medium: 0.46,
+    strong: 0.86,
   },
 } as const;
 
@@ -57,19 +57,19 @@ const safariPointerConfig = {
     strong: 0.58,
   },
   experimental: {
-    follow: 0.22,
-    drift: 24,
-    soft: -0.12,
-    medium: 0.3,
-    strong: 0.56,
+    follow: 0.18,
+    drift: 21,
+    soft: -0.1,
+    medium: 0.28,
+    strong: 0.48,
   },
 } as const;
 
 const cellConfig = {
   core: {
-    radius: 260,
-    push: 11,
-    tilt: 6,
+    radius: 284,
+    push: 10,
+    tilt: 5,
   },
   cinematic: {
     radius: 330,
@@ -77,9 +77,9 @@ const cellConfig = {
     tilt: 4,
   },
   experimental: {
-    radius: 390,
-    push: 18,
-    tilt: 11,
+    radius: 342,
+    push: 13,
+    tilt: 7.5,
   },
 } as const;
 
@@ -91,19 +91,33 @@ const safariCellConfig = {
     tilt: 3,
   },
   experimental: {
-    radius: 238,
-    push: 8,
-    tilt: 4,
+    radius: 232,
+    push: 7,
+    tilt: 3.2,
   },
 } as const;
 
 const rippleDurationByMode = {
-  core: 900,
+  core: 980,
   cinematic: 1180,
-  experimental: 680,
+  experimental: 920,
 } as const;
 
 const sectionHueStops = [198, 28, 338, 160, 46, 274, 210];
+const revealFollowByMode = {
+  core: {
+    follow: 0.3,
+    settle: 0.22,
+  },
+  cinematic: {
+    follow: 0.3,
+    settle: 0.22,
+  },
+  experimental: {
+    follow: 0.27,
+    settle: 0.2,
+  },
+} as const;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -137,6 +151,20 @@ function readInitialMotionMode(): MotionMode {
   return "core";
 }
 
+function readInitialTheme(): ThemeMode {
+  if (typeof window === "undefined") {
+    return "dark";
+  }
+
+  const storedTheme = window.localStorage.getItem("theme");
+
+  if (storedTheme === "dark" || storedTheme === "light") {
+    return storedTheme;
+  }
+
+  return "dark";
+}
+
 function readInitialPerformanceMode(): PerformanceMode {
   if (typeof window === "undefined") {
     return "full";
@@ -148,7 +176,7 @@ function readInitialPerformanceMode(): PerformanceMode {
     return storedMode;
   }
 
-  return isConstrainedPerformanceEnvironment() ? "lite" : "full";
+  return hasCoarsePointer() ? "lite" : "full";
 }
 
 function syncThemeDocument(theme: ThemeMode) {
@@ -162,21 +190,7 @@ function syncThemeDocument(theme: ThemeMode) {
 }
 
 function App() {
-  const [theme, setTheme] = useState<ThemeMode>(() => {
-    if (typeof window === "undefined") {
-      return "dark";
-    }
-
-    const storedTheme = window.localStorage.getItem("theme");
-
-    if (storedTheme === "dark" || storedTheme === "light") {
-      return storedTheme;
-    }
-
-    return window.matchMedia("(prefers-color-scheme: light)").matches
-      ? "light"
-      : "dark";
-  });
+  const [theme, setTheme] = useState<ThemeMode>(readInitialTheme);
   const [motionMode, setMotionMode] = useState<MotionMode>(readInitialMotionMode);
   const [isSafari] = useState(isSafariBrowser);
   const [isConstrainedPerformance] = useState(isConstrainedPerformanceEnvironment);
@@ -391,11 +405,12 @@ function App() {
               : clamp(adjustedProgress * 1.12, 0, 1);
         const targetRevealProgress = smootherstep(finalProgress);
         const revealDelta = targetRevealProgress - item.progress;
+        const revealProfile = revealFollowByMode[motionMode];
         const revealFollow = isCompactReveal
           ? 0.42
           : targetRevealProgress > 0.82
-            ? 0.24
-            : 0.34;
+            ? revealProfile.settle
+            : revealProfile.follow;
 
         if (useDirectScrollSync || Math.abs(revealDelta) < 0.0012) {
           item.progress = targetRevealProgress;
