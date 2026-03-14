@@ -88,6 +88,18 @@ export interface SkillGroup {
   visual: "network" | "wave" | "stack" | "grid";
 }
 
+export interface StackCloudItem {
+  label: string;
+  icon: string;
+}
+
+export interface StackCloudContent {
+  eyebrow: string;
+  title: string;
+  description: string;
+  items: StackCloudItem[];
+}
+
 export interface ExperienceItem {
   title: string;
   organization: string;
@@ -121,6 +133,7 @@ export interface PortfolioData {
   otherProjectsSection: SectionContent;
   otherProjects: Project[];
   skillsSection: SectionContent;
+  skillsCloud: StackCloudContent;
   skillGroups: SkillGroup[];
   experienceSection: SectionContent;
   experience: ExperienceItem[];

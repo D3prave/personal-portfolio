@@ -1,14 +1,17 @@
-import type { SectionContent, SkillGroup } from "../types/portfolio";
+import type { SectionContent, SkillGroup, StackCloudContent } from "../types/portfolio";
 import { SectionIntro } from "./SectionIntro";
+import { StackCloud } from "./StackCloud";
 import { SkillVisual } from "./SkillVisual";
 
 interface SkillsSectionProps {
   section: SectionContent;
+  cloud: StackCloudContent;
   skillGroups: SkillGroup[];
 }
 
 export function SkillsSection({
   section,
+  cloud,
   skillGroups,
 }: SkillsSectionProps) {
   return (
@@ -20,12 +23,24 @@ export function SkillsSection({
           description={section.description}
         />
 
+        <article
+          className="panel stack-cloud-panel reveal hover-spotlight"
+          style={{ ["--reveal-delay" as string]: "40ms" }}
+        >
+          <div className="stack-cloud-copy">
+            <p className="stack-cloud-eyebrow">{cloud.eyebrow}</p>
+            <h3>{cloud.title}</h3>
+            <p>{cloud.description}</p>
+          </div>
+          <StackCloud items={cloud.items} />
+        </article>
+
         <div className="skills-grid">
           {skillGroups.map((group, index) => (
             <article
               key={group.title}
               className="panel skill-group reveal hover-spotlight"
-              style={{ ["--reveal-delay" as string]: `${index * 70}ms` }}
+              style={{ ["--reveal-delay" as string]: `${90 + index * 70}ms` }}
             >
               <div className="skill-group-topline">
                 <span className="skill-group-index">
