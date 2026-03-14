@@ -1901,6 +1901,8 @@ body[data-motion-mode="cinematic"] .stack-cloud-stage {
   --cloud-core-glow: rgba(246, 193, 119, 0.18);
   --cloud-plate-fill: rgba(255, 255, 255, 0.05);
   --cloud-plate-line: rgba(246, 193, 119, 0.12);
+  --cloud-highlight-fill: rgba(246, 193, 119, 0.16);
+  --cloud-highlight-line: rgba(246, 193, 119, 0.34);
   border-color: rgba(246, 193, 119, 0.12);
   background:
     radial-gradient(circle at 50% 42%, rgba(246, 193, 119, 0.12), transparent 30%),
@@ -1911,6 +1913,8 @@ body[data-motion-mode="cinematic"] .stack-cloud-stage {
 body[data-motion-mode="experimental"] .stack-cloud-stage {
   --cloud-core-glow: hsl(var(--section-hue) 88% 72% / 0.18);
   --cloud-plate-line: hsl(var(--section-hue) 88% 72% / 0.16);
+  --cloud-highlight-fill: hsl(var(--section-hue) 88% 72% / 0.14);
+  --cloud-highlight-line: hsl(var(--section-hue) 88% 72% / 0.34);
   border-color: hsl(var(--section-hue) 88% 72% / 0.18);
 }
 
@@ -3174,6 +3178,10 @@ body[data-motion-mode="experimental"] .quick-link {
   --cloud-plate-fill: rgba(255, 255, 255, 0.032);
   --cloud-plate-line: rgba(255, 255, 255, 0.06);
   --cloud-shadow: rgba(2, 6, 23, 0.42);
+  --cloud-highlight-fill: rgba(125, 211, 252, 0.14);
+  --cloud-highlight-line: rgba(125, 211, 252, 0.32);
+  --cloud-tooltip-fill: rgba(6, 10, 18, 0.88);
+  --cloud-tooltip-text: rgba(240, 249, 255, 0.96);
   position: relative;
   min-height: clamp(20rem, 34vw, 25rem);
   border-radius: 30px;
@@ -5038,6 +5046,10 @@ body[data-motion-mode="experimental"] .quick-link {
   --cloud-plate-fill: rgba(15, 23, 42, 0.1);
   --cloud-plate-line: rgba(46, 74, 110, 0.12);
   --cloud-shadow: rgba(124, 147, 175, 0.24);
+  --cloud-highlight-fill: rgba(56, 189, 248, 0.14);
+  --cloud-highlight-line: rgba(46, 74, 110, 0.24);
+  --cloud-tooltip-fill: rgba(255, 255, 255, 0.96);
+  --cloud-tooltip-text: #102038;
   border-color: rgba(46, 74, 110, 0.12);
   background:
     radial-gradient(circle at 50% 42%, rgba(56, 189, 248, 0.12), transparent 30%),
@@ -5060,6 +5072,8 @@ body[data-motion-mode="experimental"] .quick-link {
   --cloud-core-glow: rgba(217, 119, 6, 0.14);
   --cloud-plate-fill: rgba(22, 28, 45, 0.11);
   --cloud-plate-line: rgba(217, 119, 6, 0.14);
+  --cloud-highlight-fill: rgba(217, 119, 6, 0.14);
+  --cloud-highlight-line: rgba(217, 119, 6, 0.26);
   background:
     radial-gradient(circle at 50% 42%, rgba(217, 119, 6, 0.12), transparent 30%),
     radial-gradient(circle at 56% 56%, rgba(56, 189, 248, 0.07), transparent 40%),

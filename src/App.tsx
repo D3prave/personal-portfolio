@@ -180,6 +180,7 @@ function App() {
   const [motionMode, setMotionMode] = useState<MotionMode>(readInitialMotionMode);
   const [isSafari] = useState(isSafariBrowser);
   const [isConstrainedPerformance] = useState(isConstrainedPerformanceEnvironment);
+  const [hasCoarseInput] = useState(hasCoarsePointer);
   const [performanceMode, setPerformanceMode] = useState<PerformanceMode>(
     readInitialPerformanceMode,
   );
@@ -219,7 +220,12 @@ function App() {
     }
 
     const useDirectScrollSync =
-      isConstrainedPerformance || isLitePerformance || (isSafari && motionMode === "cinematic");
+      hasCoarseInput ||
+      isConstrainedPerformance ||
+      isLitePerformance ||
+      (isSafari && motionMode === "cinematic");
+    const isCompactReveal =
+      hasCoarseInput || isLitePerformance || window.innerWidth <= 820;
     const revealElements = Array.from(document.querySelectorAll<HTMLElement>(".reveal"));
     const sectionElements = Array.from(
       document.querySelectorAll<HTMLElement>("main .section"),
@@ -347,8 +353,12 @@ function App() {
       const scrollY = window.scrollY;
       const pageProgress =
         scrollableHeight <= 0 ? 0 : clamp(scrollY / scrollableHeight, 0, 1);
-      const startLine = viewportHeight * 1.22;
-      const travelDistance = viewportHeight * 0.48;
+      const startLine = viewportHeight * (isCompactReveal ? 1.08 : 1.28);
+      const endLine = viewportHeight * (isCompactReveal ? 0.56 : 0.64);
+      const travelDistance = Math.max(
+        startLine - endLine,
+        viewportHeight * (isCompactReveal ? 0.24 : 0.32),
+      );
       const isNearPageEnd =
         scrollY + viewportHeight >= document.documentElement.scrollHeight - 6;
       let hasPendingAnimation = false;
@@ -361,21 +371,31 @@ function App() {
       revealItems.forEach((item) => {
         const { delayOffset, height, top } = item;
         const topInViewport = top - scrollY;
+        const effectiveDelayOffset = delayOffset * (isCompactReveal ? 0.22 : 0.58);
         const baseProgress = clamp(
-          (startLine - topInViewport) / (travelDistance + height * 0.12),
+          (startLine - topInViewport) /
+            (travelDistance + height * (isCompactReveal ? 0.03 : 0.07)),
           0,
           1,
         );
         const adjustedProgress = clamp(
-          (baseProgress - delayOffset) / (1 - delayOffset || 1),
+          (baseProgress - effectiveDelayOffset) / (1 - effectiveDelayOffset || 1),
           0,
           1,
         );
         const finalProgress =
-          isNearPageEnd && topInViewport < viewportHeight ? 1 : adjustedProgress;
+          isNearPageEnd && topInViewport < viewportHeight
+            ? 1
+            : isCompactReveal
+              ? clamp(adjustedProgress * 1.2, 0, 1)
+              : clamp(adjustedProgress * 1.12, 0, 1);
         const targetRevealProgress = smootherstep(finalProgress);
         const revealDelta = targetRevealProgress - item.progress;
-        const revealFollow = targetRevealProgress > 0.82 ? 0.18 : 0.28;
+        const revealFollow = isCompactReveal
+          ? 0.42
+          : targetRevealProgress > 0.82
+            ? 0.24
+            : 0.34;
 
         if (useDirectScrollSync || Math.abs(revealDelta) < 0.0012) {
           item.progress = targetRevealProgress;
@@ -389,7 +409,7 @@ function App() {
           item.writtenProgress = item.progress;
         }
 
-        const nextReady = item.progress > 0.94;
+        const nextReady = item.progress > (isCompactReveal ? 0.74 : 0.86);
 
         if (nextReady !== item.isReady) {
           item.element.classList.toggle("is-reveal-ready", nextReady);
@@ -519,8 +539,10 @@ function App() {
     scheduleMeasure();
     window.addEventListener("scroll", queueRender, { passive: true });
     window.addEventListener("resize", scheduleMeasure);
+    window.addEventListener("orientationchange", scheduleMeasure);
     window.addEventListener("load", scheduleMeasure);
     window.addEventListener("lenis-scroll", queueRender);
+    window.visualViewport?.addEventListener("resize", scheduleMeasure);
 
     if ("fonts" in document) {
       void (document as Document & { fonts: FontFaceSet }).fonts.ready.then(() => {
@@ -536,10 +558,18 @@ function App() {
       window.cancelAnimationFrame(measureFrame);
       window.removeEventListener("scroll", queueRender);
       window.removeEventListener("resize", scheduleMeasure);
+      window.removeEventListener("orientationchange", scheduleMeasure);
       window.removeEventListener("load", scheduleMeasure);
       window.removeEventListener("lenis-scroll", queueRender);
+      window.visualViewport?.removeEventListener("resize", scheduleMeasure);
     };
-  }, [isConstrainedPerformance, isLitePerformance, isSafari, motionMode]);
+  }, [
+    hasCoarseInput,
+    isConstrainedPerformance,
+    isLitePerformance,
+    isSafari,
+    motionMode,
+  ]);
 
   useEffect(() => {
     syncThemeDocument(theme);
