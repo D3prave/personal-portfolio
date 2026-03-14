@@ -13,7 +13,7 @@ export function TimelineItem({ item, delay = 0 }: TimelineItemProps) {
       className="timeline-item reveal"
       style={{ ["--reveal-delay" as string]: `${delay}ms` }}
     >
-      <div className={`timeline-card panel hover-spotlight ${isCurrent ? "timeline-card--current" : ""}`}>
+      <div className={`timeline-card panel ${isCurrent ? "timeline-card--current" : ""}`}>
         <div className="timeline-topline">
           <div>
             <h3 className="timeline-title">{item.title}</h3>

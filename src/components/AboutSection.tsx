@@ -17,7 +17,7 @@ export function AboutSection({ about }: AboutSectionProps) {
 
         <div className="about-editorial">
           <article
-            className="panel about-story reveal hover-spotlight"
+            className="panel about-story reveal"
             style={{ ["--reveal-delay" as string]: "40ms" }}
           >
             <div className="about-story-top">
@@ -48,7 +48,7 @@ export function AboutSection({ about }: AboutSectionProps) {
             {about.focusAreas.map((item, index) => (
               <article
                 key={item.title}
-                className={`panel about-node reveal hover-spotlight ${index % 2 === 1 ? "about-node--offset" : ""}`}
+                className={`panel about-node reveal ${index % 2 === 1 ? "about-node--offset" : ""}`}
                 style={{ ["--reveal-delay" as string]: `${90 + index * 80}ms` }}
               >
                 <span className="about-node-index">
@@ -65,7 +65,7 @@ export function AboutSection({ about }: AboutSectionProps) {
           {about.interestTracks.map((track, index) => (
             <article
               key={track.title}
-              className="panel interest-card reveal hover-spotlight"
+              className="panel interest-card reveal"
               style={{
                 ["--reveal-delay" as string]: `${190 + index * 90}ms`,
                 ["--interest-level" as string]: `${track.level}%`,

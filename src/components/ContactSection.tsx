@@ -58,7 +58,7 @@ export function ContactSection({ contact }: ContactSectionProps) {
 
         <div className="contact-grid">
           <article
-            className="panel contact-copy reveal hover-spotlight"
+            className="panel contact-copy reveal"
             style={{ ["--reveal-delay" as string]: "20ms" }}
           >
             <p>{contact.intro}</p>
@@ -81,7 +81,7 @@ export function ContactSection({ contact }: ContactSectionProps) {
           </article>
 
           <article
-            className="panel contact-meta reveal hover-spotlight"
+            className="panel contact-meta reveal"
             aria-label="Contact details"
             style={{ ["--reveal-delay" as string]: "100ms" }}
           >

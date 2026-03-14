@@ -24,7 +24,7 @@ export function ProjectCard({
 
   return (
     <article
-      className={`project-card reveal hover-spotlight ${primary ? "project-card--primary" : "project-card--secondary"} ${featured ? "project-card--featured" : ""} ${hasMedia ? "project-card--has-media" : ""} ${mediaVariantClassName}`}
+      className={`project-card reveal ${primary ? "project-card--primary" : "project-card--secondary"} ${featured ? "project-card--featured" : ""} ${hasMedia ? "project-card--has-media" : ""} ${mediaVariantClassName}`}
       style={{ ["--reveal-delay" as string]: `${delay}ms` }}
     >
       <div className="project-layout">
