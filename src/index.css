@@ -240,15 +240,15 @@
 }
 
 :root[data-browser="safari"][data-motion-mode="cinematic"] {
-  --mode-grid-opacity: 0.12;
-  --mode-drift-factor: 0.94;
-  --mode-flare-strength: 0.58;
+  --mode-grid-opacity: 0.09;
+  --mode-drift-factor: 0.86;
+  --mode-flare-strength: 0.34;
   --mode-trail-opacity: 0.05;
-  --mode-ring-opacity: 0.34;
-  --reveal-offset-x: -42px;
-  --reveal-offset-y: 72px;
-  --reveal-rotate: -1.5deg;
-  --reveal-scale-base: 0.91;
+  --mode-ring-opacity: 0.2;
+  --reveal-offset-x: -18px;
+  --reveal-offset-y: 52px;
+  --reveal-rotate: -0.65deg;
+  --reveal-scale-base: 0.95;
 }
 
 :root[data-browser="safari"][data-motion-mode="experimental"] {
@@ -3126,11 +3126,19 @@ body[data-motion-mode="experimental"] .quick-link {
 }
 
 :root[data-browser="safari"][data-motion-mode="cinematic"] .cell-node-shell {
-  animation-duration: 26s;
+  animation: none;
 }
 
 :root[data-browser="safari"][data-motion-mode="cinematic"] .cell-node {
-  animation: cellFloat 14s ease-in-out infinite;
+  animation: none;
+}
+
+:root[data-browser="safari"][data-motion-mode="cinematic"] .ambient-field__flare {
+  opacity: 0.36;
+}
+
+:root[data-browser="safari"][data-motion-mode="cinematic"] .site-shell::after {
+  display: none;
 }
 
 :root[data-browser="safari"][data-motion-mode="experimental"] .cell-node-shell,
@@ -3207,6 +3215,22 @@ body[data-motion-mode="experimental"] .quick-link {
 :root[data-browser="safari"][data-motion-mode="cinematic"] .theme-toggle,
 :root[data-browser="safari"][data-motion-mode="cinematic"] .motion-mode-switcher {
   background: rgba(11, 17, 30, 0.92);
+}
+
+:root[data-browser="safari"][data-motion-mode="cinematic"] .stat-card,
+:root[data-browser="safari"][data-motion-mode="cinematic"] .panel,
+:root[data-browser="safari"][data-motion-mode="cinematic"] .project-card,
+:root[data-browser="safari"][data-motion-mode="cinematic"] .hero-panel {
+  border-radius: 28px;
+  border-color: rgba(246, 193, 119, 0.1);
+  background: rgba(12, 19, 34, 0.82);
+  box-shadow: 0 18px 36px rgba(2, 6, 23, 0.18);
+}
+
+:root[data-browser="safari"][data-motion-mode="cinematic"] .signal-card,
+:root[data-browser="safari"][data-motion-mode="cinematic"] .quick-link {
+  border-radius: 20px;
+  border-color: rgba(246, 193, 119, 0.1);
 }
 
 :root[data-browser="safari"][data-motion-mode="experimental"] .site-nav,
@@ -3411,6 +3435,8 @@ body[data-motion-mode="experimental"] .quick-link {
 
 .hero-node-marker {
   position: absolute;
+  --marker-drift-x: 0.3rem;
+  --marker-drift-y: -0.24rem;
   width: 1rem;
   height: 1rem;
   border-radius: 0.32rem;
@@ -3712,13 +3738,47 @@ body[data-motion-mode="experimental"] .quick-link {
 @keyframes markerBeacon {
   0%,
   100% {
-    transform: translate(-50%, -50%) rotate(45deg) scale(1);
+    transform:
+      translate(
+        calc(-50% - var(--marker-drift-x)),
+        calc(-50% - var(--marker-drift-y))
+      )
+      rotate(45deg)
+      scale(0.96);
     opacity: 0.88;
   }
 
-  50% {
-    transform: translate(-50%, calc(-50% - 3px)) rotate(45deg) scale(1.08);
+  30% {
+    transform:
+      translate(
+        calc(-50% + var(--marker-drift-x)),
+        calc(-50% - var(--marker-drift-y))
+      )
+      rotate(45deg)
+      scale(1.06);
     opacity: 1;
+  }
+
+  50% {
+    transform:
+      translate(
+        calc(-50% + var(--marker-drift-x)),
+        calc(-50% + var(--marker-drift-y))
+      )
+      rotate(45deg)
+      scale(1.1);
+    opacity: 1;
+  }
+
+  75% {
+    transform:
+      translate(
+        calc(-50% - var(--marker-drift-x)),
+        calc(-50% + var(--marker-drift-y))
+      )
+      rotate(45deg)
+      scale(1.02);
+    opacity: 0.94;
   }
 }
 

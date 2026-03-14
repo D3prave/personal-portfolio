@@ -7,6 +7,8 @@ const nodes = [
     tone: "accent",
     markerOffsetX: "1.3rem",
     markerOffsetY: "1.15rem",
+    markerDriftX: "0.38rem",
+    markerDriftY: "-0.28rem",
   },
   {
     id: "data",
@@ -16,6 +18,8 @@ const nodes = [
     tone: "muted",
     markerOffsetX: "1.7rem",
     markerOffsetY: "0.8rem",
+    markerDriftX: "-0.24rem",
+    markerDriftY: "0.34rem",
   },
   {
     id: "graphs",
@@ -25,6 +29,8 @@ const nodes = [
     tone: "warm",
     markerOffsetX: "1.7rem",
     markerOffsetY: "1.2rem",
+    markerDriftX: "0.34rem",
+    markerDriftY: "0.24rem",
   },
   {
     id: "apis",
@@ -34,6 +40,8 @@ const nodes = [
     tone: "accent",
     markerOffsetX: "1.1rem",
     markerOffsetY: "1.7rem",
+    markerDriftX: "-0.3rem",
+    markerDriftY: "0.3rem",
   },
   {
     id: "ml",
@@ -43,6 +51,8 @@ const nodes = [
     tone: "warm",
     markerOffsetX: "0rem",
     markerOffsetY: "1.7rem",
+    markerDriftX: "0rem",
+    markerDriftY: "0.4rem",
   },
   {
     id: "products",
@@ -52,6 +62,8 @@ const nodes = [
     tone: "muted",
     markerOffsetX: "1.75rem",
     markerOffsetY: "0.9rem",
+    markerDriftX: "0.3rem",
+    markerDriftY: "-0.26rem",
   },
 ] as const;
 
@@ -121,6 +133,8 @@ export function HeroGraphScene() {
                 left: `calc(${node.x}% + ${node.markerOffsetX})`,
                 top: `calc(${node.y}% + ${node.markerOffsetY})`,
                 ["--marker-delay" as string]: `${index * 180}ms`,
+                ["--marker-drift-x" as string]: node.markerDriftX,
+                ["--marker-drift-y" as string]: node.markerDriftY,
               }}
               aria-hidden="true"
             />

@@ -201,6 +201,7 @@ function App() {
       return;
     }
 
+    const useDirectScrollSync = isSafari;
     const revealElements = Array.from(document.querySelectorAll<HTMLElement>(".reveal"));
     const sectionElements = Array.from(
       document.querySelectorAll<HTMLElement>("main .section"),
@@ -358,7 +359,7 @@ function App() {
         const revealDelta = targetRevealProgress - item.progress;
         const revealFollow = targetRevealProgress > 0.82 ? 0.18 : 0.28;
 
-        if (Math.abs(revealDelta) < 0.0012) {
+        if (useDirectScrollSync || Math.abs(revealDelta) < 0.0012) {
           item.progress = targetRevealProgress;
         } else {
           item.progress += revealDelta * revealFollow;
@@ -382,7 +383,7 @@ function App() {
 
       const cellDelta = targetProgress - currentProgress;
 
-      if (Math.abs(cellDelta) < 0.0015) {
+      if (useDirectScrollSync || Math.abs(cellDelta) < 0.0015) {
         currentProgress = targetProgress;
       } else {
         currentProgress += cellDelta * 0.18;
@@ -424,14 +425,14 @@ function App() {
       const depthDelta = targetDepth - currentDepth;
       const hueDelta = ((targetHue - currentHue + 540) % 360) - 180;
 
-      if (Math.abs(depthDelta) < 0.0015) {
+      if (useDirectScrollSync || Math.abs(depthDelta) < 0.0015) {
         currentDepth = targetDepth;
       } else {
         currentDepth += depthDelta * 0.12;
         hasPendingAnimation = true;
       }
 
-      if (Math.abs(hueDelta) < 0.08) {
+      if (useDirectScrollSync || Math.abs(hueDelta) < 0.08) {
         currentHue = targetHue;
       } else {
         currentHue = (currentHue + hueDelta * 0.1 + 360) % 360;
@@ -520,7 +521,7 @@ function App() {
       window.removeEventListener("load", scheduleMeasure);
       window.removeEventListener("lenis-scroll", queueRender);
     };
-  }, []);
+  }, [isSafari]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -589,9 +590,6 @@ function App() {
       if (activeElement === target) {
         activeElement = null;
       }
-
-      target.style.removeProperty("--spotlight-x");
-      target.style.removeProperty("--spotlight-y");
     };
 
     spotlightElements.forEach((element) => {
