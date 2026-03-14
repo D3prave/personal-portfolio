@@ -201,7 +201,7 @@
   --reveal-rotate: 0deg;
   --reveal-scale-base: 0.9;
   --reveal-blur-max: 14px;
-  --reveal-transition: 90ms;
+  --reveal-transition: 132ms;
 }
 
 :root[data-motion-mode="cinematic"] {
@@ -229,7 +229,7 @@
   --reveal-rotate: 5deg;
   --reveal-scale-base: 0.82;
   --reveal-blur-max: 10px;
-  --reveal-transition: 70ms;
+  --reveal-transition: 124ms;
 }
 
 :root[data-browser="safari"] {
@@ -262,6 +262,7 @@
   --reveal-offset-y: 24px;
   --reveal-rotate: 2deg;
   --reveal-scale-base: 0.9;
+  --reveal-transition: 104ms;
 }
 
 *,
