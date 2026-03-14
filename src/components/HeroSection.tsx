@@ -95,7 +95,7 @@ export function HeroSection({
           <HeroGraphScene />
 
           <aside
-            className="hero-panel hover-spotlight reveal"
+            className="hero-panel reveal"
             style={{ ["--reveal-delay" as string]: "220ms" }}
           >
             <p className="panel-label">{hero.highlightsTitle}</p>

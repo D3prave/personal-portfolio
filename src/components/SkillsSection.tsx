@@ -100,7 +100,7 @@ export function SkillsSection({
 
         <article
           ref={cloudPanelRef}
-          className="panel stack-cloud-panel reveal hover-spotlight"
+          className="panel stack-cloud-panel reveal"
           style={{ ["--reveal-delay" as string]: "40ms" }}
         >
           <div className="stack-cloud-copy">
@@ -121,7 +121,7 @@ export function SkillsSection({
           {skillGroups.map((group, index) => (
             <article
               key={group.title}
-              className="panel skill-group reveal hover-spotlight"
+              className="panel skill-group reveal"
               style={{ ["--reveal-delay" as string]: `${90 + index * 70}ms` }}
             >
               <div className="skill-group-topline">

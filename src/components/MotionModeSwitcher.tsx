@@ -131,7 +131,7 @@ export function MotionModeSwitcher({
       />
 
       <aside
-        className="motion-mode-switcher__panel hover-spotlight"
+        className="motion-mode-switcher__panel"
         id={panelId}
         aria-hidden={!isOpen}
       >

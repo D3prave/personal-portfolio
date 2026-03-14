@@ -84,7 +84,7 @@ const footerTags = ["Backend systems", "Data analytics", "Applied ML"];
 export function HeroGraphScene() {
   return (
     <article
-      className="hero-visual panel hover-spotlight reveal"
+      className="hero-visual panel reveal"
       style={{ ["--reveal-delay" as string]: "140ms" }}
       aria-label="Animated system map"
     >

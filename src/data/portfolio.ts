@@ -200,7 +200,7 @@ export const portfolio: PortfolioData = {
         cardVariant: "tall",
         expandable: true,
         expandLabel: "View poster",
-        dialogSrc: publicAsset("project-media/pagerank-poster.jpg"),
+        dialogSrc: publicAsset("project-media/pagerank-poster.webp"),
         dialogAlt:
           "Full project poster for the PageRank-based analysis of scientific paper influence, including crawler flow, graph construction, algorithm details, and results.",
         dialogFit: "contain",
