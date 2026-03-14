@@ -1,14 +1,276 @@
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Project } from "../types/portfolio";
 
 interface ProjectVisualProps {
   visual: Project["visual"];
+  media?: Project["media"];
   primary?: boolean;
+  projectName: string;
+}
+
+function getRenderedImageBounds(frameRect: DOMRect, image: HTMLImageElement) {
+  const naturalWidth = image.naturalWidth;
+  const naturalHeight = image.naturalHeight;
+
+  if (naturalWidth <= 0 || naturalHeight <= 0) {
+    return null;
+  }
+
+  const scale = Math.min(frameRect.width / naturalWidth, frameRect.height / naturalHeight);
+  const width = naturalWidth * scale;
+  const height = naturalHeight * scale;
+  const left = frameRect.left + (frameRect.width - width) * 0.5;
+  const top = frameRect.top + (frameRect.height - height) * 0.5;
+
+  return {
+    left,
+    top,
+    width,
+    height,
+    right: left + width,
+    bottom: top + height,
+  };
 }
 
 export function ProjectVisual({
   visual,
+  media,
   primary = false,
+  projectName,
 }: ProjectVisualProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const dialogFrameRef = useRef<HTMLDivElement>(null);
+  const dialogImageRef = useRef<HTMLImageElement>(null);
+  const dialogMagnifierRef = useRef<HTMLDivElement>(null);
+  const pointerFrameRef = useRef(0);
+  const queuedPointerRef = useRef<{ clientX: number; clientY: number } | null>(null);
+
+  useEffect(() => {
+    if (!isExpanded || typeof document === "undefined") {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsExpanded(false);
+      }
+    };
+
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isExpanded]);
+
+  useEffect(() => {
+    return () => {
+      if (pointerFrameRef.current !== 0) {
+        window.cancelAnimationFrame(pointerFrameRef.current);
+      }
+    };
+  }, []);
+
+  if (media) {
+    const visualClassName = `project-visual project-visual--image ${
+      primary ? "project-visual--primary" : ""
+    } ${media.expandable ? "project-visual--interactive" : ""}`;
+    const imageStyle = {
+      objectFit: media.fit ?? "cover",
+      objectPosition: media.position ?? "center",
+    } as const;
+
+    const image = (
+      <img
+        className="project-visual-image"
+        src={media.src}
+        alt={media.alt}
+        loading="lazy"
+        decoding="async"
+        fetchPriority="low"
+        draggable={false}
+        style={imageStyle}
+      />
+    );
+
+    const hideMagnifier = () => {
+      if (pointerFrameRef.current !== 0) {
+        window.cancelAnimationFrame(pointerFrameRef.current);
+        pointerFrameRef.current = 0;
+      }
+
+      queuedPointerRef.current = null;
+      dialogMagnifierRef.current?.classList.remove("is-active");
+    };
+
+    const syncMagnifier = () => {
+      pointerFrameRef.current = 0;
+
+      const queuedPointer = queuedPointerRef.current;
+      const frame = dialogFrameRef.current;
+      const image = dialogImageRef.current;
+      const magnifier = dialogMagnifierRef.current;
+
+      if (!queuedPointer || !frame || !image || !magnifier) {
+        return;
+      }
+
+      const frameRect = frame.getBoundingClientRect();
+      const renderedBounds = getRenderedImageBounds(frameRect, image);
+
+      if (!renderedBounds || renderedBounds.width < 24 || renderedBounds.height < 24) {
+        magnifier.classList.remove("is-active");
+        return;
+      }
+
+      if (
+        queuedPointer.clientX < renderedBounds.left ||
+        queuedPointer.clientX > renderedBounds.right ||
+        queuedPointer.clientY < renderedBounds.top ||
+        queuedPointer.clientY > renderedBounds.bottom
+      ) {
+        magnifier.classList.remove("is-active");
+        return;
+      }
+
+      const zoomFactor = 2.12;
+      const lensSize = Math.max(124, Math.min(168, renderedBounds.width * 0.19));
+      const halfLens = lensSize * 0.5;
+      const localX = queuedPointer.clientX - renderedBounds.left;
+      const localY = queuedPointer.clientY - renderedBounds.top;
+      const imageOffsetX = renderedBounds.left - frameRect.left;
+      const imageOffsetY = renderedBounds.top - frameRect.top;
+      const lensX = Math.min(
+        Math.max(queuedPointer.clientX - frameRect.left, imageOffsetX + halfLens),
+        imageOffsetX + renderedBounds.width - halfLens,
+      );
+      const lensY = Math.min(
+        Math.max(queuedPointer.clientY - frameRect.top, imageOffsetY + halfLens),
+        imageOffsetY + renderedBounds.height - halfLens,
+      );
+
+      magnifier.style.setProperty("--poster-magnifier-size", `${lensSize}px`);
+      magnifier.style.setProperty("--poster-magnifier-x", `${lensX}px`);
+      magnifier.style.setProperty("--poster-magnifier-y", `${lensY}px`);
+      magnifier.style.backgroundSize = `${renderedBounds.width * zoomFactor}px ${
+        renderedBounds.height * zoomFactor
+      }px`;
+      magnifier.style.backgroundPosition = `${halfLens - localX * zoomFactor}px ${
+        halfLens - localY * zoomFactor
+      }px`;
+      magnifier.classList.add("is-active");
+    };
+
+    const queueMagnifierUpdate = (clientX: number, clientY: number) => {
+      queuedPointerRef.current = { clientX, clientY };
+
+      if (pointerFrameRef.current !== 0) {
+        return;
+      }
+
+      pointerFrameRef.current = window.requestAnimationFrame(syncMagnifier);
+    };
+
+    if (media.expandable) {
+      return (
+        <>
+          <button
+            type="button"
+            className={visualClassName}
+            aria-haspopup="dialog"
+            aria-label={media.expandLabel ?? `Open ${projectName} image`}
+            onClick={() => setIsExpanded(true)}
+          >
+            {image}
+            <span className="project-visual-expand">
+              {media.expandLabel ?? "Expand image"}
+            </span>
+          </button>
+
+          {isExpanded && typeof document !== "undefined"
+            ? createPortal(
+                <div
+                  className="project-media-dialog"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={`${projectName} expanded media`}
+                >
+                  <button
+                    type="button"
+                    className="project-media-dialog__backdrop"
+                    aria-label="Close expanded media"
+                    onClick={() => setIsExpanded(false)}
+                  />
+
+                  <div className="project-media-dialog__surface">
+                    <button
+                      type="button"
+                      className="project-media-dialog__close"
+                      onClick={() => setIsExpanded(false)}
+                    >
+                      Close
+                    </button>
+
+                    <p className="project-media-dialog__hint">
+                      Hover over the poster to inspect details.
+                    </p>
+
+                    <div
+                      ref={dialogFrameRef}
+                      className="project-media-dialog__frame"
+                      onPointerMove={(event) => {
+                        if (event.pointerType === "touch") {
+                          return;
+                        }
+
+                        queueMagnifierUpdate(event.clientX, event.clientY);
+                      }}
+                      onPointerLeave={hideMagnifier}
+                      onPointerCancel={hideMagnifier}
+                    >
+                      <img
+                        ref={dialogImageRef}
+                        className="project-media-dialog__image"
+                        src={media.dialogSrc ?? media.src}
+                        alt={media.dialogAlt ?? media.alt}
+                        loading="eager"
+                        decoding="async"
+                        fetchPriority="high"
+                        draggable={false}
+                        style={{
+                          objectFit: media.dialogFit ?? "contain",
+                          objectPosition: media.dialogPosition ?? "center",
+                        }}
+                      />
+                      <div
+                        ref={dialogMagnifierRef}
+                        className="project-media-dialog__magnifier"
+                        aria-hidden="true"
+                        style={{
+                          backgroundImage: `url(${media.dialogSrc ?? media.src})`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>,
+                document.body,
+              )
+            : null}
+        </>
+      );
+    }
+
+    return (
+      <div className={visualClassName}>
+        {image}
+      </div>
+    );
+  }
+
   return (
     <div
       className={`project-visual project-visual--${visual} ${primary ? "project-visual--primary" : ""}`}

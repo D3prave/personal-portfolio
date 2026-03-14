@@ -155,24 +155,33 @@ export const portfolio: PortfolioData = {
     {
       name: "DataLab-PageRank",
       emphasis:
-        "Primary project. Citation crawling, monitoring, and PageRank analysis for large academic graph data.",
+        "Primary project. Large-scale citation crawling, monitoring, and HPC-backed PageRank analysis for academic graph data.",
       summary:
-        "A scalable academic citation crawler, monitoring dashboard, and PageRank computation pipeline built around real graph-processing constraints.",
+        "A citation crawler and analysis pipeline that processed 50 million papers and 531 million references, then computed PageRank scores on FAU Erlangen-Nuremberg supercomputing infrastructure.",
       description:
-        "This project combines distributed crawling, fault-tolerant task handling, persistent storage, deduplication, and graph analysis into one coherent system. It is the clearest representation of my interest in data-intensive systems, graph analytics, and scalable backend engineering.",
+        "This project combines distributed crawling, monitoring, persistent storage, large-scale deduplication, and graph computation into one system shaped by real throughput and reliability constraints. It is the clearest representation of my interest in data-intensive systems, graph analytics, and scalable backend engineering.",
+      proof: [
+        { value: "50M", label: "papers crawled" },
+        { value: "531M", label: "references processed" },
+        { value: "FAU", label: "supercomputer compute" },
+        { value: "FastAPI", label: "monitoring dashboard" },
+      ],
       highlights: [
-        "Crawls citation data from the Semantic Scholar API with retry logic and fault tolerance.",
-        "Uses Redis for distributed task handling and PostgreSQL for persistent storage.",
-        "Applies Bloom filters for deduplication and efficient large-scale crawl management.",
-        "Exposes a FastAPI dashboard to monitor throughput, performance, and system health.",
-        "Runs PageRank analysis on citation graphs with HPC-oriented design decisions and high-performance graph tooling.",
+        "Successfully crawled 50 million papers and 531 million references from the Semantic Scholar API.",
+        "Used Redis with Bloom filters for distributed queue management, fast membership checks, and large-scale deduplication.",
+        "Applied batched API requests, batched database inserts, and retry strategies with exponential backoff for higher throughput and fault tolerance.",
+        "Built a FastAPI dashboard to monitor crawler progress, throughput, and system health in real time.",
+        "Used cloud instances for scalable crawl execution and FAU Erlangen-Nuremberg supercomputing resources for PageRank computations.",
+        "Computed PageRank scores across the citation graph with damping-factor and dangling-node handling in the power iteration workflow.",
       ],
       tech: [
         "Python",
         "FastAPI",
         "Redis",
+        "Bloom filters",
         "PostgreSQL",
         "Semantic Scholar API",
+        "SLURM",
         "graph-tool",
         "NetworkX",
         "pandas",
@@ -181,8 +190,21 @@ export const portfolio: PortfolioData = {
         "paramiko",
         "Uvicorn",
       ],
-      badges: ["Primary Project", "Graph Analytics", "Distributed Crawling"],
+      badges: ["50M Papers", "531M References", "HPC PageRank"],
       visual: "graph",
+      media: {
+        src: publicAsset("project-media/pagerank-preview.webp"),
+        alt: "Preview of the PageRank project poster showing the title, crawler pipeline, graph construction, and implementation highlights.",
+        fit: "cover",
+        position: "center",
+        expandable: true,
+        expandLabel: "Open poster",
+        dialogSrc: publicAsset("project-media/pagerank-poster.jpg"),
+        dialogAlt:
+          "Full project poster for the PageRank-based analysis of scientific paper influence, including crawler flow, graph construction, algorithm details, and results.",
+        dialogFit: "contain",
+      },
+      repoUrl: "https://github.com/D3prave/DataLab-PageRank",
     },
     {
       name: "MSIT-Hotel-Booking",
@@ -211,6 +233,14 @@ export const portfolio: PortfolioData = {
       ],
       badges: ["Full-Stack Product", "Business Logic", "Bilingual UX"],
       visual: "booking",
+      media: {
+        src: publicAsset("project-media/msit-hotel-booking.webp"),
+        alt: "Hero section of the MSIT hotel booking project with dark editorial styling and hospitality-focused branding.",
+        fit: "cover",
+        position: "50% 6%",
+      },
+      repoUrl: "https://github.com/D3prave/MSIT-Hotel-Booking",
+      liveUrl: "https://denkraum1886.vercel.app/",
     },
     {
       name: "KULTour",
@@ -240,6 +270,13 @@ export const portfolio: PortfolioData = {
       ],
       badges: ["Hackathon Winner", "Recommendation System", "Team Project"],
       visual: "route",
+      media: {
+        src: publicAsset("project-media/kultour-map.jpeg"),
+        alt: "KULTour interface showing an interactive tourism recommendation map with highlighted destinations and a destination detail panel.",
+        fit: "cover",
+        position: "50% 34%",
+      },
+      repoUrl: "https://github.com/D3prave/KULTour",
     },
   ],
   otherProjectsSection: {
@@ -278,6 +315,7 @@ export const portfolio: PortfolioData = {
       ],
       badges: ["Analytics Tool", "ML Workflow", "Full Stack"],
       visual: "analytics",
+      repoUrl: "https://github.com/D3prave/Auto-Analyst",
     },
     {
       name: "Movie-Recommendation",
@@ -295,6 +333,14 @@ export const portfolio: PortfolioData = {
       tech: ["Python", "Streamlit", "pandas", "TMDB API", "Recommendation Logic"],
       badges: ["Recommendation App", "Demo-Friendly", "Applied ML"],
       visual: "media",
+      media: {
+        src: publicAsset("project-media/movie-recommendation.png"),
+        alt: "Movie recommendation app interface shown in dark mode with recommendation controls and tab navigation.",
+        fit: "cover",
+        position: "50% 0%",
+      },
+      repoUrl: "https://github.com/D3prave/Movie-Recommendation",
+      liveUrl: "https://movie-recommendation-deprave.streamlit.app",
     },
   ],
   skillsSection: {
@@ -506,6 +552,7 @@ export const portfolio: PortfolioData = {
         value: "jakub.wisniewski.dev@gmail.com",
         href: "mailto:jakub.wisniewski.dev@gmail.com",
         note: "Preferred for direct outreach",
+        copyValue: "jakub.wisniewski.dev@gmail.com",
       },
       {
         label: "GitHub",

@@ -16,6 +16,8 @@ export function ProjectCard({
   featured = false,
   delay = 0,
 }: ProjectCardProps) {
+  const hasLinks = Boolean(project.repoUrl || project.liveUrl);
+
   return (
     <article
       className={`project-card reveal hover-spotlight ${primary ? "project-card--primary" : "project-card--secondary"} ${featured ? "project-card--featured" : ""}`}
@@ -40,11 +42,53 @@ export function ProjectCard({
             <p className="project-summary">{project.summary}</p>
           </header>
 
-          <ProjectVisual visual={project.visual} primary={primary} />
+          <ProjectVisual
+            visual={project.visual}
+            media={project.media}
+            primary={primary}
+            projectName={project.name}
+          />
         </div>
 
         <div className="project-body">
           <p className="project-description">{project.description}</p>
+
+          {project.proof?.length ? (
+            <div className="project-proof" aria-label={`${project.name} proof points`}>
+              {project.proof.map((item) => (
+                <article key={`${item.value}-${item.label}`} className="project-proof-card">
+                  <span className="project-proof-value">{item.value}</span>
+                  <span className="project-proof-label">{item.label}</span>
+                </article>
+              ))}
+            </div>
+          ) : null}
+
+          {hasLinks ? (
+            <div className="project-actions" aria-label={`${project.name} links`}>
+              {project.repoUrl ? (
+                <a
+                  className="button-link button-link--secondary project-action-link"
+                  href={project.repoUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Repository
+                </a>
+              ) : null}
+
+              {project.liveUrl ? (
+                <a
+                  className="button-link button-link--primary project-action-link"
+                  href={project.liveUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Live Demo
+                </a>
+              ) : null}
+            </div>
+          ) : null}
 
           <div className="project-meta">
             <div>

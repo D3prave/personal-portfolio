@@ -2,15 +2,12 @@ import { useEffect, useId, useRef, useState } from "react";
 import type { CtaLink } from "../types/portfolio";
 import type { MotionMode, PerformanceMode } from "../types/ui";
 import { SmoothAnchor } from "./SmoothAnchor";
-import { ThemeToggle } from "./ThemeToggle";
 
 interface MotionModeSwitcherProps {
   mode: MotionMode;
   onChange: (mode: MotionMode) => void;
   performanceMode: PerformanceMode;
   onChangePerformanceMode: (mode: PerformanceMode) => void;
-  theme: "dark" | "light";
-  onToggleTheme: (theme: "dark" | "light") => void;
   contactHref: `#${string}`;
   resumeCta: CtaLink;
 }
@@ -76,8 +73,6 @@ export function MotionModeSwitcher({
   onChange,
   performanceMode,
   onChangePerformanceMode,
-  theme,
-  onToggleTheme,
   contactHref,
   resumeCta,
 }: MotionModeSwitcherProps) {
@@ -143,7 +138,7 @@ export function MotionModeSwitcher({
         <div className="motion-mode-switcher__header">
           <div>
             <p className="motion-mode-switcher__eyebrow">Quick controls</p>
-            <p className="motion-mode-switcher__title">Appearance, motion, and shortcuts</p>
+            <p className="motion-mode-switcher__title">Motion, performance, and shortcuts</p>
           </div>
         </div>
 
@@ -167,16 +162,6 @@ export function MotionModeSwitcher({
               CV
             </SmoothAnchor>
           </div>
-        </div>
-
-        <div className="motion-mode-switcher__section motion-mode-switcher__section--appearance">
-          <div className="motion-mode-switcher__appearance-copy">
-            <p className="motion-mode-switcher__label">Appearance</p>
-            <p className="motion-mode-switcher__current">
-              {theme === "dark" ? "Dark mode enabled" : "Light mode enabled"}
-            </p>
-          </div>
-          <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} />
         </div>
 
         <div className="motion-mode-switcher__section">

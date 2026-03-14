@@ -1,15 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AboutSection } from "./components/AboutSection";
 import { AmbientField } from "./components/AmbientField";
 import { CellField } from "./components/CellField";
-import { ContactSection } from "./components/ContactSection";
-import { ExperienceSection } from "./components/ExperienceSection";
+import { DeferredSection } from "./components/DeferredSection";
 import { Header } from "./components/Header";
 import { HeroSection } from "./components/HeroSection";
 import { MotionModeSwitcher } from "./components/MotionModeSwitcher";
-import { ProjectsSection } from "./components/ProjectsSection";
 import { ScrollProgress } from "./components/ScrollProgress";
-import { SkillsSection } from "./components/SkillsSection";
 import { portfolio } from "./data/portfolio";
 import type { MotionMode, PerformanceMode } from "./types/ui";
 import {
@@ -18,6 +15,23 @@ import {
   isSafariBrowser,
   prefersReducedMotion,
 } from "./utils/performance";
+
+const loadProjectsSection = () =>
+  import("./components/ProjectsSection").then((module) => ({
+    default: module.ProjectsSection,
+  }));
+const loadSkillsSection = () =>
+  import("./components/SkillsSection").then((module) => ({
+    default: module.SkillsSection,
+  }));
+const loadExperienceSection = () =>
+  import("./components/ExperienceSection").then((module) => ({
+    default: module.ExperienceSection,
+  }));
+const loadContactSection = () =>
+  import("./components/ContactSection").then((module) => ({
+    default: module.ContactSection,
+  }));
 
 const MOTION_MODE_STORAGE_KEY = "motion-mode";
 const PERFORMANCE_MODE_STORAGE_KEY = "performance-mode";
@@ -198,7 +212,11 @@ function App() {
   const [performanceMode, setPerformanceMode] = useState<PerformanceMode>(
     readInitialPerformanceMode,
   );
+  const [sectionVersion, setSectionVersion] = useState(0);
   const isLitePerformance = performanceMode === "lite";
+  const handleDeferredSectionReady = useCallback(() => {
+    setSectionVersion((currentVersion) => currentVersion + 1);
+  }, []);
 
   useEffect(() => {
     const browser = isSafari ? "safari" : "";
@@ -579,6 +597,7 @@ function App() {
       window.visualViewport?.removeEventListener("resize", scheduleMeasure);
     };
   }, [
+    sectionVersion,
     hasCoarseInput,
     isConstrainedPerformance,
     isLitePerformance,
@@ -991,17 +1010,18 @@ function App() {
         brand={portfolio.brand}
         roleLabel={portfolio.roleLabel}
         navigation={portfolio.navigation}
+        theme={theme}
+        onToggleTheme={(nextTheme) => {
+          syncThemeDocument(nextTheme);
+          setTheme(nextTheme);
+        }}
+        sectionVersion={sectionVersion}
       />
       <MotionModeSwitcher
         mode={motionMode}
         onChange={setMotionMode}
         performanceMode={performanceMode}
         onChangePerformanceMode={setPerformanceMode}
-        theme={theme}
-        onToggleTheme={(nextTheme) => {
-          syncThemeDocument(nextTheme);
-          setTheme(nextTheme);
-        }}
         contactHref={`#${portfolio.contactSection.id}`}
         resumeCta={portfolio.hero.resumeCta}
       />
@@ -1012,26 +1032,53 @@ function App() {
           contactLinks={portfolio.contactSection.contacts}
         />
         <AboutSection about={portfolio.about} />
-        <ProjectsSection
+        <DeferredSection
           section={portfolio.featuredProjectsSection}
-          projects={portfolio.featuredProjects}
-          highlightFirst
+          load={loadProjectsSection}
+          componentProps={{
+            section: portfolio.featuredProjectsSection,
+            projects: portfolio.featuredProjects,
+            highlightFirst: true,
+          }}
+          onReady={handleDeferredSectionReady}
         />
-        <ProjectsSection
+        <DeferredSection
           section={portfolio.otherProjectsSection}
-          projects={portfolio.otherProjects}
+          load={loadProjectsSection}
+          componentProps={{
+            section: portfolio.otherProjectsSection,
+            projects: portfolio.otherProjects,
+          }}
+          onReady={handleDeferredSectionReady}
         />
-        <SkillsSection
+        <DeferredSection
           section={portfolio.skillsSection}
-          cloud={portfolio.skillsCloud}
-          skillGroups={portfolio.skillGroups}
-          performanceMode={performanceMode}
+          load={loadSkillsSection}
+          componentProps={{
+            section: portfolio.skillsSection,
+            cloud: portfolio.skillsCloud,
+            skillGroups: portfolio.skillGroups,
+            performanceMode,
+          }}
+          onReady={handleDeferredSectionReady}
         />
-        <ExperienceSection
+        <DeferredSection
           section={portfolio.experienceSection}
-          experience={portfolio.experience}
+          load={loadExperienceSection}
+          componentProps={{
+            section: portfolio.experienceSection,
+            experience: portfolio.experience,
+          }}
+          onReady={handleDeferredSectionReady}
         />
-        <ContactSection contact={portfolio.contactSection} />
+        <DeferredSection
+          section={portfolio.contactSection}
+          load={loadContactSection}
+          componentProps={{
+            contact: portfolio.contactSection,
+          }}
+          onReady={handleDeferredSectionReady}
+        />
       </main>
 
       {isConstrainedPerformance || isLitePerformance ? null : (

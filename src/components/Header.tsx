@@ -1,17 +1,24 @@
 import { useEffect, useState } from "react";
 import type { NavItem } from "../types/portfolio";
 import { SmoothAnchor } from "./SmoothAnchor";
+import { ThemeToggle } from "./ThemeToggle";
 
 interface HeaderProps {
   brand: string;
   roleLabel: string;
   navigation: NavItem[];
+  theme: "dark" | "light";
+  onToggleTheme: (theme: "dark" | "light") => void;
+  sectionVersion?: number;
 }
 
 export function Header({
   brand,
   roleLabel,
   navigation,
+  theme,
+  onToggleTheme,
+  sectionVersion = 0,
 }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeHref, setActiveHref] = useState(navigation[0]?.href ?? "#about");
@@ -177,7 +184,7 @@ export function Header({
 
       observer.disconnect();
     };
-  }, [navigation]);
+  }, [navigation, sectionVersion]);
 
   useEffect(() => {
     let animationFrame = 0;
@@ -241,6 +248,10 @@ export function Header({
               </SmoothAnchor>
             ))}
           </nav>
+
+          <div className="header-theme-toggle">
+            <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} />
+          </div>
         </div>
 
         <button

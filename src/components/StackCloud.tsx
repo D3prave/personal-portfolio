@@ -99,11 +99,13 @@ export function StackCloud({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef(0);
+  const staticFrameRef = useRef(0);
   const lastTickRef = useRef<number | null>(null);
   const baseRotationRef = useRef({ x: -0.34, y: 0.52 });
   const displayRotationRef = useRef({ x: -0.34, y: 0.52 });
   const autoOrbitRef = useRef({ spinY: 0, wobbleX: 0, wobbleY: 0 });
   const velocityRef = useRef({ x: 0, y: 0 });
+  const dragDeltaRef = useRef({ x: 0, y: 0 });
   const pointerTargetRef = useRef({ x: 0, y: 0 });
   const pointerRef = useRef({ x: 0, y: 0 });
   const pointerCanvasRef = useRef({ x: 0, y: 0, active: false });
@@ -296,7 +298,7 @@ export function StackCloud({
       const dpr = clamp(
         window.devicePixelRatio || 1,
         1,
-        isConstrained || isLitePerformance || hasCoarseInput ? 1.15 : 1.7,
+        isConstrained || isLitePerformance || hasCoarseInput ? 1.15 : 1.55,
       );
       const width = Math.max(bounds.width, 260);
       const height = Math.max(bounds.height, 280);
@@ -366,7 +368,7 @@ export function StackCloud({
           };
         })
         .sort((left, right) => left.depthZ - right.depthZ);
-      const hoveredItem = pickHoveredItem(projected);
+      const hoveredItem = dragRef.current.active ? null : pickHoveredItem(projected);
 
       projected.forEach((item) => {
         if (hoveredItem && item.id === hoveredItem.id) {
@@ -386,6 +388,11 @@ export function StackCloud({
       if (frameRef.current !== 0) {
         window.cancelAnimationFrame(frameRef.current);
         frameRef.current = 0;
+      }
+
+      if (staticFrameRef.current !== 0) {
+        window.cancelAnimationFrame(staticFrameRef.current);
+        staticFrameRef.current = 0;
       }
 
       lastTickRef.current = null;
@@ -439,6 +446,47 @@ export function StackCloud({
         pointerRotationY;
     };
 
+    const applyPendingDrag = (deltaFactor: number) => {
+      if (!dragRef.current.active) {
+        dragDeltaRef.current.x = 0;
+        dragDeltaRef.current.y = 0;
+        return;
+      }
+
+      const pendingDragX = dragDeltaRef.current.x;
+      const pendingDragY = dragDeltaRef.current.y;
+
+      if (Math.abs(pendingDragX) < 0.01 && Math.abs(pendingDragY) < 0.01) {
+        return;
+      }
+
+      const rotationX = clamp(pendingDragY * 0.0052, -0.22, 0.22);
+      const rotationY = clamp(pendingDragX * 0.0052, -0.22, 0.22);
+      const normalizedDeltaFactor = Math.max(deltaFactor, 0.7);
+
+      baseRotationRef.current.x += rotationX;
+      baseRotationRef.current.y += rotationY;
+      velocityRef.current.x =
+        velocityRef.current.x * 0.34 + (rotationX / normalizedDeltaFactor) * 0.66;
+      velocityRef.current.y =
+        velocityRef.current.y * 0.34 + (rotationY / normalizedDeltaFactor) * 0.66;
+      dragDeltaRef.current.x = 0;
+      dragDeltaRef.current.y = 0;
+    };
+
+    const queueStaticRender = () => {
+      if (shouldAnimate || staticFrameRef.current !== 0) {
+        return;
+      }
+
+      staticFrameRef.current = window.requestAnimationFrame(() => {
+        staticFrameRef.current = 0;
+        applyPendingDrag(1);
+        updateDisplayRotation();
+        drawScene();
+      });
+    };
+
     const tick = (timestamp: number) => {
       if (!visibleRef.current || !pageVisibleRef.current) {
         lastTickRef.current = null;
@@ -464,6 +512,8 @@ export function StackCloud({
         (pointerTargetRef.current.x - pointerRef.current.x) * pointerEase;
       pointerRef.current.y +=
         (pointerTargetRef.current.y - pointerRef.current.y) * pointerEase;
+
+      applyPendingDrag(deltaFactor);
 
       if (!isPausedByInteraction) {
         autoOrbitRef.current.spinY += orbitProfile.speedY * motionScale * deltaSeconds;
@@ -503,8 +553,12 @@ export function StackCloud({
         }
 
         loadedIcons[index] = true;
-        drawScene();
-        startLoop();
+        if (shouldAnimate) {
+          drawScene();
+          startLoop();
+        } else {
+          queueStaticRender();
+        }
       };
       image.onerror = () => {
         loadedIcons[index] = false;
@@ -540,35 +594,34 @@ export function StackCloud({
         x: clamp(nextX, -1, 1),
         y: clamp(nextY, -1, 1),
       };
-      startLoop();
-
-      if (!shouldAnimate && !dragRef.current.active) {
-        drawScene();
-      }
 
       if (dragRef.current.active && dragRef.current.pointerId === event.pointerId) {
-        const deltaX = event.clientX - dragRef.current.x;
-        const deltaY = event.clientY - dragRef.current.y;
-        const rotationX = deltaY * 0.0059;
-        const rotationY = deltaX * 0.0059;
+        const events =
+          typeof event.getCoalescedEvents === "function"
+            ? event.getCoalescedEvents()
+            : [event];
 
-        baseRotationRef.current.x += rotationX;
-        baseRotationRef.current.y += rotationY;
-        velocityRef.current.x = velocityRef.current.x * 0.42 + rotationX * 0.58;
-        velocityRef.current.y = velocityRef.current.y * 0.42 + rotationY * 0.58;
-        dragRef.current.x = event.clientX;
-        dragRef.current.y = event.clientY;
-        updateDisplayRotation();
-        drawScene();
+        events.forEach((entry) => {
+          dragDeltaRef.current.x += entry.clientX - dragRef.current.x;
+          dragDeltaRef.current.y += entry.clientY - dragRef.current.y;
+          dragRef.current.x = entry.clientX;
+          dragRef.current.y = entry.clientY;
+        });
+      }
+
+      if (shouldAnimate) {
+        startLoop();
+      } else {
+        queueStaticRender();
       }
     };
 
     const handlePointerEnter = () => {
       hoverRef.current = true;
-      startLoop();
-
-      if (!shouldAnimate) {
-        drawScene();
+      if (shouldAnimate) {
+        startLoop();
+      } else {
+        queueStaticRender();
       }
     };
 
@@ -581,7 +634,12 @@ export function StackCloud({
       pointerCanvasRef.current.active = false;
       hoveredItemIdRef.current = null;
       pointerTargetRef.current = { x: 0, y: 0 };
-      drawScene();
+
+      if (shouldAnimate) {
+        startLoop();
+      } else {
+        queueStaticRender();
+      }
     };
 
     const handlePointerDown = (event: PointerEvent) => {
@@ -593,6 +651,8 @@ export function StackCloud({
       const nextX = ((event.clientX - bounds.left) / bounds.width - 0.5) * 2;
       const nextY = ((event.clientY - bounds.top) / bounds.height - 0.5) * 2;
 
+      dragDeltaRef.current.x = 0;
+      dragDeltaRef.current.y = 0;
       dragRef.current = {
         active: true,
         pointerId: event.pointerId,
@@ -610,9 +670,12 @@ export function StackCloud({
         active: event.pointerType !== "touch",
       };
       canvas.setPointerCapture(event.pointerId);
-      updateDisplayRotation();
-      drawScene();
-      startLoop();
+
+      if (shouldAnimate) {
+        startLoop();
+      } else {
+        queueStaticRender();
+      }
     };
 
     const handlePointerUp = (event: PointerEvent) => {
@@ -620,6 +683,7 @@ export function StackCloud({
         return;
       }
 
+      applyPendingDrag(1);
       dragRef.current.active = false;
 
       if (canvas.hasPointerCapture(event.pointerId)) {
@@ -631,8 +695,12 @@ export function StackCloud({
         pointerCanvasRef.current.active = false;
         hoveredItemIdRef.current = null;
         pointerTargetRef.current = { x: 0, y: 0 };
-        updateDisplayRotation();
-        drawScene();
+      }
+
+      if (shouldAnimate) {
+        startLoop();
+      } else {
+        queueStaticRender();
       }
     };
 
