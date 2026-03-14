@@ -184,11 +184,29 @@ function App() {
   }, [isConstrainedPerformance, isSafari]);
 
   useEffect(() => {
+    const root = document.documentElement;
+
+    const syncPageVisibility = () => {
+      root.dataset.pageVisibility =
+        document.visibilityState === "hidden" ? "hidden" : "visible";
+    };
+
+    syncPageVisibility();
+    document.addEventListener("visibilitychange", syncPageVisibility);
+
+    return () => {
+      document.removeEventListener("visibilitychange", syncPageVisibility);
+      delete root.dataset.pageVisibility;
+    };
+  }, []);
+
+  useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
 
-    const useDirectScrollSync = isSafari && motionMode === "cinematic";
+    const useDirectScrollSync =
+      isConstrainedPerformance || (isSafari && motionMode === "cinematic");
     const revealElements = Array.from(document.querySelectorAll<HTMLElement>(".reveal"));
     const sectionElements = Array.from(
       document.querySelectorAll<HTMLElement>("main .section"),
@@ -508,7 +526,7 @@ function App() {
       window.removeEventListener("load", scheduleMeasure);
       window.removeEventListener("lenis-scroll", queueRender);
     };
-  }, [isSafari, motionMode]);
+  }, [isConstrainedPerformance, isSafari, motionMode]);
 
   useEffect(() => {
     syncThemeDocument(theme);

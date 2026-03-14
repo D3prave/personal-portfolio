@@ -1,5 +1,6 @@
 import { useCallback, useRef } from "react";
 import { flushSync } from "react-dom";
+import { isConstrainedPerformanceEnvironment } from "../utils/performance";
 
 interface ThemeToggleProps {
   theme: "dark" | "light";
@@ -61,6 +62,8 @@ export function ThemeToggle({
       typeof window !== "undefined" &&
       typeof window.matchMedia === "function" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const skipViewTransition =
+      prefersReducedMotion || isConstrainedPerformanceEnvironment();
 
     const { top, left, width, height } = button.getBoundingClientRect();
     const x = left + width / 2;
@@ -88,10 +91,7 @@ export function ThemeToggle({
       });
     };
 
-    if (
-      prefersReducedMotion ||
-      typeof documentWithTransition.startViewTransition !== "function"
-    ) {
+    if (skipViewTransition || typeof documentWithTransition.startViewTransition !== "function") {
       applyThemeWithLock();
       return;
     }

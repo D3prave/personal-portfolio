@@ -103,6 +103,7 @@ export function StackCloud({ items }: StackCloudProps) {
   const [isConstrained] = useState(isConstrainedPerformanceEnvironment);
   const [isReducedMotion] = useState(prefersReducedMotion);
   const [hasCoarseInput] = useState(hasCoarsePointer);
+  const shouldAnimate = !hasCoarseInput && !isReducedMotion;
   const orbitalItems = useMemo(() => createSphereLayout(items), [items]);
 
   useEffect(() => {
@@ -303,7 +304,12 @@ export function StackCloud({ items }: StackCloudProps) {
     };
 
     const startLoop = () => {
-      if (frameRef.current !== 0 || !visibleRef.current || !pageVisibleRef.current) {
+      if (
+        !shouldAnimate ||
+        frameRef.current !== 0 ||
+        !visibleRef.current ||
+        !pageVisibleRef.current
+      ) {
         return;
       }
 
@@ -447,15 +453,16 @@ export function StackCloud({ items }: StackCloudProps) {
       attributeFilter: ["data-theme", "data-motion-mode"],
     });
 
-    canvas.addEventListener("pointerenter", handlePointerEnter);
-    canvas.addEventListener("pointermove", handlePointerMove, { passive: true });
-    canvas.addEventListener("pointerleave", handlePointerLeave);
-    canvas.addEventListener("pointerdown", handlePointerDown);
-    canvas.addEventListener("pointerup", handlePointerUp);
-    canvas.addEventListener("pointercancel", handlePointerUp);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    startLoop();
+    if (shouldAnimate) {
+      canvas.addEventListener("pointerenter", handlePointerEnter);
+      canvas.addEventListener("pointermove", handlePointerMove, { passive: true });
+      canvas.addEventListener("pointerleave", handlePointerLeave);
+      canvas.addEventListener("pointerdown", handlePointerDown);
+      canvas.addEventListener("pointerup", handlePointerUp);
+      canvas.addEventListener("pointercancel", handlePointerUp);
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      startLoop();
+    }
 
     return () => {
       disposed = true;
@@ -463,15 +470,17 @@ export function StackCloud({ items }: StackCloudProps) {
       resizeObserver.disconnect();
       visibilityObserver?.disconnect();
       mutationObserver.disconnect();
-      canvas.removeEventListener("pointerenter", handlePointerEnter);
-      canvas.removeEventListener("pointermove", handlePointerMove);
-      canvas.removeEventListener("pointerleave", handlePointerLeave);
-      canvas.removeEventListener("pointerdown", handlePointerDown);
-      canvas.removeEventListener("pointerup", handlePointerUp);
-      canvas.removeEventListener("pointercancel", handlePointerUp);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      if (shouldAnimate) {
+        canvas.removeEventListener("pointerenter", handlePointerEnter);
+        canvas.removeEventListener("pointermove", handlePointerMove);
+        canvas.removeEventListener("pointerleave", handlePointerLeave);
+        canvas.removeEventListener("pointerdown", handlePointerDown);
+        canvas.removeEventListener("pointerup", handlePointerUp);
+        canvas.removeEventListener("pointercancel", handlePointerUp);
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+      }
     };
-  }, [hasCoarseInput, isConstrained, isReducedMotion, items, orbitalItems]);
+  }, [hasCoarseInput, isConstrained, isReducedMotion, items, orbitalItems, shouldAnimate]);
 
   return (
     <div className="stack-cloud-stage" ref={stageRef}>
