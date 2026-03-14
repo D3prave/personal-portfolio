@@ -44,7 +44,7 @@ function MoonIcon() {
 export function ThemeToggle({
   theme,
   onToggleTheme,
-  duration = 400,
+  duration = 520,
 }: ThemeToggleProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -77,39 +77,49 @@ export function ThemeToggle({
     };
 
     const documentWithTransition = document as ViewTransitionDocument;
+    const root = document.documentElement;
+    const applyThemeWithLock = () => {
+      root.classList.add("theme-transition-lock");
+      flushSync(applyTheme);
+      window.requestAnimationFrame(() => {
+        window.setTimeout(() => {
+          root.classList.remove("theme-transition-lock");
+        }, 24);
+      });
+    };
 
     if (
       prefersReducedMotion ||
       typeof documentWithTransition.startViewTransition !== "function"
     ) {
-      applyTheme();
+      applyThemeWithLock();
       return;
     }
+
+    const clearTransitionState = () => {
+      root.classList.remove("theme-transitioning", "theme-transition-lock");
+      root.style.removeProperty("--theme-wave-x");
+      root.style.removeProperty("--theme-wave-y");
+      root.style.removeProperty("--theme-wave-radius");
+      root.style.removeProperty("--theme-wave-duration");
+    };
+
+    root.style.setProperty("--theme-wave-x", `${x}px`);
+    root.style.setProperty("--theme-wave-y", `${y}px`);
+    root.style.setProperty("--theme-wave-radius", `${maxRadius}px`);
+    root.style.setProperty("--theme-wave-duration", `${duration}ms`);
+    root.classList.add("theme-transitioning", "theme-transition-lock");
 
     const transition = documentWithTransition.startViewTransition(() => {
       flushSync(applyTheme);
     });
 
-    const ready = transition?.ready;
-    if (ready && typeof ready.then === "function") {
-      void ready
-        .then(() => {
-          document.documentElement.animate(
-            {
-              clipPath: [
-                `circle(0px at ${x}px ${y}px)`,
-                `circle(${maxRadius}px at ${x}px ${y}px)`,
-              ],
-            },
-            {
-              duration,
-              easing: "ease-in-out",
-              pseudoElement: "::view-transition-new(root)",
-            },
-          );
-        })
-        .catch(() => undefined);
-    }
+    window.setTimeout(clearTransitionState, duration + 80);
+    void transition.finished.finally(() => {
+      window.requestAnimationFrame(() => {
+        clearTransitionState();
+      });
+    });
   }, [duration, onToggleTheme, theme]);
 
   return (
