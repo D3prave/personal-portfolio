@@ -143,8 +143,6 @@ function syncThemeDocument(theme: ThemeMode) {
   document.documentElement.dataset.theme = theme;
   document.documentElement.classList.toggle("dark", theme === "dark");
   document.documentElement.style.colorScheme = theme;
-  document.body.dataset.theme = theme;
-  document.body.classList.toggle("dark", theme === "dark");
 }
 
 function App() {
@@ -173,41 +171,17 @@ function App() {
 
     if (browser) {
       document.documentElement.dataset.browser = browser;
-      document.body.dataset.browser = browser;
     } else {
       delete document.documentElement.dataset.browser;
-      delete document.body.dataset.browser;
     }
 
     if (performance) {
       document.documentElement.dataset.performance = performance;
-      document.body.dataset.performance = performance;
       return;
     }
 
     delete document.documentElement.dataset.performance;
-    delete document.body.dataset.performance;
   }, [isConstrainedPerformance, isSafari]);
-
-  useEffect(() => {
-    if (typeof document === "undefined") {
-      return;
-    }
-
-    const applyVisibilityState = () => {
-      const pageVisibility = document.visibilityState === "hidden" ? "hidden" : "visible";
-
-      document.documentElement.dataset.pageVisibility = pageVisibility;
-      document.body.dataset.pageVisibility = pageVisibility;
-    };
-
-    applyVisibilityState();
-    document.addEventListener("visibilitychange", applyVisibilityState);
-
-    return () => {
-      document.removeEventListener("visibilitychange", applyVisibilityState);
-    };
-  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") {
