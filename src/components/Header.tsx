@@ -1,22 +1,17 @@
 import { useEffect, useState } from "react";
 import type { NavItem } from "../types/portfolio";
 import { SmoothAnchor } from "./SmoothAnchor";
-import { ThemeToggle } from "./ThemeToggle";
 
 interface HeaderProps {
   brand: string;
   roleLabel: string;
   navigation: NavItem[];
-  theme: "dark" | "light";
-  onToggleTheme: (theme: "dark" | "light") => void;
 }
 
 export function Header({
   brand,
   roleLabel,
   navigation,
-  theme,
-  onToggleTheme,
 }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeHref, setActiveHref] = useState(navigation[0]?.href ?? "#about");
@@ -246,8 +241,6 @@ export function Header({
               </SmoothAnchor>
             ))}
           </nav>
-
-          <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} />
         </div>
 
         <button

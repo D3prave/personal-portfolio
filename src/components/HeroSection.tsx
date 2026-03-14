@@ -1,5 +1,6 @@
 import type { ContactItem, HeroContent } from "../types/portfolio";
 import { HeroGraphScene } from "./HeroGraphScene";
+import { MagicText } from "./MagicText";
 import { SmoothAnchor } from "./SmoothAnchor";
 
 interface HeroSectionProps {
@@ -16,6 +17,13 @@ export function HeroSection({
       <div className="container hero-grid">
         <div className="hero-copy reveal">
           <p className="eyebrow">{hero.eyebrow}</p>
+          <p
+            className="hero-magic-line reveal"
+            style={{ ["--reveal-delay" as string]: "40ms" }}
+          >
+            <span className="hero-magic-label">{hero.magicLabel}</span>
+            <MagicText words={hero.magicWords} />
+          </p>
           <h1 className="hero-title">{hero.title}</h1>
           <p className="hero-description">{hero.description}</p>
 
@@ -33,11 +41,13 @@ export function HeroSection({
           </div>
 
           <div className="cta-row">
-            {hero.ctas.map((cta) => (
+            {[...hero.ctas, hero.resumeCta].map((cta) => (
               <SmoothAnchor
                 key={cta.label}
                 className={`button-link button-link--${cta.variant}`}
                 href={cta.href}
+                target={cta.target}
+                rel={cta.rel}
               >
                 {cta.label}
               </SmoothAnchor>

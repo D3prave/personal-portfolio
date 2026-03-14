@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { StackCloudItem } from "../types/portfolio";
+import type { PerformanceMode } from "../types/ui";
 import {
   hasCoarsePointer,
   isConstrainedPerformanceEnvironment,
@@ -8,6 +9,7 @@ import {
 
 interface StackCloudProps {
   items: StackCloudItem[];
+  performanceMode: PerformanceMode;
 }
 
 interface OrbitalItem extends StackCloudItem {
@@ -76,7 +78,10 @@ function createSphereLayout(items: StackCloudItem[]) {
   });
 }
 
-export function StackCloud({ items }: StackCloudProps) {
+export function StackCloud({
+  items,
+  performanceMode,
+}: StackCloudProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef(0);
@@ -103,7 +108,8 @@ export function StackCloud({ items }: StackCloudProps) {
   const [isConstrained] = useState(isConstrainedPerformanceEnvironment);
   const [isReducedMotion] = useState(prefersReducedMotion);
   const [hasCoarseInput] = useState(hasCoarsePointer);
-  const shouldAnimate = !hasCoarseInput && !isReducedMotion;
+  const isLitePerformance = performanceMode === "lite";
+  const shouldAnimate = !isReducedMotion;
   const orbitalItems = useMemo(() => createSphereLayout(items), [items]);
 
   useEffect(() => {
@@ -142,7 +148,11 @@ export function StackCloud({ items }: StackCloudProps) {
 
     const resizeCanvas = () => {
       const bounds = stage.getBoundingClientRect();
-      const dpr = clamp(window.devicePixelRatio || 1, 1, isConstrained ? 1.15 : 1.7);
+      const dpr = clamp(
+        window.devicePixelRatio || 1,
+        1,
+        isConstrained || isLitePerformance || hasCoarseInput ? 1.15 : 1.7,
+      );
       const width = Math.max(bounds.width, 260);
       const height = Math.max(bounds.height, 280);
 
@@ -262,8 +272,11 @@ export function StackCloud({ items }: StackCloudProps) {
         return;
       }
 
-      const motionScale = isReducedMotion ? 0.42 : 1;
-      const pointerEase = (hoverRef.current ? 0.18 : 0.08) * (isReducedMotion ? 0.72 : 1);
+      const motionScale = isLitePerformance ? 0.58 : hasCoarseInput ? 0.74 : 1;
+      const pointerEase =
+        (hoverRef.current ? 0.18 : 0.08) *
+        (isLitePerformance ? 0.82 : 1) *
+        (hasCoarseInput ? 0.9 : 1);
       const pointerInfluenceX =
         (isConstrained
           ? hoverRef.current
@@ -292,7 +305,8 @@ export function StackCloud({ items }: StackCloudProps) {
       const targetY = idleRotationY + pointerRef.current.x * pointerInfluenceY;
       const velocityEase =
         (dragRef.current.active ? 0.12 : hoverRef.current ? 0.18 : 0.11) *
-        (isReducedMotion ? 0.78 : 1);
+        (isLitePerformance ? 0.84 : 1) *
+        (hasCoarseInput ? 0.88 : 1);
 
       velocityRef.current.x += (targetX - velocityRef.current.x) * velocityEase;
       velocityRef.current.y += (targetY - velocityRef.current.y) * velocityEase;
@@ -385,9 +399,13 @@ export function StackCloud({ items }: StackCloudProps) {
     };
 
     const handlePointerDown = (event: PointerEvent) => {
-      if (hasCoarseInput || event.pointerType === "touch") {
+      if (event.pointerType === "mouse" && event.button !== 0) {
         return;
       }
+
+      const bounds = canvas.getBoundingClientRect();
+      const nextX = ((event.clientX - bounds.left) / bounds.width - 0.5) * 2;
+      const nextY = ((event.clientY - bounds.top) / bounds.height - 0.5) * 2;
 
       dragRef.current = {
         active: true,
@@ -396,7 +414,13 @@ export function StackCloud({ items }: StackCloudProps) {
         y: event.clientY,
       };
       hoverRef.current = true;
+      pointerTargetRef.current = {
+        x: clamp(nextX, -1, 1),
+        y: clamp(nextY, -1, 1),
+      };
       canvas.setPointerCapture(event.pointerId);
+      drawScene();
+      startLoop();
     };
 
     const handlePointerUp = (event: PointerEvent) => {
@@ -408,6 +432,11 @@ export function StackCloud({ items }: StackCloudProps) {
 
       if (canvas.hasPointerCapture(event.pointerId)) {
         canvas.releasePointerCapture(event.pointerId);
+      }
+
+      if (hasCoarseInput || event.pointerType === "touch") {
+        hoverRef.current = false;
+        pointerTargetRef.current = { x: 0, y: 0 };
       }
     };
 
@@ -453,13 +482,14 @@ export function StackCloud({ items }: StackCloudProps) {
       attributeFilter: ["data-theme", "data-motion-mode"],
     });
 
+    canvas.addEventListener("pointermove", handlePointerMove, { passive: true });
+    canvas.addEventListener("pointerdown", handlePointerDown);
+    canvas.addEventListener("pointerup", handlePointerUp);
+    canvas.addEventListener("pointercancel", handlePointerUp);
+
     if (shouldAnimate) {
       canvas.addEventListener("pointerenter", handlePointerEnter);
-      canvas.addEventListener("pointermove", handlePointerMove, { passive: true });
       canvas.addEventListener("pointerleave", handlePointerLeave);
-      canvas.addEventListener("pointerdown", handlePointerDown);
-      canvas.addEventListener("pointerup", handlePointerUp);
-      canvas.addEventListener("pointercancel", handlePointerUp);
       document.addEventListener("visibilitychange", handleVisibilityChange);
       startLoop();
     }
@@ -470,17 +500,25 @@ export function StackCloud({ items }: StackCloudProps) {
       resizeObserver.disconnect();
       visibilityObserver?.disconnect();
       mutationObserver.disconnect();
+      canvas.removeEventListener("pointermove", handlePointerMove);
+      canvas.removeEventListener("pointerdown", handlePointerDown);
+      canvas.removeEventListener("pointerup", handlePointerUp);
+      canvas.removeEventListener("pointercancel", handlePointerUp);
       if (shouldAnimate) {
         canvas.removeEventListener("pointerenter", handlePointerEnter);
-        canvas.removeEventListener("pointermove", handlePointerMove);
         canvas.removeEventListener("pointerleave", handlePointerLeave);
-        canvas.removeEventListener("pointerdown", handlePointerDown);
-        canvas.removeEventListener("pointerup", handlePointerUp);
-        canvas.removeEventListener("pointercancel", handlePointerUp);
         document.removeEventListener("visibilitychange", handleVisibilityChange);
       }
     };
-  }, [hasCoarseInput, isConstrained, isReducedMotion, items, orbitalItems, shouldAnimate]);
+  }, [
+    hasCoarseInput,
+    isConstrained,
+    isReducedMotion,
+    isLitePerformance,
+    items,
+    orbitalItems,
+    shouldAnimate,
+  ]);
 
   return (
     <div className="stack-cloud-stage" ref={stageRef}>
