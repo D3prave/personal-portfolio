@@ -6,11 +6,12 @@ import { ContactSection } from "./components/ContactSection";
 import { ExperienceSection } from "./components/ExperienceSection";
 import { Header } from "./components/Header";
 import { HeroSection } from "./components/HeroSection";
-import { MotionModeSwitcher, type MotionMode } from "./components/MotionModeSwitcher";
+import { MotionModeSwitcher } from "./components/MotionModeSwitcher";
 import { ProjectsSection } from "./components/ProjectsSection";
 import { ScrollProgress } from "./components/ScrollProgress";
 import { SkillsSection } from "./components/SkillsSection";
 import { portfolio } from "./data/portfolio";
+import type { MotionMode, PerformanceMode } from "./types/ui";
 import {
   hasCoarsePointer,
   isConstrainedPerformanceEnvironment,
@@ -19,6 +20,7 @@ import {
 } from "./utils/performance";
 
 const MOTION_MODE_STORAGE_KEY = "motion-mode";
+const PERFORMANCE_MODE_STORAGE_KEY = "performance-mode";
 type ThemeMode = "dark" | "light";
 
 const pointerConfig = {
@@ -135,6 +137,20 @@ function readInitialMotionMode(): MotionMode {
   return "core";
 }
 
+function readInitialPerformanceMode(): PerformanceMode {
+  if (typeof window === "undefined") {
+    return "full";
+  }
+
+  const storedMode = window.localStorage.getItem(PERFORMANCE_MODE_STORAGE_KEY);
+
+  if (storedMode === "lite" || storedMode === "full") {
+    return storedMode;
+  }
+
+  return isConstrainedPerformanceEnvironment() ? "lite" : "full";
+}
+
 function syncThemeDocument(theme: ThemeMode) {
   if (typeof document === "undefined") {
     return;
@@ -164,24 +180,21 @@ function App() {
   const [motionMode, setMotionMode] = useState<MotionMode>(readInitialMotionMode);
   const [isSafari] = useState(isSafariBrowser);
   const [isConstrainedPerformance] = useState(isConstrainedPerformanceEnvironment);
+  const [performanceMode, setPerformanceMode] = useState<PerformanceMode>(
+    readInitialPerformanceMode,
+  );
+  const isLitePerformance = performanceMode === "lite";
 
   useEffect(() => {
     const browser = isSafari ? "safari" : "";
-    const performance = isConstrainedPerformance ? "constrained" : "";
 
     if (browser) {
       document.documentElement.dataset.browser = browser;
     } else {
       delete document.documentElement.dataset.browser;
     }
-
-    if (performance) {
-      document.documentElement.dataset.performance = performance;
-      return;
-    }
-
-    delete document.documentElement.dataset.performance;
-  }, [isConstrainedPerformance, isSafari]);
+    document.documentElement.dataset.performance = performanceMode;
+  }, [isSafari, performanceMode]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -206,7 +219,7 @@ function App() {
     }
 
     const useDirectScrollSync =
-      isConstrainedPerformance || (isSafari && motionMode === "cinematic");
+      isConstrainedPerformance || isLitePerformance || (isSafari && motionMode === "cinematic");
     const revealElements = Array.from(document.querySelectorAll<HTMLElement>(".reveal"));
     const sectionElements = Array.from(
       document.querySelectorAll<HTMLElement>("main .section"),
@@ -526,7 +539,7 @@ function App() {
       window.removeEventListener("load", scheduleMeasure);
       window.removeEventListener("lenis-scroll", queueRender);
     };
-  }, [isConstrainedPerformance, isSafari, motionMode]);
+  }, [isConstrainedPerformance, isLitePerformance, isSafari, motionMode]);
 
   useEffect(() => {
     syncThemeDocument(theme);
@@ -540,6 +553,10 @@ function App() {
   }, [motionMode]);
 
   useEffect(() => {
+    window.localStorage.setItem(PERFORMANCE_MODE_STORAGE_KEY, performanceMode);
+  }, [performanceMode]);
+
+  useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
@@ -549,7 +566,7 @@ function App() {
       "(hover: hover) and (pointer: fine)",
     ).matches;
 
-    if (isConstrainedPerformance || reducedMotion || !supportsHover) {
+    if (isConstrainedPerformance || isLitePerformance || reducedMotion || !supportsHover) {
       return;
     }
 
@@ -613,7 +630,7 @@ function App() {
         element.removeEventListener("pointerleave", handlePointerLeave);
       });
     };
-  }, [isConstrainedPerformance]);
+  }, [isConstrainedPerformance, isLitePerformance]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -676,7 +693,7 @@ function App() {
 
     applyPointer(currentX, currentY, 0);
 
-    if (isConstrainedPerformance || reducedMotion || !supportsHover) {
+    if (isConstrainedPerformance || isLitePerformance || reducedMotion || !supportsHover) {
       return;
     }
 
@@ -733,7 +750,7 @@ function App() {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("resize", handleResize);
     };
-  }, [isConstrainedPerformance, isSafari, motionMode]);
+  }, [isConstrainedPerformance, isLitePerformance, isSafari, motionMode]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -759,6 +776,7 @@ function App() {
 
     if (
       isConstrainedPerformance ||
+      isLitePerformance ||
       reducedMotion ||
       !supportsHover ||
       cellItems.length === 0
@@ -850,7 +868,7 @@ function App() {
         node.style.removeProperty("--cell-tilt");
       });
     };
-  }, [isConstrainedPerformance, isSafari, motionMode]);
+  }, [isConstrainedPerformance, isLitePerformance, isSafari, motionMode]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -863,7 +881,13 @@ function App() {
       window.matchMedia("(hover: hover) and (pointer: fine)").matches;
     const cellField = document.querySelector<HTMLElement>(".cell-field");
 
-    if (isConstrainedPerformance || reducedMotion || !supportsHover || !cellField) {
+    if (
+      isConstrainedPerformance ||
+      isLitePerformance ||
+      reducedMotion ||
+      !supportsHover ||
+      !cellField
+    ) {
       return;
     }
 
@@ -911,24 +935,31 @@ function App() {
       window.clearTimeout(clickTimeout);
       document.documentElement.style.setProperty("--click-energy", "0");
     };
-  }, [isConstrainedPerformance, isSafari, motionMode]);
+  }, [isConstrainedPerformance, isLitePerformance, isSafari, motionMode]);
 
   return (
     <div className={`site-shell motion-mode-${motionMode}`}>
-      {isConstrainedPerformance ? null : <CellField />}
-      {isConstrainedPerformance ? null : <AmbientField />}
+      {isConstrainedPerformance || isLitePerformance ? null : <CellField />}
+      {isConstrainedPerformance || isLitePerformance ? null : <AmbientField />}
       <ScrollProgress />
       <Header
         brand={portfolio.brand}
         roleLabel={portfolio.roleLabel}
         navigation={portfolio.navigation}
+      />
+      <MotionModeSwitcher
+        mode={motionMode}
+        onChange={setMotionMode}
+        performanceMode={performanceMode}
+        onChangePerformanceMode={setPerformanceMode}
         theme={theme}
         onToggleTheme={(nextTheme) => {
           syncThemeDocument(nextTheme);
           setTheme(nextTheme);
         }}
+        contactHref={`#${portfolio.contactSection.id}`}
+        resumeCta={portfolio.hero.resumeCta}
       />
-      <MotionModeSwitcher mode={motionMode} onChange={setMotionMode} />
 
       <main>
         <HeroSection
@@ -949,6 +980,7 @@ function App() {
           section={portfolio.skillsSection}
           cloud={portfolio.skillsCloud}
           skillGroups={portfolio.skillGroups}
+          performanceMode={performanceMode}
         />
         <ExperienceSection
           section={portfolio.experienceSection}
@@ -957,7 +989,7 @@ function App() {
         <ContactSection contact={portfolio.contactSection} />
       </main>
 
-      {isConstrainedPerformance ? null : (
+      {isConstrainedPerformance || isLitePerformance ? null : (
         <>
           <div className="cursor-comet" aria-hidden="true" />
           <div className="cursor-trail" aria-hidden="true" />

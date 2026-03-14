@@ -1,0 +1,9 @@
+Resume placeholder
+
+Replace this file with the final CV / resume export later.
+
+Suggested final filename:
+jakub-wisniewski-resume.pdf
+
+Current placeholder added so the portfolio CTA and mobile sticky action
+already have a working target during development.

@@ -11,52 +11,64 @@ export const portfolio: PortfolioData = {
     { label: "Contact", href: "#contact" },
   ],
   hero: {
-    eyebrow:
-      "Enterprise IT, research infrastructure, and data-intensive software systems",
-    title:
-      "I build technically serious software for data-heavy, backend-driven, real-world applications.",
+    eyebrow: "Backend engineering, ML workflows, and data-heavy software systems",
+    magicLabel: "Focused on",
+    magicWords: [
+      "backend systems",
+      "ML workflows",
+      "analytics products",
+      "research tooling",
+    ],
+    title: "I build backend systems that make complex data work in the real world.",
     description:
-      "I am a Bachelor of Data Science student at Katholische Universit\u00e4t Eichst\u00e4tt-Ingolstadt, currently working across Siemens, university research infrastructure, and conference website operations. My work sits at the intersection of backend engineering, machine learning, data analytics, graph-oriented systems, and practical product delivery.",
+      "I work across Siemens, university research infrastructure, and conference web operations, building software that has to be reliable, clear, and useful beyond a demo. My focus is backend engineering, ML-enabled workflows, analytics tooling, and product delivery for technical environments.",
     ctas: [
       { label: "View Featured Work", href: "#featured-projects", variant: "primary" },
       { label: "View Experience", href: "#experience", variant: "secondary" },
     ],
+    resumeCta: {
+      label: "Open Resume",
+      href: "/jakub-wisniewski-resume-placeholder.txt",
+      variant: "secondary",
+      target: "_blank",
+      rel: "noreferrer",
+    },
     signals: [
       {
-        label: "Degree",
+        label: "Current scope",
+        value: "Siemens, HPC, conference web",
+      },
+      {
+        label: "Focus",
+        value: "Backend, ML, analytics",
+      },
+      {
+        label: "Studying",
         value: "B.Sc. Data Science",
       },
       {
-        label: "University",
-        value: "KU Eichst\u00e4tt-Ingolstadt",
-      },
-      {
-        label: "Current roles",
-        value: "Siemens, research, conference web",
-      },
-      {
-        label: "Interests",
-        value: "Backend, ML, data analytics",
+        label: "Based in",
+        value: "Germany",
       },
     ],
     stats: [
-      { value: "3", label: "current technical roles" },
-      { value: "5", label: "selected software projects" },
-      { value: "3", label: "focus areas: backend, ML, analytics" },
+      { value: "3", label: "active technical roles" },
+      { value: "5", label: "selected software builds" },
+      { value: "1", label: "technical profile across backend, ML, and analytics" },
     ],
-    highlightsTitle: "Current work",
+    highlightsTitle: "Current scope",
     highlights: [
       {
         title: "Enterprise IT architecture support",
-        text: "Contribute to architecture documentation, system landscape analysis, reporting, and technology research inside a large-scale Siemens environment.",
+        text: "Support architecture documentation, landscape analysis, reporting, and technology research inside a large-scale Siemens environment.",
       },
       {
         title: "Research infrastructure enablement",
-        text: "Help researchers work with Linux and SLURM-based HPC systems, covering SSH setup, remote execution, data transfer, troubleshooting, and technical documentation.",
+        text: "Help researchers work effectively with Linux and SLURM-based HPC systems, from SSH setup and remote execution to troubleshooting and technical documentation.",
       },
       {
         title: "Conference website operations",
-        text: "Run and extend the central SampTA conference website, including cross-edition structure, implementation, and core information architecture.",
+        text: "Run and extend the central SampTA conference website, covering cross-edition structure, implementation, and core information architecture.",
       },
     ],
   },

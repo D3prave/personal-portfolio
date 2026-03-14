@@ -7,6 +7,8 @@ export interface CtaLink {
   label: string;
   href: string;
   variant: "primary" | "secondary";
+  target?: "_self" | "_blank";
+  rel?: string;
 }
 
 export interface HeroStat {
@@ -26,9 +28,12 @@ export interface HighlightItem {
 
 export interface HeroContent {
   eyebrow: string;
+  magicLabel: string;
+  magicWords: string[];
   title: string;
   description: string;
   ctas: CtaLink[];
+  resumeCta: CtaLink;
   signals: HeroSignal[];
   stats: HeroStat[];
   highlightsTitle: string;

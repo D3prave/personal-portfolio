@@ -1,4 +1,5 @@
 import type { SectionContent, SkillGroup, StackCloudContent } from "../types/portfolio";
+import type { PerformanceMode } from "../types/ui";
 import { SectionIntro } from "./SectionIntro";
 import { StackCloud } from "./StackCloud";
 import { SkillVisual } from "./SkillVisual";
@@ -7,12 +8,14 @@ interface SkillsSectionProps {
   section: SectionContent;
   cloud: StackCloudContent;
   skillGroups: SkillGroup[];
+  performanceMode: PerformanceMode;
 }
 
 export function SkillsSection({
   section,
   cloud,
   skillGroups,
+  performanceMode,
 }: SkillsSectionProps) {
   return (
     <section className="section section-reveal reveal" id={section.id}>
@@ -32,7 +35,7 @@ export function SkillsSection({
             <h3>{cloud.title}</h3>
             <p>{cloud.description}</p>
           </div>
-          <StackCloud items={cloud.items} />
+          <StackCloud items={cloud.items} performanceMode={performanceMode} />
         </article>
 
         <div className="skills-grid">
