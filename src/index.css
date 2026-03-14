@@ -659,11 +659,85 @@ textarea:focus-visible {
 }
 
 #root {
+  position: relative;
+  isolation: isolate;
   min-height: 100vh;
+}
+
+#root::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      64rem 46rem at 14% 4%,
+      hsl(var(--section-hue) 88% 70% / calc(0.13 + var(--section-depth, 0) * 0.12)),
+      transparent 72%
+    ),
+    radial-gradient(
+      52rem 38rem at 88% 18%,
+      rgba(246, 193, 119, calc(0.11 + var(--section-depth, 0) * 0.06)),
+      transparent 74%
+    ),
+    radial-gradient(
+      56rem 44rem at 18% 70%,
+      hsl(var(--section-hue) 84% 66% / calc(0.09 + var(--section-depth, 0) * 0.1)),
+      transparent 76%
+    ),
+    radial-gradient(
+      44rem 34rem at 84% 92%,
+      rgba(125, 211, 252, 0.07),
+      transparent 78%
+    ),
+    linear-gradient(
+      180deg,
+      hsl(var(--section-hue) 90% 72% / 0.04) 0%,
+      rgba(246, 193, 119, 0.04) 24%,
+      hsl(var(--section-hue) 88% 68% / 0.05) 50%,
+      rgba(125, 211, 252, 0.035) 76%,
+      rgba(246, 193, 119, 0.03) 100%
+    );
+  opacity: 0.92;
+}
+
+:root[data-theme="light"] #root::before {
+  background:
+    radial-gradient(
+      64rem 46rem at 12% 2%,
+      hsl(var(--section-hue) 78% 56% / calc(0.1 + var(--section-depth, 0) * 0.08)),
+      transparent 72%
+    ),
+    radial-gradient(
+      54rem 36rem at 86% 16%,
+      rgba(217, 119, 6, calc(0.09 + var(--section-depth, 0) * 0.05)),
+      transparent 74%
+    ),
+    radial-gradient(
+      56rem 42rem at 20% 74%,
+      hsl(var(--section-hue) 72% 54% / calc(0.07 + var(--section-depth, 0) * 0.08)),
+      transparent 76%
+    ),
+    radial-gradient(
+      44rem 32rem at 84% 92%,
+      rgba(56, 189, 248, 0.05),
+      transparent 78%
+    ),
+    linear-gradient(
+      180deg,
+      hsl(var(--section-hue) 74% 60% / 0.03) 0%,
+      rgba(217, 119, 6, 0.03) 24%,
+      hsl(var(--section-hue) 72% 56% / 0.04) 52%,
+      rgba(56, 189, 248, 0.025) 78%,
+      rgba(217, 119, 6, 0.02) 100%
+    );
+  opacity: 0.88;
 }
 
 .site-shell {
   position: relative;
+  z-index: 1;
 }
 
 .site-shell > :not(.ambient-field):not(.cell-field):not(.site-header):not(.scroll-progress):not(.motion-mode-switcher):not(.mobile-sticky-bar):not(.cursor-comet):not(.cursor-trail) {
@@ -2838,19 +2912,19 @@ body[data-motion-mode="experimental"] .quick-link {
 
 .project-layout {
   display: grid;
-  gap: 0.85rem;
+  gap: 0.74rem;
 }
 
 .project-card--featured .project-layout {
   grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
-  gap: 1.15rem;
+  gap: 0.98rem;
   align-items: start;
 }
 
 .project-overview {
   display: grid;
   align-content: start;
-  gap: 0.78rem;
+  gap: 0.62rem;
 }
 
 .project-topline {
@@ -2895,7 +2969,7 @@ body[data-motion-mode="experimental"] .quick-link {
 
 .project-header {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.28rem;
 }
 
 .project-visual {
@@ -2910,9 +2984,49 @@ body[data-motion-mode="experimental"] .quick-link {
 }
 
 .project-visual--image {
+  min-height: 0;
+  aspect-ratio: 16 / 10;
   background:
     linear-gradient(180deg, rgba(7, 11, 21, 0.08), rgba(7, 11, 21, 0.28)),
     rgba(7, 11, 21, 0.82);
+}
+
+.project-card--featured .project-visual--image {
+  min-height: clamp(12.5rem, 23vw, 15rem);
+  aspect-ratio: 16 / 10;
+}
+
+.project-card--featured .project-visual--interactive {
+  min-height: clamp(13.6rem, 26vw, 16.5rem);
+  aspect-ratio: 1.34;
+}
+
+.project-card--secondary .project-visual--image {
+  min-height: clamp(10.2rem, 18vw, 12.2rem);
+  aspect-ratio: 1.56;
+}
+
+.project-card--media-wide .project-visual--image {
+  aspect-ratio: 1.88;
+}
+
+.project-card--featured.project-card--media-wide .project-visual--image {
+  min-height: clamp(11rem, 20vw, 13rem);
+  aspect-ratio: 1.9;
+}
+
+.project-card--media-tall .project-visual--image {
+  aspect-ratio: 1.38;
+}
+
+.project-card--featured.project-card--media-tall .project-visual--image {
+  min-height: clamp(13.8rem, 27vw, 16.8rem);
+  aspect-ratio: 1.32;
+}
+
+.project-card--secondary.project-card--media-tall .project-visual--image {
+  min-height: clamp(11.2rem, 20vw, 13.6rem);
+  aspect-ratio: 1.34;
 }
 
 .project-visual--interactive {
@@ -2950,6 +3064,26 @@ body[data-motion-mode="experimental"] .quick-link {
 
   .project-visual {
     contain-intrinsic-size: 9rem;
+  }
+
+  .project-visual--image {
+    contain-intrinsic-size: 12rem;
+  }
+
+  .project-card--featured .project-visual--interactive {
+    contain-intrinsic-size: 15rem;
+  }
+
+  .project-card--featured.project-card--media-wide .project-visual--image {
+    contain-intrinsic-size: 12rem;
+  }
+
+  .project-card--featured.project-card--media-tall .project-visual--image {
+    contain-intrinsic-size: 16rem;
+  }
+
+  .project-card--secondary.project-card--media-tall .project-visual--image {
+    contain-intrinsic-size: 13rem;
   }
 
   .skill-visual {
@@ -2993,25 +3127,28 @@ body[data-motion-mode="experimental"] .quick-link {
 
 .project-visual-expand {
   position: absolute;
-  right: 0.8rem;
-  bottom: 0.8rem;
+  top: 0.72rem;
+  right: 0.72rem;
   z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2rem;
-  padding: 0.38rem 0.75rem;
+  min-height: 1.9rem;
+  padding: 0.3rem 0.68rem;
   border-radius: 999px;
-  background: rgba(7, 11, 21, 0.74);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(125, 211, 252, 0.03)),
+    rgba(7, 11, 21, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.9);
   font-size: 0.72rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  opacity: 0.78;
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
   transition:
+    opacity 220ms ease,
     transform 220ms ease,
     background 220ms ease,
     border-color 220ms ease;
@@ -3019,8 +3156,11 @@ body[data-motion-mode="experimental"] .quick-link {
 
 .project-visual--interactive:hover .project-visual-expand,
 .project-visual--interactive:focus-visible .project-visual-expand {
-  transform: translateY(-1px);
-  background: rgba(7, 11, 21, 0.86);
+  opacity: 1;
+  transform: translateY(-1px) scale(1.01);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(125, 211, 252, 0.06)),
+    rgba(7, 11, 21, 0.72);
   border-color: rgba(125, 211, 252, 0.22);
 }
 
@@ -3329,7 +3469,7 @@ body[data-motion-mode="experimental"] .quick-link {
 
 .project-body {
   display: grid;
-  gap: 0.72rem;
+  gap: 0.62rem;
 }
 
 .project-proof {
@@ -3378,12 +3518,12 @@ body[data-motion-mode="experimental"] .quick-link {
 
 .project-meta {
   display: grid;
-  gap: 0.8rem;
+  gap: 0.68rem;
 }
 
 .project-card--featured .project-meta {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem 1.15rem;
+  gap: 0.82rem 0.98rem;
 }
 
 .list-title {

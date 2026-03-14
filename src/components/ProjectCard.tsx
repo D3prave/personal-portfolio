@@ -17,10 +17,14 @@ export function ProjectCard({
   delay = 0,
 }: ProjectCardProps) {
   const hasLinks = Boolean(project.repoUrl || project.liveUrl);
+  const hasMedia = Boolean(project.media);
+  const mediaVariantClassName = hasMedia
+    ? `project-card--media-${project.media?.cardVariant ?? "default"}`
+    : "";
 
   return (
     <article
-      className={`project-card reveal hover-spotlight ${primary ? "project-card--primary" : "project-card--secondary"} ${featured ? "project-card--featured" : ""}`}
+      className={`project-card reveal hover-spotlight ${primary ? "project-card--primary" : "project-card--secondary"} ${featured ? "project-card--featured" : ""} ${hasMedia ? "project-card--has-media" : ""} ${mediaVariantClassName}`}
       style={{ ["--reveal-delay" as string]: `${delay}ms` }}
     >
       <div className="project-layout">

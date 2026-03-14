@@ -80,6 +80,7 @@ export interface ProjectMedia {
   alt: string;
   fit?: "cover" | "contain";
   position?: string;
+  cardVariant?: "default" | "wide" | "tall";
   expandable?: boolean;
   expandLabel?: string;
   dialogSrc?: string;
