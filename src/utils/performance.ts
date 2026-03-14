@@ -62,7 +62,6 @@ export function shouldUseNativeScroll() {
   return (
     prefersReducedMotion() ||
     hasCoarsePointer() ||
-    isSafariBrowser() ||
     isIOSWebKitBrowser()
   );
 }
