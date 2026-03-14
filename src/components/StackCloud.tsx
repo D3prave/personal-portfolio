@@ -24,6 +24,21 @@ interface CloudPalette {
   plateFill: string;
   plateLine: string;
   shadow: string;
+  highlightFill: string;
+  highlightLine: string;
+  tooltipFill: string;
+  tooltipText: string;
+}
+
+interface ProjectedOrbitalItem extends OrbitalItem {
+  screenX: number;
+  screenY: number;
+  depthZ: number;
+  scale: number;
+  opacity: number;
+  size: number;
+  plateSize: number;
+  plateRadius: number;
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -85,10 +100,14 @@ export function StackCloud({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef(0);
-  const rotationRef = useRef({ x: -0.34, y: 0.52 });
+  const lastTickRef = useRef<number | null>(null);
+  const baseRotationRef = useRef({ x: -0.34, y: 0.52 });
+  const displayRotationRef = useRef({ x: -0.34, y: 0.52 });
+  const autoOrbitRef = useRef({ spinY: 0, wobbleX: 0, wobbleY: 0 });
   const velocityRef = useRef({ x: 0, y: 0 });
-  const pointerRef = useRef({ x: 0, y: 0 });
   const pointerTargetRef = useRef({ x: 0, y: 0 });
+  const pointerRef = useRef({ x: 0, y: 0 });
+  const pointerCanvasRef = useRef({ x: 0, y: 0, active: false });
   const hoverRef = useRef(false);
   const dragRef = useRef({
     active: false,
@@ -96,12 +115,17 @@ export function StackCloud({
     x: 0,
     y: 0,
   });
+  const hoveredItemIdRef = useRef<number | null>(null);
   const sizeRef = useRef({ width: 0, height: 0, radius: 110, dpr: 1 });
   const paletteRef = useRef<CloudPalette>({
     coreGlow: "rgba(59, 130, 246, 0.12)",
     plateFill: "rgba(255, 255, 255, 0.05)",
     plateLine: "rgba(255, 255, 255, 0.08)",
     shadow: "rgba(0, 0, 0, 0.38)",
+    highlightFill: "rgba(125, 211, 252, 0.12)",
+    highlightLine: "rgba(125, 211, 252, 0.34)",
+    tooltipFill: "rgba(6, 10, 18, 0.86)",
+    tooltipText: "rgba(240, 249, 255, 0.96)",
   });
   const visibleRef = useRef(true);
   const pageVisibleRef = useRef(true);
@@ -109,7 +133,8 @@ export function StackCloud({
   const [isReducedMotion] = useState(prefersReducedMotion);
   const [hasCoarseInput] = useState(hasCoarsePointer);
   const isLitePerformance = performanceMode === "lite";
-  const shouldAnimate = !isReducedMotion;
+  const isFullPerformance = performanceMode === "full";
+  const shouldAnimate = isFullPerformance || !isReducedMotion;
   const orbitalItems = useMemo(() => createSphereLayout(items), [items]);
 
   useEffect(() => {
@@ -137,13 +162,135 @@ export function StackCloud({
 
     const updatePalette = () => {
       const styles = window.getComputedStyle(stage);
+      const previousPalette = paletteRef.current;
 
       paletteRef.current = {
-        coreGlow: styles.getPropertyValue("--cloud-core-glow").trim(),
-        plateFill: styles.getPropertyValue("--cloud-plate-fill").trim(),
-        plateLine: styles.getPropertyValue("--cloud-plate-line").trim(),
-        shadow: styles.getPropertyValue("--cloud-shadow").trim(),
+        coreGlow:
+          styles.getPropertyValue("--cloud-core-glow").trim() || previousPalette.coreGlow,
+        plateFill:
+          styles.getPropertyValue("--cloud-plate-fill").trim() || previousPalette.plateFill,
+        plateLine:
+          styles.getPropertyValue("--cloud-plate-line").trim() || previousPalette.plateLine,
+        shadow: styles.getPropertyValue("--cloud-shadow").trim() || previousPalette.shadow,
+        highlightFill:
+          styles.getPropertyValue("--cloud-highlight-fill").trim() ||
+          previousPalette.highlightFill,
+        highlightLine:
+          styles.getPropertyValue("--cloud-highlight-line").trim() ||
+          previousPalette.highlightLine,
+        tooltipFill:
+          styles.getPropertyValue("--cloud-tooltip-fill").trim() ||
+          previousPalette.tooltipFill,
+        tooltipText:
+          styles.getPropertyValue("--cloud-tooltip-text").trim() ||
+          previousPalette.tooltipText,
       };
+    };
+
+    const pickHoveredItem = (projected: ProjectedOrbitalItem[]) => {
+      if (!pointerCanvasRef.current.active) {
+        hoveredItemIdRef.current = null;
+        return null;
+      }
+
+      const { x, y } = pointerCanvasRef.current;
+
+      for (let index = projected.length - 1; index >= 0; index -= 1) {
+        const item = projected[index];
+        const halfSize = item.plateSize * 0.52;
+
+        if (
+          x >= item.screenX - halfSize &&
+          x <= item.screenX + halfSize &&
+          y >= item.screenY - halfSize &&
+          y <= item.screenY + halfSize
+        ) {
+          hoveredItemIdRef.current = item.id;
+          return item;
+        }
+      }
+
+      hoveredItemIdRef.current = null;
+      return null;
+    };
+
+    const drawItem = (item: ProjectedOrbitalItem, isHovered: boolean) => {
+      const palette = paletteRef.current;
+      const image = images[item.id];
+      const isLoaded = loadedIcons[item.id];
+      const scaleMultiplier = isHovered ? 1.14 : 1;
+      const glowMultiplier = isHovered ? 1.45 : 1;
+      const size = item.size * scaleMultiplier;
+      const plateSize = item.plateSize * scaleMultiplier;
+      const plateRadius = item.plateRadius * scaleMultiplier;
+
+      context.save();
+      context.translate(item.screenX, item.screenY);
+      context.globalAlpha = isHovered ? 1 : item.opacity;
+
+      traceRoundedTile(
+        context,
+        -plateSize / 2,
+        -plateSize / 2,
+        plateSize,
+        plateSize,
+        plateRadius,
+      );
+      context.fillStyle = isHovered ? palette.highlightFill : palette.plateFill;
+      context.fill();
+      context.lineWidth = isHovered ? 1.35 : 1;
+      context.strokeStyle = isHovered ? palette.highlightLine : palette.plateLine;
+      context.stroke();
+
+      if (isLoaded) {
+        context.shadowColor = palette.shadow;
+        context.shadowBlur = item.scale * 12 * glowMultiplier;
+        context.drawImage(image, -size / 2, -size / 2, size, size);
+      } else {
+        context.beginPath();
+        context.arc(0, 0, size * 0.2, 0, Math.PI * 2);
+        context.fillStyle = isHovered ? palette.highlightLine : palette.plateLine;
+        context.fill();
+      }
+
+      context.restore();
+    };
+
+    const drawTooltip = (item: ProjectedOrbitalItem) => {
+      const palette = paletteRef.current;
+      const label = item.label;
+      const fontSize = clamp(11.5 + item.scale * 1.9, 11.5, 14.2);
+      const labelPaddingX = 10;
+      const labelHeight = 28;
+      const maxWidth = sizeRef.current.width - 16;
+
+      context.save();
+      context.font = `600 ${fontSize}px "IBM Plex Sans", system-ui, sans-serif`;
+      const textWidth = context.measureText(label).width;
+      const bubbleWidth = clamp(textWidth + labelPaddingX * 2, 72, maxWidth);
+      const bubbleX = clamp(
+        item.screenX - bubbleWidth / 2,
+        8,
+        sizeRef.current.width - bubbleWidth - 8,
+      );
+      const bubbleY = clamp(
+        item.screenY + item.plateSize * 0.72,
+        8,
+        sizeRef.current.height - labelHeight - 8,
+      );
+
+      traceRoundedTile(context, bubbleX, bubbleY, bubbleWidth, labelHeight, 11);
+      context.fillStyle = palette.tooltipFill;
+      context.fill();
+      context.lineWidth = 1;
+      context.strokeStyle = palette.highlightLine;
+      context.stroke();
+
+      context.fillStyle = palette.tooltipText;
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText(label, bubbleX + bubbleWidth / 2, bubbleY + labelHeight / 2 + 0.5);
+      context.restore();
     };
 
     const resizeCanvas = () => {
@@ -193,10 +340,10 @@ export function StackCloud({
 
       const projected = orbitalItems
         .map((item) => {
-          const cosY = Math.cos(rotationRef.current.y);
-          const sinY = Math.sin(rotationRef.current.y);
-          const cosX = Math.cos(rotationRef.current.x);
-          const sinX = Math.sin(rotationRef.current.x);
+          const cosY = Math.cos(displayRotationRef.current.y);
+          const sinY = Math.sin(displayRotationRef.current.y);
+          const cosX = Math.cos(displayRotationRef.current.x);
+          const sinX = Math.sin(displayRotationRef.current.x);
 
           const baseX = item.x * radius;
           const baseY = item.y * radius;
@@ -215,48 +362,26 @@ export function StackCloud({
             depthZ,
             scale: 0.54 + depth * 0.74,
             opacity: 0.2 + depth * 0.8,
+            size: clamp(16 + (0.54 + depth * 0.74) * 24, 16, 46),
+            plateSize: clamp(16 + (0.54 + depth * 0.74) * 24, 16, 46) * 1.34,
+            plateRadius: clamp(16 + (0.54 + depth * 0.74) * 24, 16, 46) * 1.34 * 0.24,
           };
         })
         .sort((left, right) => left.depthZ - right.depthZ);
+      const hoveredItem = pickHoveredItem(projected);
 
       projected.forEach((item) => {
-        const size = clamp(16 + item.scale * 24, 16, 46);
-        const plateSize = size * 1.34;
-        const plateRadius = plateSize * 0.24;
-        const image = images[item.id];
-        const isLoaded = loadedIcons[item.id];
-
-        context.save();
-        context.translate(item.screenX, item.screenY);
-        context.globalAlpha = item.opacity;
-
-        traceRoundedTile(
-          context,
-          -plateSize / 2,
-          -plateSize / 2,
-          plateSize,
-          plateSize,
-          plateRadius,
-        );
-        context.fillStyle = palette.plateFill;
-        context.fill();
-        context.lineWidth = 1;
-        context.strokeStyle = palette.plateLine;
-        context.stroke();
-
-        if (isLoaded) {
-          context.shadowColor = palette.shadow;
-          context.shadowBlur = item.scale * 12;
-          context.drawImage(image, -size / 2, -size / 2, size, size);
-        } else {
-          context.beginPath();
-          context.arc(0, 0, size * 0.2, 0, Math.PI * 2);
-          context.fillStyle = palette.plateLine;
-          context.fill();
+        if (hoveredItem && item.id === hoveredItem.id) {
+          return;
         }
 
-        context.restore();
+        drawItem(item, false);
       });
+
+      if (hoveredItem) {
+        drawItem(hoveredItem, true);
+        drawTooltip(hoveredItem);
+      }
     };
 
     const stopLoop = () => {
@@ -264,54 +389,96 @@ export function StackCloud({
         window.cancelAnimationFrame(frameRef.current);
         frameRef.current = 0;
       }
+
+      lastTickRef.current = null;
     };
 
-    const tick = () => {
+    const tick = (timestamp: number) => {
       if (!visibleRef.current || !pageVisibleRef.current) {
+        lastTickRef.current = null;
         frameRef.current = 0;
         return;
       }
 
-      const motionScale = isLitePerformance ? 0.58 : hasCoarseInput ? 0.74 : 1;
-      const pointerEase =
-        (hoverRef.current ? 0.18 : 0.08) *
-        (isLitePerformance ? 0.82 : 1) *
-        (hasCoarseInput ? 0.9 : 1);
-      const pointerInfluenceX =
-        (isConstrained
-          ? hoverRef.current
-            ? 0.00195
-            : 0.00115
-          : hoverRef.current
-            ? 0.0032
-            : 0.0016) * motionScale;
-      const pointerInfluenceY =
-        (isConstrained
-          ? hoverRef.current
-            ? 0.00255
-            : 0.00155
-          : hoverRef.current
-            ? 0.0048
-            : 0.00225) * motionScale;
-      const idleRotationX = (isConstrained ? -0.00155 : -0.00215) * motionScale;
-      const idleRotationY = (isConstrained ? 0.00285 : 0.0044) * motionScale;
+      const delta =
+        lastTickRef.current === null
+          ? 16.67
+          : clamp(timestamp - lastTickRef.current, 8, 32);
+      const deltaFactor = delta / 16.67;
+      const deltaSeconds = delta / 1000;
+      lastTickRef.current = timestamp;
+
+      const motionScale = isLitePerformance ? 0.7 : hasCoarseInput ? 0.84 : 1;
+      const pointerEase = hoverRef.current ? 0.2 : 0.08;
+      const orbitProfile = isFullPerformance
+        ? {
+            speedY: hasCoarseInput ? 0.13 : 0.18,
+            wobbleXAmplitude: hasCoarseInput ? 0.055 : 0.075,
+            wobbleYAmplitude: hasCoarseInput ? 0.028 : 0.04,
+            wobbleXSpeed: hasCoarseInput ? 0.42 : 0.5,
+            wobbleYSpeed: hasCoarseInput ? 0.28 : 0.34,
+          }
+        : {
+            speedY: hasCoarseInput ? 0.075 : 0.11,
+            wobbleXAmplitude: hasCoarseInput ? 0.034 : 0.048,
+            wobbleYAmplitude: hasCoarseInput ? 0.018 : 0.026,
+            wobbleXSpeed: hasCoarseInput ? 0.32 : 0.38,
+            wobbleYSpeed: hasCoarseInput ? 0.2 : 0.24,
+          };
+      const isPausedByInteraction = hoverRef.current || dragRef.current.active;
+      const pointerRotationX =
+        !isPausedByInteraction && !hasCoarseInput
+          ? pointerRef.current.y * (isLitePerformance ? 0.02 : 0.035)
+          : 0;
+      const pointerRotationY =
+        !isPausedByInteraction && !hasCoarseInput
+          ? pointerRef.current.x * (isLitePerformance ? 0.032 : 0.052)
+          : 0;
+      const damping = Math.pow(dragRef.current.active ? 0.86 : 0.93, deltaFactor);
+      const hoverDamping = Math.pow(0.52, deltaFactor);
 
       pointerRef.current.x +=
         (pointerTargetRef.current.x - pointerRef.current.x) * pointerEase;
       pointerRef.current.y +=
         (pointerTargetRef.current.y - pointerRef.current.y) * pointerEase;
 
-      const targetX = idleRotationX + pointerRef.current.y * pointerInfluenceX;
-      const targetY = idleRotationY + pointerRef.current.x * pointerInfluenceY;
-      const velocityEase =
-        (dragRef.current.active ? 0.12 : hoverRef.current ? 0.18 : 0.11) *
-        (isLitePerformance ? 0.84 : 1) *
-        (hasCoarseInput ? 0.88 : 1);
+      if (!isPausedByInteraction) {
+        autoOrbitRef.current.spinY += orbitProfile.speedY * motionScale * deltaSeconds;
+        autoOrbitRef.current.wobbleX += orbitProfile.wobbleXSpeed * deltaSeconds;
+        autoOrbitRef.current.wobbleY += orbitProfile.wobbleYSpeed * deltaSeconds;
 
-      velocityRef.current.x += (targetX - velocityRef.current.x) * velocityEase;
-      velocityRef.current.y += (targetY - velocityRef.current.y) * velocityEase;
-      rotationRef.current.x += velocityRef.current.x;
-      rotationRef.current.y += velocityRef.current.y;
+        baseRotationRef.current.x += velocityRef.current.x * deltaFactor;
+        baseRotationRef.current.y += velocityRef.current.y * deltaFactor;
+        velocityRef.current.x *= damping;
+        velocityRef.current.y *= damping;
+      } else if (!dragRef.current.active) {
+        velocityRef.current.x *= hoverDamping;
+        velocityRef.current.y *= hoverDamping;
+
+        if (Math.abs(velocityRef.current.x) < 0.00005) {
+          velocityRef.current.x = 0;
+        }
+
+        if (Math.abs(velocityRef.current.y) < 0.00005) {
+          velocityRef.current.y = 0;
+        }
+      }
+
+      displayRotationRef.current.x =
+        baseRotationRef.current.x +
+        (Math.sin(autoOrbitRef.current.wobbleX) * orbitProfile.wobbleXAmplitude +
+          Math.cos(autoOrbitRef.current.wobbleY * 0.72) *
+            orbitProfile.wobbleXAmplitude *
+            0.24) *
+          motionScale +
+        pointerRotationX;
+      displayRotationRef.current.y =
+        baseRotationRef.current.y +
+        autoOrbitRef.current.spinY +
+        Math.sin(autoOrbitRef.current.wobbleY) *
+          orbitProfile.wobbleYAmplitude *
+          motionScale +
+        pointerRotationY;
 
       drawScene();
       frameRef.current = window.requestAnimationFrame(tick);
@@ -327,6 +494,7 @@ export function StackCloud({
         return;
       }
 
+      lastTickRef.current = null;
       frameRef.current = window.requestAnimationFrame(tick);
     };
 
@@ -361,6 +529,14 @@ export function StackCloud({
       const nextX = ((event.clientX - bounds.left) / bounds.width - 0.5) * 2;
       const nextY = ((event.clientY - bounds.top) / bounds.height - 0.5) * 2;
 
+      if (event.pointerType !== "touch") {
+        pointerCanvasRef.current = {
+          x: event.clientX - bounds.left,
+          y: event.clientY - bounds.top,
+          active: true,
+        };
+      }
+
       hoverRef.current = true;
       pointerTargetRef.current = {
         x: clamp(nextX, -1, 1),
@@ -368,14 +544,18 @@ export function StackCloud({
       };
       startLoop();
 
+      if (!shouldAnimate && !dragRef.current.active) {
+        drawScene();
+      }
+
       if (dragRef.current.active && dragRef.current.pointerId === event.pointerId) {
         const deltaX = event.clientX - dragRef.current.x;
         const deltaY = event.clientY - dragRef.current.y;
         const rotationX = deltaY * 0.0059;
         const rotationY = deltaX * 0.0059;
 
-        rotationRef.current.x += rotationX;
-        rotationRef.current.y += rotationY;
+        baseRotationRef.current.x += rotationX;
+        baseRotationRef.current.y += rotationY;
         velocityRef.current.x = velocityRef.current.x * 0.42 + rotationX * 0.58;
         velocityRef.current.y = velocityRef.current.y * 0.42 + rotationY * 0.58;
         dragRef.current.x = event.clientX;
@@ -387,6 +567,10 @@ export function StackCloud({
     const handlePointerEnter = () => {
       hoverRef.current = true;
       startLoop();
+
+      if (!shouldAnimate) {
+        drawScene();
+      }
     };
 
     const handlePointerLeave = () => {
@@ -395,7 +579,10 @@ export function StackCloud({
       }
 
       hoverRef.current = false;
+      pointerCanvasRef.current.active = false;
+      hoveredItemIdRef.current = null;
       pointerTargetRef.current = { x: 0, y: 0 };
+      drawScene();
     };
 
     const handlePointerDown = (event: PointerEvent) => {
@@ -418,6 +605,11 @@ export function StackCloud({
         x: clamp(nextX, -1, 1),
         y: clamp(nextY, -1, 1),
       };
+      pointerCanvasRef.current = {
+        x: event.clientX - bounds.left,
+        y: event.clientY - bounds.top,
+        active: event.pointerType !== "touch",
+      };
       canvas.setPointerCapture(event.pointerId);
       drawScene();
       startLoop();
@@ -436,7 +628,10 @@ export function StackCloud({
 
       if (hasCoarseInput || event.pointerType === "touch") {
         hoverRef.current = false;
+        pointerCanvasRef.current.active = false;
+        hoveredItemIdRef.current = null;
         pointerTargetRef.current = { x: 0, y: 0 };
+        drawScene();
       }
     };
 
@@ -514,6 +709,7 @@ export function StackCloud({
     hasCoarseInput,
     isConstrained,
     isReducedMotion,
+    isFullPerformance,
     isLitePerformance,
     items,
     orbitalItems,
