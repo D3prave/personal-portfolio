@@ -3274,6 +3274,7 @@ body[data-motion-mode="experimental"] .quick-link {
   --reveal-rotate: 0deg;
   --reveal-scale-base: 0.96;
   --reveal-blur-max: 0px;
+  --reveal-transition: 0ms;
 }
 
 :root[data-performance="constrained"] .scroll-progress-bar {
@@ -3282,7 +3283,55 @@ body[data-motion-mode="experimental"] .quick-link {
 
 :root[data-performance="constrained"] .reveal {
   filter: none;
-  will-change: opacity, transform;
+  will-change: auto;
+}
+
+:root[data-performance="constrained"] .site-header,
+:root[data-performance="constrained"] .motion-mode-switcher,
+:root[data-performance="constrained"] .site-nav,
+:root[data-performance="constrained"] .theme-toggle {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:root[data-performance="constrained"] body::after,
+:root[data-performance="constrained"] .site-shell::before,
+:root[data-performance="constrained"] .site-shell::after,
+:root[data-performance="constrained"] .hero-visual-canvas::after,
+:root[data-performance="constrained"] .hero-rings span,
+:root[data-performance="constrained"] .hero-graph-edge,
+:root[data-performance="constrained"] .hero-node-marker,
+:root[data-performance="constrained"] .hero-node-chip,
+:root[data-performance="constrained"] .project-visual-svg--route path,
+:root[data-performance="constrained"] .interest-meter span::after,
+:root[data-performance="constrained"] .cell-field::after,
+:root[data-performance="constrained"] .cell-node-shell,
+:root[data-performance="constrained"] .cell-node,
+:root[data-performance="constrained"] .ambient-field__flare,
+:root[data-performance="constrained"] .ambient-field__ring {
+  animation: none;
+}
+
+:root[data-performance="constrained"] .stack-cloud-panel::after,
+:root[data-performance="constrained"] .stack-cloud-stage::before,
+:root[data-performance="constrained"] .stack-cloud-stage::after,
+:root[data-performance="constrained"] .skill-group::after {
+  display: none;
+}
+
+:root[data-performance="constrained"] .hero-node-marker,
+:root[data-performance="constrained"] .hero-node-chip,
+:root[data-performance="constrained"] .theme-toggle,
+:root[data-performance="constrained"] .motion-mode-switcher,
+:root[data-performance="constrained"] .stack-cloud-stage {
+  box-shadow: none;
+}
+
+:root[data-performance="constrained"] .project-card:hover,
+:root[data-performance="constrained"] .panel:hover,
+:root[data-performance="constrained"] .stat-card:hover,
+:root[data-performance="constrained"] .hero-panel:hover {
+  transform: none;
 }
 
 /* Safari gets a flatter rendering path to preserve the same design language
