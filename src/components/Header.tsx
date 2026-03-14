@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import type { NavItem } from "../types/portfolio";
 import { SmoothAnchor } from "./SmoothAnchor";
+import { ThemeToggle } from "./ThemeToggle";
 
 interface HeaderProps {
   brand: string;
   roleLabel: string;
   navigation: NavItem[];
   theme: "dark" | "light";
-  onToggleTheme: () => void;
+  onToggleTheme: (theme: "dark" | "light") => void;
 }
 
 export function Header({
@@ -246,19 +247,7 @@ export function Header({
             ))}
           </nav>
 
-          <button
-            type="button"
-            className="theme-toggle"
-            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-            onClick={onToggleTheme}
-          >
-            <span className="theme-toggle__icon" aria-hidden="true">
-              {theme === "dark" ? "\u2600" : "\u263D"}
-            </span>
-            <span className="theme-toggle__label">
-              {theme === "dark" ? "Light" : "Dark"}
-            </span>
-          </button>
+          <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} />
         </div>
 
         <button

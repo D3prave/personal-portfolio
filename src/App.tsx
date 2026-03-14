@@ -19,6 +19,7 @@ import {
 } from "./utils/performance";
 
 const MOTION_MODE_STORAGE_KEY = "motion-mode";
+type ThemeMode = "dark" | "light";
 
 const pointerConfig = {
   core: {
@@ -134,8 +135,20 @@ function readInitialMotionMode(): MotionMode {
   return "core";
 }
 
+function syncThemeDocument(theme: ThemeMode) {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  document.documentElement.dataset.theme = theme;
+  document.documentElement.classList.toggle("dark", theme === "dark");
+  document.documentElement.style.colorScheme = theme;
+  document.body.dataset.theme = theme;
+  document.body.classList.toggle("dark", theme === "dark");
+}
+
 function App() {
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
+  const [theme, setTheme] = useState<ThemeMode>(() => {
     if (typeof window === "undefined") {
       return "dark";
     }
@@ -201,7 +214,7 @@ function App() {
       return;
     }
 
-    const useDirectScrollSync = isSafari;
+    const useDirectScrollSync = isSafari && motionMode === "cinematic";
     const revealElements = Array.from(document.querySelectorAll<HTMLElement>(".reveal"));
     const sectionElements = Array.from(
       document.querySelectorAll<HTMLElement>("main .section"),
@@ -521,11 +534,10 @@ function App() {
       window.removeEventListener("load", scheduleMeasure);
       window.removeEventListener("lenis-scroll", queueRender);
     };
-  }, [isSafari]);
+  }, [isSafari, motionMode]);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    document.documentElement.style.colorScheme = theme;
+    syncThemeDocument(theme);
     window.localStorage.setItem("theme", theme);
   }, [theme]);
 
@@ -919,11 +931,10 @@ function App() {
         roleLabel={portfolio.roleLabel}
         navigation={portfolio.navigation}
         theme={theme}
-        onToggleTheme={() =>
-          setTheme((currentTheme) =>
-            currentTheme === "dark" ? "light" : "dark",
-          )
-        }
+        onToggleTheme={(nextTheme) => {
+          syncThemeDocument(nextTheme);
+          setTheme(nextTheme);
+        }}
       />
       <MotionModeSwitcher mode={motionMode} onChange={setMotionMode} />
 
@@ -944,6 +955,7 @@ function App() {
         />
         <SkillsSection
           section={portfolio.skillsSection}
+          cloud={portfolio.skillsCloud}
           skillGroups={portfolio.skillGroups}
         />
         <ExperienceSection
