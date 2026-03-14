@@ -75,15 +75,35 @@ export interface SectionContent {
   description: string;
 }
 
+export interface ProjectMedia {
+  src: string;
+  alt: string;
+  fit?: "cover" | "contain";
+  position?: string;
+  expandable?: boolean;
+  expandLabel?: string;
+  dialogSrc?: string;
+  dialogAlt?: string;
+  dialogFit?: "cover" | "contain";
+  dialogPosition?: string;
+}
+
 export interface Project {
   name: string;
   emphasis: string;
   summary: string;
   description: string;
+  proof?: Array<{
+    value: string;
+    label: string;
+  }>;
   highlights: string[];
   tech: string[];
   badges: string[];
   visual: "graph" | "booking" | "route" | "analytics" | "media";
+  media?: ProjectMedia;
+  repoUrl?: string;
+  liveUrl?: string;
 }
 
 export interface SkillGroup {
@@ -120,6 +140,7 @@ export interface ContactItem {
   target?: "_self" | "_blank";
   rel?: string;
   note: string;
+  copyValue?: string;
 }
 
 export interface ContactSectionContent extends SectionContent {

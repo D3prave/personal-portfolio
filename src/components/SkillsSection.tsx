@@ -1,8 +1,35 @@
+import {
+  Suspense,
+  lazy,
+  startTransition,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import type { SectionContent, SkillGroup, StackCloudContent } from "../types/portfolio";
 import type { PerformanceMode } from "../types/ui";
 import { SectionIntro } from "./SectionIntro";
-import { StackCloud } from "./StackCloud";
 import { SkillVisual } from "./SkillVisual";
+
+const LazyStackCloud = lazy(async () => {
+  const module = await import("./StackCloud");
+
+  return {
+    default: module.StackCloud,
+  };
+});
+
+function StackCloudPlaceholder() {
+  return (
+    <div className="stack-cloud-stage stack-cloud-stage--placeholder" aria-hidden="true">
+      <div className="stack-cloud-placeholder-grid">
+        {Array.from({ length: 12 }, (_, index) => (
+          <span key={index} className="stack-cloud-placeholder-pill" />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 interface SkillsSectionProps {
   section: SectionContent;
@@ -17,6 +44,51 @@ export function SkillsSection({
   skillGroups,
   performanceMode,
 }: SkillsSectionProps) {
+  const cloudPanelRef = useRef<HTMLElement>(null);
+  const [shouldLoadCloud, setShouldLoadCloud] = useState(false);
+
+  useEffect(() => {
+    if (shouldLoadCloud) {
+      return;
+    }
+
+    const panel = cloudPanelRef.current;
+
+    if (!panel || typeof window === "undefined") {
+      return;
+    }
+
+    if (typeof window.IntersectionObserver !== "function") {
+      startTransition(() => {
+        setShouldLoadCloud(true);
+      });
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) {
+          return;
+        }
+
+        startTransition(() => {
+          setShouldLoadCloud(true);
+        });
+        observer.disconnect();
+      },
+      {
+        rootMargin: "260px 0px",
+        threshold: 0.01,
+      },
+    );
+
+    observer.observe(panel);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [shouldLoadCloud]);
+
   return (
     <section className="section section-reveal reveal" id={section.id}>
       <div className="container">
@@ -27,6 +99,7 @@ export function SkillsSection({
         />
 
         <article
+          ref={cloudPanelRef}
           className="panel stack-cloud-panel reveal hover-spotlight"
           style={{ ["--reveal-delay" as string]: "40ms" }}
         >
@@ -35,7 +108,13 @@ export function SkillsSection({
             <h3>{cloud.title}</h3>
             <p>{cloud.description}</p>
           </div>
-          <StackCloud items={cloud.items} performanceMode={performanceMode} />
+          {shouldLoadCloud ? (
+            <Suspense fallback={<StackCloudPlaceholder />}>
+              <LazyStackCloud items={cloud.items} performanceMode={performanceMode} />
+            </Suspense>
+          ) : (
+            <StackCloudPlaceholder />
+          )}
         </article>
 
         <div className="skills-grid">

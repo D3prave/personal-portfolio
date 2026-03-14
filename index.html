@@ -10,7 +10,10 @@
       name="description"
       content="Developer portfolio focused on backend systems, data products, graph analytics, and practical machine learning."
     />
+    <meta name="robots" content="index,follow" />
     <meta name="theme-color" content="#09101f" />
+    <link rel="canonical" href="https://portfolio.jakub-wisniewski.workers.dev/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link
       rel="preload"
       href="/fonts/ibm-plex-sans-latin.woff2"
@@ -40,6 +43,27 @@
       crossorigin
     />
     <title>Jakub Wiśniewski | Developer Portfolio</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "name": "Jakub Wiśniewski Portfolio",
+            "url": "https://portfolio.jakub-wisniewski.workers.dev/",
+            "description": "Developer portfolio focused on backend systems, data products, graph analytics, and practical machine learning."
+          },
+          {
+            "@type": "Person",
+            "name": "Jakub Wiśniewski",
+            "url": "https://portfolio.jakub-wisniewski.workers.dev/",
+            "jobTitle": "Developer focused on backend engineering, machine learning, and data analytics",
+            "description": "Backend-focused developer working across scalable systems, machine learning workflows, analytics tooling, and research infrastructure.",
+            "email": "mailto:jakub.wisniewski.dev@gmail.com"
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
