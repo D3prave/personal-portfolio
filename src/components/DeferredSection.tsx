@@ -16,10 +16,11 @@ export function DeferredSection<TProps extends object>({
   load,
   componentProps,
   onReady,
-  rootMargin = "340px 0px",
+  rootMargin = "960px 0px",
 }: DeferredSectionProps<TProps>) {
   const hostRef = useRef<HTMLElement>(null);
   const [LoadedComponent, setLoadedComponent] = useState<ComponentType<TProps> | null>(null);
+  const loadPromiseRef = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
     if (LoadedComponent) {
@@ -33,17 +34,43 @@ export function DeferredSection<TProps extends object>({
     }
 
     let isDisposed = false;
+    let idleCallbackId: number | null = null;
+    let idleTimeoutId: number | null = null;
 
     const loadComponent = () => {
-      void load().then((module) => {
-        if (isDisposed) {
-          return;
-        }
+      if (loadPromiseRef.current) {
+        return;
+      }
 
-        startTransition(() => {
-          setLoadedComponent(() => module.default);
+      loadPromiseRef.current = load()
+        .then((module) => {
+          if (isDisposed) {
+            return;
+          }
+
+          startTransition(() => {
+            setLoadedComponent(() => module.default);
+          });
+        })
+        .finally(() => {
+          loadPromiseRef.current = null;
         });
-      });
+    };
+
+    const scheduleIdleLoad = () => {
+      if (typeof window.requestIdleCallback === "function") {
+        idleCallbackId = window.requestIdleCallback(
+          () => {
+            loadComponent();
+          },
+          { timeout: 900 },
+        );
+        return;
+      }
+
+      idleTimeoutId = window.setTimeout(() => {
+        loadComponent();
+      }, 180);
     };
 
     if (typeof window.IntersectionObserver !== "function") {
@@ -68,11 +95,25 @@ export function DeferredSection<TProps extends object>({
       },
     );
 
+    const handleAnchorNavigation = () => {
+      loadComponent();
+      observer.disconnect();
+    };
+
     observer.observe(host);
+    scheduleIdleLoad();
+    window.addEventListener("portfolio:anchor-navigation", handleAnchorNavigation);
 
     return () => {
       isDisposed = true;
       observer.disconnect();
+      if (idleCallbackId !== null && typeof window.cancelIdleCallback === "function") {
+        window.cancelIdleCallback(idleCallbackId);
+      }
+      if (idleTimeoutId !== null) {
+        window.clearTimeout(idleTimeoutId);
+      }
+      window.removeEventListener("portfolio:anchor-navigation", handleAnchorNavigation);
     };
   }, [LoadedComponent, load, rootMargin]);
 

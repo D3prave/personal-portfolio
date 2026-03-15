@@ -41,7 +41,7 @@ export function HeroSection({
           </div>
 
           <div className="cta-row">
-            {[...hero.ctas, hero.resumeCta].map((cta) => (
+            {hero.ctas.map((cta) => (
               <SmoothAnchor
                 key={cta.label}
                 className={`button-link button-link--${cta.variant}`}
@@ -52,6 +52,21 @@ export function HeroSection({
                 {cta.label}
               </SmoothAnchor>
             ))}
+            <SmoothAnchor
+              className={`button-link button-link--${hero.resumeCta.variant}`}
+              href={hero.resumeCta.href}
+              target={hero.resumeCta.target}
+              rel={hero.resumeCta.rel}
+            >
+              {hero.resumeCta.label}
+            </SmoothAnchor>
+            <SmoothAnchor
+              className="button-link button-link--secondary"
+              href={hero.resumeCta.href}
+              download
+            >
+              Download CV
+            </SmoothAnchor>
           </div>
 
           <SmoothAnchor

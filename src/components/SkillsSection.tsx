@@ -77,7 +77,7 @@ export function SkillsSection({
         observer.disconnect();
       },
       {
-        rootMargin: "260px 0px",
+        rootMargin: "720px 0px",
         threshold: 0.01,
       },
     );

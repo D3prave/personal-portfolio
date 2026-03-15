@@ -10,6 +10,7 @@ export function ContactSection({ contact }: ContactSectionProps) {
   const [copiedValue, setCopiedValue] = useState<string | null>(null);
   const resetTimeoutRef = useRef<number | null>(null);
   const githubContact = contact.contacts.find((item) => item.label === "GitHub");
+  const isPdfContact = (href?: string) => href?.toLowerCase().includes(".pdf") ?? false;
 
   useEffect(() => {
     return () => {
@@ -88,13 +89,33 @@ export function ContactSection({ contact }: ContactSectionProps) {
             {contact.contacts.map((item, index) => (
               <div
                 key={item.label}
-                className="contact-detail reveal"
+                className={`contact-detail reveal${isPdfContact(item.href) ? " contact-detail--document" : ""}`}
                 style={{ ["--reveal-delay" as string]: `${140 + index * 60}ms` }}
               >
-                <div>
-                  <p className="contact-label">{item.label}</p>
-                  <div className="contact-value-row">
-                    {item.href ? (
+                <p className="contact-label">{item.label}</p>
+                <div className="contact-main">
+                  <div
+                    className={`contact-value-row${item.copyValue ? " contact-value-row--with-copy" : ""}`}
+                  >
+                    {item.href && isPdfContact(item.href) ? (
+                      <>
+                        <a
+                          className="contact-inline-action"
+                          href={item.href}
+                          target={item.target}
+                          rel={item.rel}
+                        >
+                          {item.value}
+                        </a>
+                        <a
+                          className="contact-inline-action"
+                          href={item.href}
+                          download
+                        >
+                          Download PDF
+                        </a>
+                      </>
+                    ) : item.href ? (
                       <a
                         className="contact-value"
                         href={item.href}

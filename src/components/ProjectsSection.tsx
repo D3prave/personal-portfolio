@@ -15,7 +15,9 @@ export function ProjectsSection({
 }: ProjectsSectionProps) {
   const gridClassName = highlightFirst
     ? "projects-stack projects-stack--featured"
-    : "projects-grid projects-grid--standard";
+    : `projects-grid projects-grid--standard ${
+        projects.length <= 2 ? "projects-grid--centered" : ""
+      }`.trim();
 
   return (
     <section className="section section-reveal reveal" id={section.id}>

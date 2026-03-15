@@ -37,48 +37,6 @@ const MOTION_MODE_STORAGE_KEY = "motion-mode";
 const PERFORMANCE_MODE_STORAGE_KEY = "performance-mode";
 type ThemeMode = "dark" | "light";
 
-const pointerConfig = {
-  core: {
-    follow: 0.15,
-    drift: 22,
-    soft: -0.22,
-    medium: 0.4,
-    strong: 0.74,
-  },
-  cinematic: {
-    follow: 0.11,
-    drift: 29,
-    soft: -0.31,
-    medium: 0.38,
-    strong: 0.72,
-  },
-  experimental: {
-    follow: 0.18,
-    drift: 28,
-    soft: -0.15,
-    medium: 0.46,
-    strong: 0.86,
-  },
-} as const;
-
-const safariPointerConfig = {
-  core: pointerConfig.core,
-  cinematic: {
-    follow: 0.14,
-    drift: 22,
-    soft: -0.24,
-    medium: 0.34,
-    strong: 0.58,
-  },
-  experimental: {
-    follow: 0.18,
-    drift: 21,
-    soft: -0.1,
-    medium: 0.28,
-    strong: 0.48,
-  },
-} as const;
-
 const cellConfig = {
   core: {
     radius: 284,
@@ -120,16 +78,16 @@ const rippleDurationByMode = {
 const sectionHueStops = [198, 28, 338, 160, 46, 274, 210];
 const revealFollowByMode = {
   core: {
-    follow: 0.3,
-    settle: 0.22,
+    follow: 0.52,
+    settle: 0.4,
   },
   cinematic: {
-    follow: 0.3,
-    settle: 0.22,
+    follow: 0.48,
+    settle: 0.36,
   },
   experimental: {
-    follow: 0.27,
-    settle: 0.2,
+    follow: 0.56,
+    settle: 0.42,
   },
 } as const;
 
@@ -145,6 +103,32 @@ function interpolateHue(from: number, to: number, progress: number) {
 
 function smootherstep(progress: number) {
   return progress * progress * progress * (progress * (progress * 6 - 15) + 10);
+}
+
+function getGradientStateAtProgress(progress: number, sectionCount: number) {
+  const clampedProgress = clamp(progress, 0, 1);
+
+  if (sectionCount <= 1) {
+    return {
+      depth: clampedProgress,
+      hue: sectionHueStops[0],
+    };
+  }
+
+  const lastIndex = sectionCount - 1;
+  const scaledProgress = clampedProgress * lastIndex;
+  const startIndex = Math.floor(scaledProgress);
+  const endIndex = Math.min(startIndex + 1, lastIndex);
+  const localProgress = smootherstep(clamp(scaledProgress - startIndex, 0, 1));
+
+  return {
+    depth: clampedProgress,
+    hue: interpolateHue(
+      sectionHueStops[startIndex % sectionHueStops.length],
+      sectionHueStops[endIndex % sectionHueStops.length],
+      localProgress,
+    ),
+  };
 }
 
 function readInitialMotionMode(): MotionMode {
@@ -256,8 +240,6 @@ function App() {
       isConstrainedPerformance ||
       isLitePerformance ||
       (isSafari && motionMode === "cinematic");
-    const isCompactReveal =
-      hasCoarseInput || isLitePerformance || window.innerWidth <= 820;
     const revealElements = Array.from(document.querySelectorAll<HTMLElement>(".reveal"));
     const sectionElements = Array.from(
       document.querySelectorAll<HTMLElement>("main .section"),
@@ -300,27 +282,31 @@ function App() {
     let animationFrame = 0;
     let measureFrame = 0;
     let viewportHeight = window.innerHeight;
+    let viewportWidth = window.innerWidth;
     let scrollableHeight = Math.max(
       document.documentElement.scrollHeight - viewportHeight,
       1,
     );
-    let currentProgress = 0;
-    let targetProgress = 0;
-    let currentDepth = 0;
-    let targetDepth = 0;
-    let currentHue = sectionHueStops[0];
+    const initialPageProgress =
+      scrollableHeight <= 0 ? 0 : clamp(window.scrollY / scrollableHeight, 0, 1);
+    const initialGradientState = getGradientStateAtProgress(
+      initialPageProgress,
+      sections.length,
+    );
+    let currentProgress = initialPageProgress;
+    let targetProgress = initialPageProgress;
+    let currentDepth = initialGradientState.depth;
+    let targetDepth = currentDepth;
+    let currentHue = initialGradientState.hue;
     let targetHue = currentHue;
     let writtenPageProgress = -1;
     let writtenDepth = -1;
     let writtenHue = Number.NaN;
 
-    const updateSectionTargets = (scrollY: number) => {
+    const updateSectionTargets = (scrollY: number, gradientProgress: number) => {
       if (sections.length === 0) {
         return;
       }
-
-      const viewportMid = viewportHeight * 0.54;
-      const viewportCenter = scrollY + viewportMid;
 
       sections.forEach((section) => {
         const sectionTop = section.top - scrollY;
@@ -337,76 +323,35 @@ function App() {
         }
       });
 
-      if (sections.length === 1) {
-        targetDepth = 0;
-        targetHue = sectionHueStops[0];
-        return;
-      }
-
-      if (viewportCenter <= sections[0].center) {
-        targetDepth = 0;
-        targetHue = sectionHueStops[0];
-        return;
-      }
-
-      const lastIndex = sections.length - 1;
-
-      if (viewportCenter >= sections[lastIndex].center) {
-        targetDepth = 1;
-        targetHue = sectionHueStops[lastIndex % sectionHueStops.length];
-        return;
-      }
-
-      for (let index = 0; index < lastIndex; index += 1) {
-        const start = sections[index].center;
-        const end = sections[index + 1].center;
-
-        if (viewportCenter < start || viewportCenter > end) {
-          continue;
-        }
-
-        const localProgress = clamp(
-          (viewportCenter - start) / (end - start || 1),
-          0,
-          1,
-        );
-
-        targetDepth = (index + localProgress) / lastIndex;
-        targetHue = interpolateHue(
-          sectionHueStops[index % sectionHueStops.length],
-          sectionHueStops[(index + 1) % sectionHueStops.length],
-          localProgress,
-        );
-        return;
-      }
+      const gradientState = getGradientStateAtProgress(gradientProgress, sections.length);
+      targetDepth = gradientState.depth;
+      targetHue = gradientState.hue;
     };
 
     const render = () => {
       const scrollY = window.scrollY;
+      const isCompactReveal =
+        hasCoarseInput || isLitePerformance || viewportWidth <= 820;
+      const isWideReveal = !isCompactReveal && viewportWidth >= 1280;
       const pageProgress =
         scrollableHeight <= 0 ? 0 : clamp(scrollY / scrollableHeight, 0, 1);
-      const startLine = viewportHeight * (isCompactReveal ? 1.08 : 1.28);
-      const endLine = viewportHeight * (isCompactReveal ? 0.56 : 0.64);
+      const startLine = viewportHeight * (isCompactReveal ? 1.16 : isWideReveal ? 1.46 : 1.38);
+      const endLine = viewportHeight * (isCompactReveal ? 0.78 : isWideReveal ? 0.9 : 0.82);
       const travelDistance = Math.max(
         startLine - endLine,
-        viewportHeight * (isCompactReveal ? 0.24 : 0.32),
+        viewportHeight * (isCompactReveal ? 0.2 : isWideReveal ? 0.26 : 0.28),
       );
       const isNearPageEnd =
         scrollY + viewportHeight >= document.documentElement.scrollHeight - 6;
       let hasPendingAnimation = false;
 
-      if (Math.abs(pageProgress - writtenPageProgress) > 0.0008) {
-        rootStyle.setProperty("--page-scroll", pageProgress.toFixed(4));
-        writtenPageProgress = pageProgress;
-      }
-
       revealItems.forEach((item) => {
         const { delayOffset, height, top } = item;
         const topInViewport = top - scrollY;
-        const effectiveDelayOffset = delayOffset * (isCompactReveal ? 0.22 : 0.58);
+        const effectiveDelayOffset = delayOffset * (isCompactReveal ? 0.08 : isWideReveal ? 0.16 : 0.22);
         const baseProgress = clamp(
           (startLine - topInViewport) /
-            (travelDistance + height * (isCompactReveal ? 0.03 : 0.07)),
+            (travelDistance + height * (isCompactReveal ? 0.02 : isWideReveal ? 0.035 : 0.05)),
           0,
           1,
         );
@@ -419,8 +364,10 @@ function App() {
           isNearPageEnd && topInViewport < viewportHeight
             ? 1
             : isCompactReveal
-              ? clamp(adjustedProgress * 1.2, 0, 1)
-              : clamp(adjustedProgress * 1.12, 0, 1);
+              ? clamp(adjustedProgress * 1.3, 0, 1)
+              : isWideReveal
+                ? clamp(adjustedProgress * 1.22, 0, 1)
+                : clamp(adjustedProgress * 1.18, 0, 1);
         const targetRevealProgress = smootherstep(finalProgress);
         const revealDelta = targetRevealProgress - item.progress;
         const revealProfile = revealFollowByMode[motionMode];
@@ -430,7 +377,11 @@ function App() {
             ? revealProfile.settle
             : revealProfile.follow;
 
-        if (useDirectScrollSync || Math.abs(revealDelta) < 0.0012) {
+        if (
+          useDirectScrollSync ||
+          targetRevealProgress >= 0.985 ||
+          Math.abs(revealDelta) < 0.0012
+        ) {
           item.progress = targetRevealProgress;
         } else {
           item.progress += revealDelta * revealFollow;
@@ -442,7 +393,7 @@ function App() {
           item.writtenProgress = item.progress;
         }
 
-        const nextReady = item.progress > (isCompactReveal ? 0.74 : 0.86);
+        const nextReady = item.progress > (isCompactReveal ? 0.66 : isWideReveal ? 0.72 : 0.76);
 
         if (nextReady !== item.isReady) {
           item.element.classList.toggle("is-reveal-ready", nextReady);
@@ -491,7 +442,7 @@ function App() {
         }
       });
 
-      updateSectionTargets(scrollY);
+      updateSectionTargets(scrollY, currentProgress);
 
       const depthDelta = targetDepth - currentDepth;
       const hueDelta = ((targetHue - currentHue + 540) % 360) - 180;
@@ -506,8 +457,13 @@ function App() {
       if (useDirectScrollSync || Math.abs(hueDelta) < 0.08) {
         currentHue = targetHue;
       } else {
-        currentHue = (currentHue + hueDelta * 0.1 + 360) % 360;
+        currentHue = (currentHue + hueDelta * 0.06 + 360) % 360;
         hasPendingAnimation = true;
+      }
+
+      if (Math.abs(currentProgress - writtenPageProgress) > 0.0008) {
+        rootStyle.setProperty("--page-scroll", currentProgress.toFixed(4));
+        writtenPageProgress = currentProgress;
       }
 
       if (Math.abs(currentDepth - writtenDepth) > 0.0008) {
@@ -539,6 +495,7 @@ function App() {
     const measureLayout = () => {
       const scrollY = window.scrollY;
       viewportHeight = window.innerHeight;
+      viewportWidth = window.innerWidth;
       scrollableHeight = Math.max(
         document.documentElement.scrollHeight - viewportHeight,
         1,
@@ -695,126 +652,6 @@ function App() {
       });
     };
   }, [isConstrainedPerformance, isLitePerformance]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const currentModeConfig = (isSafari ? safariPointerConfig : pointerConfig)[motionMode];
-    const reducedMotion = prefersReducedMotion();
-    const supportsHover = window.matchMedia(
-      "(hover: hover) and (pointer: fine)",
-    ).matches;
-
-    const applyPointer = (x: number, y: number, speed: number) => {
-      const shiftX =
-        ((x - window.innerWidth * 0.5) / window.innerWidth) *
-        currentModeConfig.drift;
-      const shiftY =
-        ((y - window.innerHeight * 0.5) / window.innerHeight) *
-        currentModeConfig.drift;
-
-      document.documentElement.style.setProperty("--page-x", `${x}px`);
-      document.documentElement.style.setProperty("--page-y", `${y}px`);
-      document.documentElement.style.setProperty(
-        "--pointer-speed",
-        clamp(speed, 0, 1).toFixed(3),
-      );
-      document.documentElement.style.setProperty("--bg-shift-x", `${shiftX}px`);
-      document.documentElement.style.setProperty("--bg-shift-y", `${shiftY}px`);
-      document.documentElement.style.setProperty(
-        "--bg-shift-soft-x",
-        `${shiftX * currentModeConfig.soft}px`,
-      );
-      document.documentElement.style.setProperty(
-        "--bg-shift-soft-y",
-        `${shiftY * currentModeConfig.soft}px`,
-      );
-      document.documentElement.style.setProperty(
-        "--bg-shift-medium-x",
-        `${shiftX * currentModeConfig.medium}px`,
-      );
-      document.documentElement.style.setProperty(
-        "--bg-shift-medium-y",
-        `${shiftY * currentModeConfig.medium}px`,
-      );
-      document.documentElement.style.setProperty(
-        "--bg-shift-strong-x",
-        `${shiftX * currentModeConfig.strong}px`,
-      );
-      document.documentElement.style.setProperty(
-        "--bg-shift-strong-y",
-        `${shiftY * currentModeConfig.strong}px`,
-      );
-    };
-
-    let currentX = window.innerWidth * 0.72;
-    let currentY = window.innerHeight * 0.24;
-    let targetX = currentX;
-    let targetY = currentY;
-    let pointerSpeed = 0;
-
-    applyPointer(currentX, currentY, 0);
-
-    if (isConstrainedPerformance || isLitePerformance || reducedMotion || !supportsHover) {
-      return;
-    }
-
-    let frame = 0;
-
-    const render = () => {
-      const deltaX = targetX - currentX;
-      const deltaY = targetY - currentY;
-      const velocity = Math.hypot(deltaX, deltaY);
-
-      pointerSpeed += (velocity / 42 - pointerSpeed) * 0.16;
-      currentX += deltaX * currentModeConfig.follow;
-      currentY += deltaY * currentModeConfig.follow;
-      applyPointer(currentX, currentY, pointerSpeed);
-
-      if (Math.abs(deltaX) < 0.35 && Math.abs(deltaY) < 0.35) {
-        currentX = targetX;
-        currentY = targetY;
-        applyPointer(currentX, currentY, pointerSpeed * 0.84);
-        frame = 0;
-        return;
-      }
-
-      frame = window.requestAnimationFrame(render);
-    };
-
-    const queueRender = () => {
-      if (frame !== 0) {
-        return;
-      }
-
-      frame = window.requestAnimationFrame(render);
-    };
-
-    const handlePointerMove = (event: PointerEvent) => {
-      targetX = event.clientX;
-      targetY = event.clientY;
-      queueRender();
-    };
-
-    const handleResize = () => {
-      currentX = Math.min(currentX, window.innerWidth);
-      currentY = Math.min(currentY, window.innerHeight);
-      targetX = Math.min(targetX, window.innerWidth);
-      targetY = Math.min(targetY, window.innerHeight);
-      applyPointer(currentX, currentY, pointerSpeed);
-    };
-
-    window.addEventListener("pointermove", handlePointerMove, { passive: true });
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.cancelAnimationFrame(frame);
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [isConstrainedPerformance, isLitePerformance, isSafari, motionMode]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -1080,14 +917,6 @@ function App() {
           onReady={handleDeferredSectionReady}
         />
       </main>
-
-      {isConstrainedPerformance || isLitePerformance ? null : (
-        <>
-          <div className="cursor-comet" aria-hidden="true" />
-          <div className="cursor-trail" aria-hidden="true" />
-        </>
-      )}
-
       <footer className="footer">
         <div className="container footer-inner">
           <p>{portfolio.footer.note}</p>
