@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { NavItem } from "../types/portfolio";
 import { SmoothAnchor } from "./SmoothAnchor";
 import { ThemeToggle } from "./ThemeToggle";
+
+const HEADER_ANCHOR_GAP_PX = 28;
 
 interface HeaderProps {
   brand: string;
@@ -20,9 +22,65 @@ export function Header({
   onToggleTheme,
   sectionVersion = 0,
 }: HeaderProps) {
+  const headerRef = useRef<HTMLElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeHref, setActiveHref] = useState(navigation[0]?.href ?? "#about");
   const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    const root = document.documentElement;
+    let resizeObserver: ResizeObserver | null = null;
+    let animationFrame = 0;
+
+    const syncHeaderMetrics = () => {
+      const headerHeight = headerRef.current?.getBoundingClientRect().height ?? 0;
+
+      if (headerHeight <= 0) {
+        return;
+      }
+
+      root.style.setProperty("--header-height", `${headerHeight.toFixed(2)}px`);
+      root.style.setProperty(
+        "--anchor-offset",
+        `${Math.round(headerHeight + HEADER_ANCHOR_GAP_PX)}px`,
+      );
+    };
+
+    const queueSync = () => {
+      if (animationFrame !== 0) {
+        return;
+      }
+
+      animationFrame = window.requestAnimationFrame(() => {
+        syncHeaderMetrics();
+        animationFrame = 0;
+      });
+    };
+
+    queueSync();
+    window.addEventListener("resize", queueSync);
+    window.visualViewport?.addEventListener("resize", queueSync);
+
+    if (typeof ResizeObserver === "function" && headerRef.current) {
+      resizeObserver = new ResizeObserver(queueSync);
+      resizeObserver.observe(headerRef.current);
+    }
+
+    if ("fonts" in document) {
+      void (document as Document & { fonts: FontFaceSet }).fonts.ready.then(queueSync);
+    }
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      window.removeEventListener("resize", queueSync);
+      window.visualViewport?.removeEventListener("resize", queueSync);
+      resizeObserver?.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -220,7 +278,10 @@ export function Header({
   }, []);
 
   return (
-    <header className={`site-header ${isScrolled ? "is-scrolled" : ""}`}>
+    <header
+      ref={headerRef}
+      className={`site-header ${isScrolled ? "is-scrolled" : ""}`}
+    >
       <div className="container header-inner">
         <SmoothAnchor
           className="brand-link brand-block"
