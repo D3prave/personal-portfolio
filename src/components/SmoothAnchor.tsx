@@ -35,6 +35,18 @@ function getAnchorLandingNode(href: string) {
   return targetNode.querySelector<HTMLElement>(".section-intro") ?? targetNode;
 }
 
+function getDocumentTop(node: HTMLElement) {
+  let current: HTMLElement | null = node;
+  let top = 0;
+
+  while (current) {
+    top += current.offsetTop;
+    current = current.offsetParent as HTMLElement | null;
+  }
+
+  return top;
+}
+
 function getTargetScrollTop(href: string, anchorOffset: number) {
   const targetNode = getAnchorLandingNode(href);
 
@@ -46,7 +58,7 @@ function getTargetScrollTop(href: string, anchorOffset: number) {
     return 0;
   }
 
-  return targetNode.getBoundingClientRect().top + window.scrollY - anchorOffset;
+  return getDocumentTop(targetNode) - anchorOffset;
 }
 
 function scrollToAnchorTarget(
