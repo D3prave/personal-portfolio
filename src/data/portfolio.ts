@@ -412,7 +412,7 @@ export const portfolio: PortfolioData = {
     {
       title: "Data and machine learning",
       description:
-        "Applied analytics, model workflows, and graph-oriented data processing.",
+        "Applied analytics, model workflows, and graph-oriented data processing for research and production systems.",
       visual: "wave",
       items: [
         "pandas",

@@ -16,33 +16,38 @@ export function AboutSection({ about }: AboutSectionProps) {
         />
 
         <div className="about-editorial">
-          <article
-            className="panel about-story reveal"
-            style={{ ["--reveal-delay" as string]: "40ms" }}
-          >
-            <div className="about-story-top">
+          <div className="about-story-column">
+            <article
+              className="panel about-contracts reveal"
+              style={{ ["--reveal-delay" as string]: "40ms" }}
+            >
               <p className="list-title">Current contracts</p>
-              <div className="contract-band" aria-label="Current technical roles">
+              <div className="contract-list" aria-label="Current technical roles">
                 {about.currentContracts.map((contract, index) => (
-                  <article key={contract.detail} className="contract-pill">
-                    <span className="contract-index">
+                  <div key={contract.detail} className="contract-row">
+                    <span className="contract-row-index">
                       {String(index + 1).padStart(2, "0")}
                     </span>
-                    <div className="contract-copy">
-                      <p className="contract-title">{contract.title}</p>
-                      <p className="contract-detail">{contract.detail}</p>
+                    <div className="contract-row-content">
+                      <span className="contract-row-title">{contract.title}</span>
+                      <span className="contract-row-detail">{contract.detail}</span>
                     </div>
-                  </article>
+                  </div>
                 ))}
               </div>
-            </div>
+            </article>
 
-            <div className="text-stack">
-              {about.paragraphs.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
-            </div>
-          </article>
+            <article
+              className="panel about-story reveal"
+              style={{ ["--reveal-delay" as string]: "60ms" }}
+            >
+              <div className="text-stack">
+                {about.paragraphs.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
+              </div>
+            </article>
+          </div>
 
           <div className="about-rail">
             {about.focusAreas.map((item, index) => (

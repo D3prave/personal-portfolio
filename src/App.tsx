@@ -14,6 +14,7 @@ import {
   isConstrainedPerformanceEnvironment,
   isSafariBrowser,
   prefersReducedMotion,
+  shouldUseNativeScroll,
 } from "./utils/performance";
 
 const loadProjectsSection = () =>
@@ -55,41 +56,7 @@ const cellConfig = {
   },
 } as const;
 
-const safariCellConfig = {
-  core: cellConfig.core,
-  cinematic: {
-    radius: 248,
-    push: 7,
-    tilt: 3,
-  },
-  experimental: {
-    radius: 232,
-    push: 7,
-    tilt: 3.2,
-  },
-} as const;
-
-const rippleDurationByMode = {
-  core: 980,
-  cinematic: 1180,
-  experimental: 920,
-} as const;
-
 const sectionHueStops = [198, 28, 338, 160, 46, 274, 210];
-const revealFollowByMode = {
-  core: {
-    follow: 0.52,
-    settle: 0.4,
-  },
-  cinematic: {
-    follow: 0.48,
-    settle: 0.36,
-  },
-  experimental: {
-    follow: 0.56,
-    settle: 0.42,
-  },
-} as const;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -190,9 +157,9 @@ function syncThemeDocument(theme: ThemeMode) {
 function App() {
   const [theme, setTheme] = useState<ThemeMode>(readInitialTheme);
   const [motionMode, setMotionMode] = useState<MotionMode>(readInitialMotionMode);
-  const [isSafari] = useState(isSafariBrowser);
   const [isConstrainedPerformance] = useState(isConstrainedPerformanceEnvironment);
   const [hasCoarseInput] = useState(hasCoarsePointer);
+  const [isSafari] = useState(isSafariBrowser);
   const [performanceMode, setPerformanceMode] = useState<PerformanceMode>(
     readInitialPerformanceMode,
   );
@@ -203,15 +170,14 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const browser = isSafari ? "safari" : "";
-
-    if (browser) {
-      document.documentElement.dataset.browser = browser;
-    } else {
-      delete document.documentElement.dataset.browser;
-    }
     document.documentElement.dataset.performance = performanceMode;
-  }, [isSafari, performanceMode]);
+  }, [performanceMode]);
+
+  useEffect(() => {
+    if (isSafariBrowser()) {
+      document.documentElement.dataset.browser = "safari";
+    }
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -238,30 +204,24 @@ function App() {
     const useDirectScrollSync =
       hasCoarseInput ||
       isConstrainedPerformance ||
-      isLitePerformance ||
-      (isSafari && motionMode === "cinematic");
+      isLitePerformance;
+    // On Safari, snap color/depth/progress values directly to their targets.
+    // --section-hue is referenced in 40+ CSS rules across the page; interpolating
+    // it over ~50 frames per section causes Safari to run expensive style
+    // recalculation for all those elements on every rAF tick. Since the
+    // background drift animations are already disabled on Safari, smooth
+    // color interpolation provides no visible benefit there.
+    const useDirectColorSync = useDirectScrollSync || isSafari;
     const revealElements = Array.from(document.querySelectorAll<HTMLElement>(".reveal"));
     const sectionElements = Array.from(
       document.querySelectorAll<HTMLElement>("main .section"),
     );
-    const revealItems = revealElements.map((element) => {
-      const rawDelay = window
-        .getComputedStyle(element)
-        .getPropertyValue("--reveal-delay")
-        .trim();
-      const delayMs = rawDelay.endsWith("ms") ? Number.parseFloat(rawDelay) : 0;
-      const delayOffset = clamp(delayMs / 640, 0, 0.18);
-
-      return {
-        element,
-        delayOffset,
-        top: 0,
-        height: 0,
-        progress: 0,
-        writtenProgress: -1,
-        isReady: false,
-      };
-    });
+    const revealItems = revealElements.map((element) => ({
+      element,
+      top: 0,
+      height: 0,
+      isVisible: false,
+    }));
     const sections = sectionElements.map((element) => ({
       element,
       top: 0,
@@ -281,8 +241,9 @@ function App() {
     let isMounted = true;
     let animationFrame = 0;
     let measureFrame = 0;
+    let isRevealInitialized = false;
+    let prevRenderScrollY = window.scrollY;
     let viewportHeight = window.innerHeight;
-    let viewportWidth = window.innerWidth;
     let scrollableHeight = Math.max(
       document.documentElement.scrollHeight - viewportHeight,
       1,
@@ -330,82 +291,36 @@ function App() {
 
     const render = () => {
       const scrollY = window.scrollY;
-      const isCompactReveal =
-        hasCoarseInput || isLitePerformance || viewportWidth <= 820;
-      const isWideReveal = !isCompactReveal && viewportWidth >= 1280;
+      prevRenderScrollY = scrollY;
       const pageProgress =
         scrollableHeight <= 0 ? 0 : clamp(scrollY / scrollableHeight, 0, 1);
-      const startLine = viewportHeight * (isCompactReveal ? 1.16 : isWideReveal ? 1.46 : 1.38);
-      const endLine = viewportHeight * (isCompactReveal ? 0.78 : isWideReveal ? 0.9 : 0.82);
-      const travelDistance = Math.max(
-        startLine - endLine,
-        viewportHeight * (isCompactReveal ? 0.2 : isWideReveal ? 0.26 : 0.28),
-      );
-      const isNearPageEnd =
-        scrollY + viewportHeight >= document.documentElement.scrollHeight - 6;
       let hasPendingAnimation = false;
 
       revealItems.forEach((item) => {
-        const { delayOffset, height, top } = item;
-        const topInViewport = top - scrollY;
-        const effectiveDelayOffset = delayOffset * (isCompactReveal ? 0.08 : isWideReveal ? 0.16 : 0.22);
-        const baseProgress = clamp(
-          (startLine - topInViewport) /
-            (travelDistance + height * (isCompactReveal ? 0.02 : isWideReveal ? 0.035 : 0.05)),
-          0,
-          1,
-        );
-        const adjustedProgress = clamp(
-          (baseProgress - effectiveDelayOffset) / (1 - effectiveDelayOffset || 1),
-          0,
-          1,
-        );
-        const finalProgress =
-          isNearPageEnd && topInViewport < viewportHeight
-            ? 1
-            : isCompactReveal
-              ? clamp(adjustedProgress * 1.3, 0, 1)
-              : isWideReveal
-                ? clamp(adjustedProgress * 1.22, 0, 1)
-                : clamp(adjustedProgress * 1.18, 0, 1);
-        const targetRevealProgress = smootherstep(finalProgress);
-        const revealDelta = targetRevealProgress - item.progress;
-        const revealProfile = revealFollowByMode[motionMode];
-        const revealFollow = isCompactReveal
-          ? 0.42
-          : targetRevealProgress > 0.82
-            ? revealProfile.settle
-            : revealProfile.follow;
+        if (item.isVisible) return;
+        const topInViewport = item.top - scrollY;
+        // Native scroll (Safari): scrollY updates instantly, so 0.98 is enough.
+        // Lenis scroll (Chrome): scrollY is lerp-interpolated and lags behind
+        // the user's actual scroll, so we trigger earlier to compensate.
+        const revealEdge = isNativeScroll ? 0.98 : 1.25;
+        const inViewport =
+          topInViewport < viewportHeight * revealEdge &&
+          topInViewport + item.height > viewportHeight * 0.04;
+        const isScrolledPast =
+          !isRevealInitialized && topInViewport + item.height <= viewportHeight * 0.04;
 
-        if (
-          useDirectScrollSync ||
-          targetRevealProgress >= 0.985 ||
-          Math.abs(revealDelta) < 0.0012
-        ) {
-          item.progress = targetRevealProgress;
-        } else {
-          item.progress += revealDelta * revealFollow;
-          hasPendingAnimation = true;
-        }
-
-        if (Math.abs(item.progress - item.writtenProgress) > 0.0008) {
-          item.element.style.setProperty("--reveal-progress", item.progress.toFixed(3));
-          item.writtenProgress = item.progress;
-        }
-
-        const nextReady = item.progress > (isCompactReveal ? 0.66 : isWideReveal ? 0.72 : 0.76);
-
-        if (nextReady !== item.isReady) {
-          item.element.classList.toggle("is-reveal-ready", nextReady);
-          item.isReady = nextReady;
+        if (inViewport || isScrolledPast) {
+          item.element.classList.add("is-visible");
+          item.isVisible = true;
         }
       });
 
+      isRevealInitialized = true;
       targetProgress = pageProgress;
 
       const cellDelta = targetProgress - currentProgress;
 
-      if (useDirectScrollSync || Math.abs(cellDelta) < 0.0015) {
+      if (useDirectColorSync || Math.abs(cellDelta) < 0.0015) {
         currentProgress = targetProgress;
       } else {
         currentProgress += cellDelta * 0.18;
@@ -447,14 +362,14 @@ function App() {
       const depthDelta = targetDepth - currentDepth;
       const hueDelta = ((targetHue - currentHue + 540) % 360) - 180;
 
-      if (useDirectScrollSync || Math.abs(depthDelta) < 0.0015) {
+      if (useDirectColorSync || Math.abs(depthDelta) < 0.0015) {
         currentDepth = targetDepth;
       } else {
         currentDepth += depthDelta * 0.12;
         hasPendingAnimation = true;
       }
 
-      if (useDirectScrollSync || Math.abs(hueDelta) < 0.08) {
+      if (useDirectColorSync || Math.abs(hueDelta) < 0.08) {
         currentHue = targetHue;
       } else {
         currentHue = (currentHue + hueDelta * 0.06 + 360) % 360;
@@ -492,10 +407,22 @@ function App() {
       animationFrame = window.requestAnimationFrame(render);
     };
 
+    const handleScroll = () => {
+      const delta = Math.abs(window.scrollY - prevRenderScrollY);
+      if (isNativeScroll && delta > viewportHeight * 0.4) {
+        if (animationFrame !== 0) {
+          cancelAnimationFrame(animationFrame);
+          animationFrame = 0;
+        }
+        render();
+      } else {
+        queueRender();
+      }
+    };
+
     const measureLayout = () => {
       const scrollY = window.scrollY;
       viewportHeight = window.innerHeight;
-      viewportWidth = window.innerWidth;
       scrollableHeight = Math.max(
         document.documentElement.scrollHeight - viewportHeight,
         1,
@@ -527,11 +454,11 @@ function App() {
     };
 
     scheduleMeasure();
-    window.addEventListener("scroll", queueRender, { passive: true });
-    window.addEventListener("resize", scheduleMeasure);
-    window.addEventListener("orientationchange", scheduleMeasure);
-    window.addEventListener("load", scheduleMeasure);
+    const isNativeScroll = shouldUseNativeScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
     window.addEventListener("lenis-scroll", queueRender);
+    window.addEventListener("resize", scheduleMeasure);
+    window.addEventListener("load", scheduleMeasure);
     window.visualViewport?.addEventListener("resize", scheduleMeasure);
 
     if ("fonts" in document) {
@@ -546,11 +473,10 @@ function App() {
       isMounted = false;
       window.cancelAnimationFrame(animationFrame);
       window.cancelAnimationFrame(measureFrame);
-      window.removeEventListener("scroll", queueRender);
-      window.removeEventListener("resize", scheduleMeasure);
-      window.removeEventListener("orientationchange", scheduleMeasure);
-      window.removeEventListener("load", scheduleMeasure);
+      window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("lenis-scroll", queueRender);
+      window.removeEventListener("resize", scheduleMeasure);
+      window.removeEventListener("load", scheduleMeasure);
       window.visualViewport?.removeEventListener("resize", scheduleMeasure);
     };
   }, [
@@ -559,7 +485,6 @@ function App() {
     isConstrainedPerformance,
     isLitePerformance,
     isSafari,
-    motionMode,
   ]);
 
   useEffect(() => {
@@ -658,7 +583,7 @@ function App() {
       return;
     }
 
-    const modeConfig = (isSafari ? safariCellConfig : cellConfig)[motionMode];
+    const modeConfig = cellConfig[motionMode];
     const reducedMotion = prefersReducedMotion();
     const supportsHover =
       !hasCoarsePointer() &&
@@ -769,79 +694,12 @@ function App() {
         node.style.removeProperty("--cell-tilt");
       });
     };
-  }, [isConstrainedPerformance, isLitePerformance, isSafari, motionMode]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const reducedMotion = prefersReducedMotion();
-    const supportsHover =
-      !hasCoarsePointer() &&
-      window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-    const cellField = document.querySelector<HTMLElement>(".cell-field");
-
-    if (
-      isConstrainedPerformance ||
-      isLitePerformance ||
-      reducedMotion ||
-      !supportsHover ||
-      !cellField
-    ) {
-      return;
-    }
-
-    let clickTimeout = 0;
-
-    const createRipple = (x: number, y: number, intensity: number) => {
-      const ripple = document.createElement("span");
-      const randomOffsetX = (Math.random() - 0.5) * 34 * intensity;
-      const randomOffsetY = (Math.random() - 0.5) * 34 * intensity;
-
-      ripple.className = "cell-ripple";
-      ripple.style.setProperty("--ripple-x", `${x + randomOffsetX}px`);
-      ripple.style.setProperty("--ripple-y", `${y + randomOffsetY}px`);
-      ripple.style.setProperty(
-        "--ripple-duration",
-        `${rippleDurationByMode[motionMode]}ms`,
-      );
-      ripple.style.setProperty("--ripple-scale", `${(14 + intensity * 8).toFixed(1)}`);
-      cellField.appendChild(ripple);
-      ripple.addEventListener("animationend", () => ripple.remove(), { once: true });
-    };
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (event.button !== 0) {
-        return;
-      }
-
-      createRipple(event.clientX, event.clientY, 1);
-
-      if (motionMode === "experimental" && !isSafari) {
-        createRipple(event.clientX, event.clientY, 1.25);
-      }
-
-      document.documentElement.style.setProperty("--click-energy", "1");
-      window.clearTimeout(clickTimeout);
-      clickTimeout = window.setTimeout(() => {
-        document.documentElement.style.setProperty("--click-energy", "0");
-      }, 240);
-    };
-
-    window.addEventListener("pointerdown", handlePointerDown, { passive: true });
-
-    return () => {
-      window.removeEventListener("pointerdown", handlePointerDown);
-      window.clearTimeout(clickTimeout);
-      document.documentElement.style.setProperty("--click-energy", "0");
-    };
-  }, [isConstrainedPerformance, isLitePerformance, isSafari, motionMode]);
+  }, [isConstrainedPerformance, isLitePerformance, motionMode]);
 
   return (
     <div className={`site-shell motion-mode-${motionMode}`}>
-      {isConstrainedPerformance || isLitePerformance ? null : <CellField />}
-      {isConstrainedPerformance || isLitePerformance ? null : <AmbientField />}
+      {isConstrainedPerformance || isLitePerformance || isSafari ? null : <CellField />}
+      {isConstrainedPerformance || isLitePerformance || isSafari ? null : <AmbientField />}
       <ScrollProgress />
       <Header
         brand={portfolio.brand}
@@ -867,6 +725,7 @@ function App() {
         <HeroSection
           hero={portfolio.hero}
           contactLinks={portfolio.contactSection.contacts}
+          isLitePerformance={isLitePerformance}
         />
         <AboutSection about={portfolio.about} />
         <DeferredSection

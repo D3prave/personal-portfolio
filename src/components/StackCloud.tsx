@@ -4,6 +4,7 @@ import type { PerformanceMode } from "../types/ui";
 import {
   hasCoarsePointer,
   isConstrainedPerformanceEnvironment,
+  isSafariBrowser,
 } from "../utils/performance";
 
 interface StackCloudProps {
@@ -152,6 +153,7 @@ export function StackCloud({
     }
 
     let disposed = false;
+    const skipShadow = isSafariBrowser();
     const loadedIcons = new Array(items.length).fill(false);
     const images = items.map((item) => {
       const image = new Image();
@@ -243,8 +245,10 @@ export function StackCloud({
       context.stroke();
 
       if (isLoaded) {
-        context.shadowColor = palette.shadow;
-        context.shadowBlur = item.scale * 12 * glowMultiplier;
+        if (!skipShadow) {
+          context.shadowColor = palette.shadow;
+          context.shadowBlur = item.scale * 12 * glowMultiplier;
+        }
         context.drawImage(image, -size / 2, -size / 2, size, size);
       } else {
         context.beginPath();
@@ -294,19 +298,15 @@ export function StackCloud({
     };
 
     const resizeCanvas = () => {
-      const bounds = stage.getBoundingClientRect();
-      const dpr = clamp(
-        window.devicePixelRatio || 1,
-        1,
-        isConstrained || isLitePerformance || hasCoarseInput ? 1.15 : 1.55,
-      );
-      const width = Math.max(bounds.width, 260);
-      const height = Math.max(bounds.height, 280);
+      const width = Math.max(canvas.offsetWidth, 260);
+      const height = Math.max(canvas.offsetHeight, 280);
+      const dprMax = isSafariBrowser() ? 1.0 : isConstrained || isLitePerformance || hasCoarseInput ? 1.15 : 1.55;
+      const dpr = clamp(window.devicePixelRatio || 1, 1, dprMax);
 
       sizeRef.current = {
         width,
         height,
-        radius: Math.min(width, height) * (isConstrained ? 0.3 : 0.338),
+        radius: Math.min(width, height) * (isConstrained ? 0.34 : 0.40),
         dpr,
       };
 
@@ -505,7 +505,7 @@ export function StackCloud({
       const motionScale = getMotionScale();
       const pointerEase = hoverRef.current ? 0.2 : 0.08;
       const orbitProfile = getOrbitProfile();
-      const isPausedByInteraction = dragRef.current.active;
+      const isPausedByInteraction = dragRef.current.active || hoveredItemIdRef.current !== null;
       const damping = Math.pow(dragRef.current.active ? 0.86 : 0.93, deltaFactor);
 
       pointerRef.current.x +=
@@ -578,13 +578,17 @@ export function StackCloud({
 
     const handlePointerMove = (event: PointerEvent) => {
       const bounds = canvas.getBoundingClientRect();
-      const nextX = ((event.clientX - bounds.left) / bounds.width - 0.5) * 2;
-      const nextY = ((event.clientY - bounds.top) / bounds.height - 0.5) * 2;
+      const scaleX = canvas.offsetWidth / (bounds.width || canvas.offsetWidth);
+      const scaleY = canvas.offsetHeight / (bounds.height || canvas.offsetHeight);
+      const localX = (event.clientX - bounds.left) * scaleX;
+      const localY = (event.clientY - bounds.top) * scaleY;
+      const nextX = (localX / canvas.offsetWidth - 0.5) * 2;
+      const nextY = (localY / canvas.offsetHeight - 0.5) * 2;
 
       if (event.pointerType !== "touch") {
         pointerCanvasRef.current = {
-          x: event.clientX - bounds.left,
-          y: event.clientY - bounds.top,
+          x: localX,
+          y: localY,
           active: true,
         };
       }
@@ -648,8 +652,12 @@ export function StackCloud({
       }
 
       const bounds = canvas.getBoundingClientRect();
-      const nextX = ((event.clientX - bounds.left) / bounds.width - 0.5) * 2;
-      const nextY = ((event.clientY - bounds.top) / bounds.height - 0.5) * 2;
+      const scaleX = canvas.offsetWidth / (bounds.width || canvas.offsetWidth);
+      const scaleY = canvas.offsetHeight / (bounds.height || canvas.offsetHeight);
+      const localX = (event.clientX - bounds.left) * scaleX;
+      const localY = (event.clientY - bounds.top) * scaleY;
+      const nextX = (localX / canvas.offsetWidth - 0.5) * 2;
+      const nextY = (localY / canvas.offsetHeight - 0.5) * 2;
 
       dragDeltaRef.current.x = 0;
       dragDeltaRef.current.y = 0;
@@ -665,8 +673,8 @@ export function StackCloud({
         y: clamp(nextY, -1, 1),
       };
       pointerCanvasRef.current = {
-        x: event.clientX - bounds.left,
-        y: event.clientY - bounds.top,
+        x: localX,
+        y: localY,
         active: event.pointerType !== "touch",
       };
       canvas.setPointerCapture(event.pointerId);
@@ -704,9 +712,17 @@ export function StackCloud({
       }
     };
 
+    // Debounce resize callbacks: iOS Safari fires ResizeObserver many times during
+    // rotation and keyboard show/hide, causing canvas flicker if each call resets
+    // the backing store. A 16ms gate collapses bursts into one update per frame.
+    let resizeDebounceTimer: ReturnType<typeof setTimeout> | null = null;
     const resizeObserver = new ResizeObserver(() => {
-      resizeCanvas();
-      drawScene();
+      if (resizeDebounceTimer !== null) clearTimeout(resizeDebounceTimer);
+      resizeDebounceTimer = setTimeout(() => {
+        resizeDebounceTimer = null;
+        resizeCanvas();
+        drawScene();
+      }, 16);
     });
 
     const visibilityObserver =
@@ -761,6 +777,7 @@ export function StackCloud({
     return () => {
       disposed = true;
       stopLoop();
+      if (resizeDebounceTimer !== null) clearTimeout(resizeDebounceTimer);
       resizeObserver.disconnect();
       visibilityObserver?.disconnect();
       mutationObserver.disconnect();

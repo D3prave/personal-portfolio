@@ -50,18 +50,14 @@ export function isIOSWebKitBrowser() {
 }
 
 export function isConstrainedPerformanceEnvironment() {
-  return (
-    prefersReducedMotion() ||
-    hasCoarsePointer() ||
-    isSafariBrowser() ||
-    isIOSWebKitBrowser()
-  );
+  return prefersReducedMotion() || hasCoarsePointer();
 }
 
 export function shouldUseNativeScroll() {
   return (
     prefersReducedMotion() ||
     hasCoarsePointer() ||
-    isIOSWebKitBrowser()
+    isIOSWebKitBrowser() ||
+    isSafariBrowser()
   );
 }
