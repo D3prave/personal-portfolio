@@ -6,11 +6,13 @@ import { SmoothAnchor } from "./SmoothAnchor";
 interface HeroSectionProps {
   hero: HeroContent;
   contactLinks: ContactItem[];
+  isLitePerformance?: boolean;
 }
 
 export function HeroSection({
   hero,
   contactLinks,
+  isLitePerformance,
 }: HeroSectionProps) {
   return (
     <section className="hero section" id="top">
@@ -107,7 +109,7 @@ export function HeroSection({
         </div>
 
         <div className="hero-aside">
-          <HeroGraphScene />
+          <HeroGraphScene isLitePerformance={isLitePerformance} />
 
           <aside
             className="hero-panel reveal"

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Project } from "../types/portfolio";
+import { isIOSWebKitBrowser } from "../utils/performance";
 
 interface ProjectVisualProps {
   visual: Project["visual"];
@@ -51,19 +52,41 @@ export function ProjectVisual({
       return;
     }
 
-    const previousOverflow = document.body.style.overflow;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setIsExpanded(false);
       }
     };
 
-    document.body.style.overflow = "hidden";
     document.addEventListener("keydown", handleKeyDown);
 
+    // iOS Safari ignores overflow:hidden on <body> — the page keeps scrolling
+    // behind the modal. Use position:fixed with a saved scroll offset instead,
+    // then restore that offset when the modal closes.
+    const isIOS = isIOSWebKitBrowser();
+    const savedScrollY = window.scrollY;
+
+    if (isIOS) {
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${savedScrollY}px`;
+      document.body.style.width = "100%";
+      document.body.style.overflowY = "scroll";
+    } else {
+      document.body.style.overflow = "hidden";
+    }
+
     return () => {
-      document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleKeyDown);
+
+      if (isIOS) {
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
+        document.body.style.overflowY = "";
+        window.scrollTo(0, savedScrollY);
+      } else {
+        document.body.style.overflow = "";
+      }
     };
   }, [isExpanded]);
 
@@ -89,9 +112,7 @@ export function ProjectVisual({
         className="project-visual-image"
         src={media.src}
         alt={media.alt}
-        loading="lazy"
         decoding="async"
-        fetchPriority="low"
         draggable={false}
         style={imageStyle}
       />
