@@ -2,6 +2,10 @@
 
 A single-page portfolio built with React, TypeScript, and Vite. The content is driven from a typed data file so you can edit copy, projects, skills, and contact details without touching the presentation layer.
 
+## Live Site
+
+[portfolio.jakub-wisniewski.workers.dev](https://portfolio.jakub-wisniewski.workers.dev)
+
 ## Folder Structure
 
 ```text
