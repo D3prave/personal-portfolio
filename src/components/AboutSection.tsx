@@ -16,11 +16,11 @@ export function AboutSection({ about }: AboutSectionProps) {
         />
 
         <div className="about-editorial">
-          <div className="about-story-column">
-            <article
-              className="panel about-contracts reveal"
-              style={{ ["--reveal-delay" as string]: "40ms" }}
-            >
+          <div
+            className="about-story-column reveal"
+            style={{ ["--reveal-delay" as string]: "20ms" }}
+          >
+            <article className="panel about-contracts">
               <p className="list-title">Current contracts</p>
               <div className="contract-list" aria-label="Current technical roles">
                 {about.currentContracts.map((contract, index) => (
@@ -37,10 +37,7 @@ export function AboutSection({ about }: AboutSectionProps) {
               </div>
             </article>
 
-            <article
-              className="panel about-story reveal"
-              style={{ ["--reveal-delay" as string]: "60ms" }}
-            >
+            <article className="panel about-story">
               <div className="text-stack">
                 {about.paragraphs.map((paragraph) => (
                   <p key={paragraph}>{paragraph}</p>
@@ -49,12 +46,14 @@ export function AboutSection({ about }: AboutSectionProps) {
             </article>
           </div>
 
-          <div className="about-rail">
+          <div
+            className="about-rail reveal"
+            style={{ ["--reveal-delay" as string]: "20ms" }}
+          >
             {about.focusAreas.map((item, index) => (
               <article
                 key={item.title}
-                className={`panel about-node reveal ${index % 2 === 1 ? "about-node--offset" : ""}`}
-                style={{ ["--reveal-delay" as string]: `${90 + index * 80}ms` }}
+                className={`panel about-node ${index % 2 === 1 ? "about-node--offset" : ""}`}
               >
                 <span className="about-node-index">
                   {String(index + 1).padStart(2, "0")}

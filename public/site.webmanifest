@@ -1,0 +1,31 @@
+{
+  "name": "Jakub Wiśniewski | Developer Portfolio",
+  "short_name": "Jakub W.",
+  "description": "Portfolio site for Jakub Wiśniewski, focused on backend engineering, machine learning workflows, and data analytics.",
+  "lang": "en",
+  "start_url": "/",
+  "scope": "/",
+  "display": "browser",
+  "background_color": "#09101f",
+  "theme_color": "#09101f",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+/* TEAM */
+Developer: Jakub Wisniewski
+Role: Backend-focused developer
+Site: https://portfolio.jakub-wisniewski.workers.dev/
+Contact: jakub.wisniewski.dev@gmail.com
+Location: Germany
+
+/* STACK */
+React
+TypeScript
+Vite
+Cloudflare Workers
+
+/* SOCIAL */
+GitHub: https://github.com/D3prave
+LinkedIn: https://linkedin.com/in/wis-jak

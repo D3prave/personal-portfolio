@@ -77,6 +77,14 @@ npm run build
 npm run preview
 ```
 
+## SEO and Observability
+
+- The site ships with search/discovery assets in [`public/robots.txt`](/Users/deprave/Documents/PersonalWebsite/public/robots.txt), [`public/sitemap.xml`](/Users/deprave/Documents/PersonalWebsite/public/sitemap.xml), [`public/site.webmanifest`](/Users/deprave/Documents/PersonalWebsite/public/site.webmanifest), [`public/browserconfig.xml`](/Users/deprave/Documents/PersonalWebsite/public/browserconfig.xml), [`public/humans.txt`](/Users/deprave/Documents/PersonalWebsite/public/humans.txt), and [`public/.well-known/security.txt`](/Users/deprave/Documents/PersonalWebsite/public/.well-known/security.txt).
+- Social, canonical, and structured-data tags live in [`index.html`](/Users/deprave/Documents/PersonalWebsite/index.html).
+- Optional Cloudflare Web Analytics support is wired in [`src/components/CloudflareWebAnalytics.tsx`](/Users/deprave/Documents/PersonalWebsite/src/components/CloudflareWebAnalytics.tsx). Set `VITE_CLOUDFLARE_WEB_ANALYTICS_TOKEN` before `npm run build` if you want Cloudflare's browser-side beacon on a plain static deployment.
+- For a Worker that only serves static assets, the Workers `Metrics` tab is not the right observability surface. Cloudflare serves those static requests at no charge, and the useful measurement layer here is Web Analytics in the browser, not Workers logs/traces.
+- After deployment, add the site to Google Search Console and submit `https://portfolio.jakub-wisniewski.workers.dev/sitemap.xml`. That step cannot be completed from inside the repo, but it is the normal follow-up if you want Google to discover updates faster.
+
 ## Deploy For Free
 
 Recommended: Cloudflare Pages

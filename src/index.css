@@ -3167,9 +3167,13 @@ body[data-motion-mode="experimental"] .quick-link {
 .project-visual--image {
   min-height: 0;
   aspect-ratio: 16 / 10;
-  background:
+  background-color: rgba(7, 11, 21, 0.82);
+  background-image:
     linear-gradient(180deg, rgba(7, 11, 21, 0.08), rgba(7, 11, 21, 0.28)),
-    rgba(7, 11, 21, 0.82);
+    var(--project-placeholder-image);
+  background-position: center, var(--project-placeholder-position, center);
+  background-size: auto, var(--project-placeholder-fit, cover);
+  background-repeat: no-repeat;
 }
 
 .project-card--featured .project-visual--image {
@@ -4672,6 +4676,25 @@ a.contact-card-value:hover {
 /* layers for a subtle shadow that isn't visible on most screens anyway.       */
 :root[data-browser="safari"] .project-card::after {
   filter: none;
+}
+
+/* Safari is more likely to defer paint for offscreen media when these
+   containment optimizations are enabled, which shows the card chrome before
+   the actual image/icon content after anchor jumps. Prefer fully eager paint. */
+:root[data-browser="safari"] .project-card {
+  contain: none;
+}
+
+:root[data-browser="safari"] .project-visual,
+:root[data-browser="safari"] .skill-visual,
+:root[data-browser="safari"] .hero-visual-canvas {
+  content-visibility: visible;
+  contain-intrinsic-size: auto;
+}
+
+:root[data-browser="safari"] .project-visual-image {
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* The image dialog backdrop: same blur-on-scroll issue as the header.        */
