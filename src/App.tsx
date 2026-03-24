@@ -1,12 +1,15 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { AboutSection } from "./components/AboutSection";
 import { AmbientField } from "./components/AmbientField";
 import { CellField } from "./components/CellField";
-import { DeferredSection } from "./components/DeferredSection";
+import { ContactSection } from "./components/ContactSection";
+import { ExperienceSection } from "./components/ExperienceSection";
 import { Header } from "./components/Header";
 import { HeroSection } from "./components/HeroSection";
 import { MotionModeSwitcher } from "./components/MotionModeSwitcher";
+import { ProjectsSection } from "./components/ProjectsSection";
 import { ScrollProgress } from "./components/ScrollProgress";
+import { SkillsSection } from "./components/SkillsSection";
 import { portfolio } from "./data/portfolio";
 import type { MotionMode, PerformanceMode } from "./types/ui";
 import {
@@ -16,23 +19,6 @@ import {
   prefersReducedMotion,
   shouldUseNativeScroll,
 } from "./utils/performance";
-
-const loadProjectsSection = () =>
-  import("./components/ProjectsSection").then((module) => ({
-    default: module.ProjectsSection,
-  }));
-const loadSkillsSection = () =>
-  import("./components/SkillsSection").then((module) => ({
-    default: module.SkillsSection,
-  }));
-const loadExperienceSection = () =>
-  import("./components/ExperienceSection").then((module) => ({
-    default: module.ExperienceSection,
-  }));
-const loadContactSection = () =>
-  import("./components/ContactSection").then((module) => ({
-    default: module.ContactSection,
-  }));
 
 const MOTION_MODE_STORAGE_KEY = "motion-mode";
 const PERFORMANCE_MODE_STORAGE_KEY = "performance-mode";
@@ -57,6 +43,30 @@ const cellConfig = {
 } as const;
 
 const sectionHueStops = [198, 28, 338, 160, 46, 274, 210];
+const getProjectMediaPlaceholderSrc = (src: string) =>
+  src.replace(/(\.[a-z0-9]+)([?#].*)?$/i, "-placeholder.jpg$2");
+const eagerMediaSources = Array.from(
+  new Set(
+    [
+      ...portfolio.featuredProjects,
+      ...portfolio.otherProjects,
+    ].flatMap<string>((project) =>
+      project.media
+        ? [project.media.src, project.media.dialogSrc ?? project.media.src]
+        : [],
+    ),
+  ),
+);
+const eagerIconSources = Array.from(
+  new Set(portfolio.skillsCloud.items.map((item) => item.icon)),
+);
+const eagerPlaceholderSources = Array.from(
+  new Set(
+    [...portfolio.featuredProjects, ...portfolio.otherProjects]
+      .filter((project) => project.media)
+      .map((project) => getProjectMediaPlaceholderSrc(project.media!.src)),
+  ),
+);
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -163,15 +173,45 @@ function App() {
   const [performanceMode, setPerformanceMode] = useState<PerformanceMode>(
     readInitialPerformanceMode,
   );
-  const [sectionVersion, setSectionVersion] = useState(0);
   const isLitePerformance = performanceMode === "lite";
-  const handleDeferredSectionReady = useCallback(() => {
-    setSectionVersion((currentVersion) => currentVersion + 1);
-  }, []);
 
   useEffect(() => {
     document.documentElement.dataset.performance = performanceMode;
   }, [performanceMode]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const prefersSyncDecode = isSafariBrowser();
+    const warmedImages = [
+      ...eagerPlaceholderSources,
+      ...eagerMediaSources,
+      ...eagerIconSources,
+    ].map((src) => {
+      const image = new Image();
+      image.decoding = prefersSyncDecode ? "sync" : "async";
+
+      if ("fetchPriority" in image) {
+        image.fetchPriority = "high";
+      }
+
+      image.src = src;
+
+      if (typeof image.decode === "function") {
+        void image.decode().catch(() => {
+          // Ignore decode failures for SVGs and already-cached assets.
+        });
+      }
+
+      return image;
+    });
+
+    return () => {
+      warmedImages.length = 0;
+    };
+  }, []);
 
   useEffect(() => {
     if (isSafariBrowser()) {
@@ -480,7 +520,6 @@ function App() {
       window.visualViewport?.removeEventListener("resize", scheduleMeasure);
     };
   }, [
-    sectionVersion,
     hasCoarseInput,
     isConstrainedPerformance,
     isLitePerformance,
@@ -710,7 +749,6 @@ function App() {
           syncThemeDocument(nextTheme);
           setTheme(nextTheme);
         }}
-        sectionVersion={sectionVersion}
       />
       <MotionModeSwitcher
         mode={motionMode}
@@ -728,53 +766,26 @@ function App() {
           isLitePerformance={isLitePerformance}
         />
         <AboutSection about={portfolio.about} />
-        <DeferredSection
+        <ProjectsSection
           section={portfolio.featuredProjectsSection}
-          load={loadProjectsSection}
-          componentProps={{
-            section: portfolio.featuredProjectsSection,
-            projects: portfolio.featuredProjects,
-            highlightFirst: true,
-          }}
-          onReady={handleDeferredSectionReady}
+          projects={portfolio.featuredProjects}
+          highlightFirst
         />
-        <DeferredSection
+        <ProjectsSection
           section={portfolio.otherProjectsSection}
-          load={loadProjectsSection}
-          componentProps={{
-            section: portfolio.otherProjectsSection,
-            projects: portfolio.otherProjects,
-          }}
-          onReady={handleDeferredSectionReady}
+          projects={portfolio.otherProjects}
         />
-        <DeferredSection
+        <SkillsSection
           section={portfolio.skillsSection}
-          load={loadSkillsSection}
-          componentProps={{
-            section: portfolio.skillsSection,
-            cloud: portfolio.skillsCloud,
-            skillGroups: portfolio.skillGroups,
-            performanceMode,
-          }}
-          onReady={handleDeferredSectionReady}
+          cloud={portfolio.skillsCloud}
+          skillGroups={portfolio.skillGroups}
+          performanceMode={performanceMode}
         />
-        <DeferredSection
+        <ExperienceSection
           section={portfolio.experienceSection}
-          load={loadExperienceSection}
-          componentProps={{
-            section: portfolio.experienceSection,
-            experience: portfolio.experience,
-          }}
-          onReady={handleDeferredSectionReady}
+          experience={portfolio.experience}
         />
-        <DeferredSection
-          section={portfolio.contactSection}
-          load={loadContactSection}
-          componentProps={{
-            contact: portfolio.contactSection,
-          }}
-          onReady={handleDeferredSectionReady}
-        />
+        <ContactSection contact={portfolio.contactSection} />
       </main>
       <footer className="footer">
         <div className="container footer-inner">

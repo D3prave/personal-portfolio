@@ -11,7 +11,6 @@ interface HeaderProps {
   navigation: NavItem[];
   theme: "dark" | "light";
   onToggleTheme: (theme: "dark" | "light") => void;
-  sectionVersion?: number;
 }
 
 export function Header({
@@ -20,7 +19,6 @@ export function Header({
   navigation,
   theme,
   onToggleTheme,
-  sectionVersion = 0,
 }: HeaderProps) {
   const headerRef = useRef<HTMLElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -242,7 +240,7 @@ export function Header({
 
       observer.disconnect();
     };
-  }, [navigation, sectionVersion]);
+  }, [navigation]);
 
   useEffect(() => {
     let animationFrame = 0;

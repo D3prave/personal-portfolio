@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Jakub Wiśniewski developer portfolio social preview</title>
+  <desc id="desc">A social preview card with graph-inspired visuals and copy focused on backend systems, machine learning workflows, and data analytics.</desc>
+  <defs>
+    <linearGradient id="bg" x1="160" x2="1040" y1="80" y2="560" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0f1b31" />
+      <stop offset="0.5" stop-color="#09101f" />
+      <stop offset="1" stop-color="#0b1426" />
+    </linearGradient>
+    <linearGradient id="edge" x1="735" x2="1110" y1="140" y2="490" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7dd3fc" />
+      <stop offset="1" stop-color="#f6c177" />
+    </linearGradient>
+    <linearGradient id="panel" x1="80" x2="610" y1="130" y2="530" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#13213e" stop-opacity="0.95" />
+      <stop offset="1" stop-color="#0a1223" stop-opacity="0.82" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <g opacity="0.2">
+    <path d="M0 120H1200" stroke="#7dd3fc" stroke-width="1" />
+    <path d="M0 260H1200" stroke="#7dd3fc" stroke-width="1" />
+    <path d="M0 400H1200" stroke="#7dd3fc" stroke-width="1" />
+    <path d="M0 540H1200" stroke="#7dd3fc" stroke-width="1" />
+    <path d="M160 0V630" stroke="#f6c177" stroke-width="1" />
+    <path d="M380 0V630" stroke="#f6c177" stroke-width="1" />
+    <path d="M600 0V630" stroke="#f6c177" stroke-width="1" />
+    <path d="M820 0V630" stroke="#f6c177" stroke-width="1" />
+    <path d="M1040 0V630" stroke="#f6c177" stroke-width="1" />
+  </g>
+  <rect x="72" y="94" width="566" height="442" rx="32" fill="url(#panel)" stroke="#2a466c" stroke-opacity="0.7" />
+  <g transform="translate(88 116)">
+    <rect x="0" y="0" width="176" height="40" rx="20" fill="#13213e" stroke="#35537d" />
+    <text x="88" y="26" fill="#d7e7ff" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" text-anchor="middle" letter-spacing="1.2">DEVELOPER PORTFOLIO</text>
+    <text x="0" y="122" fill="#f5f7fb" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="700">Jakub Wiśniewski</text>
+    <text x="0" y="186" fill="#d2ddf0" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="500">Backend systems, ML workflows, and</text>
+    <text x="0" y="226" fill="#d2ddf0" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="500">data-heavy software that has to work in practice.</text>
+    <text x="0" y="304" fill="#9ec5f8" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700">Focus Areas</text>
+    <text x="0" y="348" fill="#f5f7fb" font-family="Arial, Helvetica, sans-serif" font-size="24">Backend engineering</text>
+    <text x="0" y="384" fill="#f5f7fb" font-family="Arial, Helvetica, sans-serif" font-size="24">Graph analytics and data products</text>
+    <text x="0" y="420" fill="#f5f7fb" font-family="Arial, Helvetica, sans-serif" font-size="24">Production-minded ML-enabled workflows</text>
+    <text x="0" y="476" fill="#8fb4e5" font-family="Arial, Helvetica, sans-serif" font-size="20">portfolio.jakub-wisniewski.workers.dev</text>
+  </g>
+  <g fill="none" stroke="url(#edge)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M722 448L830 226L924 292L1026 176L1100 234" stroke-width="10" />
+    <path d="M756 514L866 390L980 446L1080 360" stroke-width="8" opacity="0.8" />
+  </g>
+  <g>
+    <circle cx="722" cy="448" r="24" fill="#7dd3fc" />
+    <circle cx="830" cy="226" r="20" fill="#f6c177" />
+    <circle cx="924" cy="292" r="20" fill="#7dd3fc" />
+    <circle cx="1026" cy="176" r="18" fill="#f6c177" />
+    <circle cx="1100" cy="234" r="18" fill="#7dd3fc" />
+    <circle cx="756" cy="514" r="18" fill="#f6c177" />
+    <circle cx="866" cy="390" r="20" fill="#7dd3fc" />
+    <circle cx="980" cy="446" r="20" fill="#f6c177" />
+    <circle cx="1080" cy="360" r="18" fill="#7dd3fc" />
+  </g>
+  <g opacity="0.9">
+    <rect x="830" y="472" width="230" height="92" rx="24" fill="#101b31" stroke="#28405f" />
+    <text x="864" y="515" fill="#9ec5f8" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700">Current Direction</text>
+    <text x="864" y="546" fill="#f5f7fb" font-family="Arial, Helvetica, sans-serif" font-size="22">Backend, analytics, and</text>
+    <text x="864" y="576" fill="#f5f7fb" font-family="Arial, Helvetica, sans-serif" font-size="22">real-world ML delivery</text>
+  </g>
+</svg>

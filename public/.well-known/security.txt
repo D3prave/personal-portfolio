@@ -1,0 +1,5 @@
+Contact: mailto:jakub.wisniewski.dev@gmail.com
+Canonical: https://portfolio.jakub-wisniewski.workers.dev/.well-known/security.txt
+Expires: 2027-03-24T00:00:00.000Z
+Preferred-Languages: en, de
+Policy: https://portfolio.jakub-wisniewski.workers.dev/#contact

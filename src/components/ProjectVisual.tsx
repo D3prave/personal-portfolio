@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Project } from "../types/portfolio";
-import { isIOSWebKitBrowser } from "../utils/performance";
+import { isIOSWebKitBrowser, isSafariBrowser } from "../utils/performance";
 
 interface ProjectVisualProps {
   visual: Project["visual"];
@@ -34,12 +34,17 @@ function getRenderedImageBounds(frameRect: DOMRect, image: HTMLImageElement) {
   };
 }
 
+function getProjectMediaPlaceholderSrc(src: string) {
+  return src.replace(/(\.[a-z0-9]+)([?#].*)?$/i, "-placeholder.jpg$2");
+}
+
 export function ProjectVisual({
   visual,
   media,
   primary = false,
   projectName,
 }: ProjectVisualProps) {
+  const isSafari = isSafariBrowser();
   const [isExpanded, setIsExpanded] = useState(false);
   const dialogFrameRef = useRef<HTMLDivElement>(null);
   const dialogImageRef = useRef<HTMLImageElement>(null);
@@ -102,6 +107,12 @@ export function ProjectVisual({
     const visualClassName = `project-visual project-visual--image ${
       primary ? "project-visual--primary" : ""
     } ${media.expandable ? "project-visual--interactive" : ""}`;
+    const placeholderSrc = getProjectMediaPlaceholderSrc(media.src);
+    const visualStyle = {
+      ["--project-placeholder-image" as string]: `url("${placeholderSrc}")`,
+      ["--project-placeholder-fit" as string]: media.fit ?? "cover",
+      ["--project-placeholder-position" as string]: media.position ?? "center",
+    };
     const imageStyle = {
       objectFit: media.fit ?? "cover",
       objectPosition: media.position ?? "center",
@@ -112,7 +123,9 @@ export function ProjectVisual({
         className="project-visual-image"
         src={media.src}
         alt={media.alt}
-        decoding="async"
+        loading="eager"
+        fetchPriority="high"
+        decoding={isSafari ? "sync" : "async"}
         draggable={false}
         style={imageStyle}
       />
@@ -202,6 +215,7 @@ export function ProjectVisual({
           <button
             type="button"
             className={visualClassName}
+            style={visualStyle}
             aria-haspopup="dialog"
             aria-label={media.expandLabel ?? `Open ${projectName} image`}
             onClick={() => setIsExpanded(true)}
@@ -286,7 +300,7 @@ export function ProjectVisual({
     }
 
     return (
-      <div className={visualClassName}>
+      <div className={visualClassName} style={visualStyle}>
         {image}
       </div>
     );

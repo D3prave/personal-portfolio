@@ -90,90 +90,6 @@ function scrollToAnchorTarget(
   return true;
 }
 
-function hasBlockingDeferredSections(href: string) {
-  if (href === "#top") {
-    return false;
-  }
-
-  const targetNode = getLiveTargetNode(href);
-
-  if (!targetNode) {
-    return false;
-  }
-
-  return Array.from(
-    document.querySelectorAll<HTMLElement>("main .deferred-section"),
-  ).some((placeholder) => {
-    if (placeholder.id === targetNode.id) {
-      return true;
-    }
-
-    return Boolean(
-      placeholder.compareDocumentPosition(targetNode) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    );
-  });
-}
-
-function waitForDeferredSectionsToSettle(href: string) {
-  if (
-    href === "#top" ||
-    typeof window === "undefined" ||
-    !hasBlockingDeferredSections(href)
-  ) {
-    return Promise.resolve();
-  }
-
-  return new Promise<void>((resolve) => {
-    const observerTarget = document.querySelector("main") ?? document.body;
-    let observer: MutationObserver | null = null;
-    let timeoutId = 0;
-    let settleFrameOne = 0;
-    let settleFrameTwo = 0;
-
-    const finish = () => {
-      observer?.disconnect();
-      window.clearTimeout(timeoutId);
-
-      if (settleFrameOne !== 0) {
-        window.cancelAnimationFrame(settleFrameOne);
-      }
-      if (settleFrameTwo !== 0) {
-        window.cancelAnimationFrame(settleFrameTwo);
-      }
-
-      resolve();
-    };
-
-    const settle = () => {
-      if (settleFrameOne !== 0 || settleFrameTwo !== 0) {
-        return;
-      }
-
-      settleFrameOne = window.requestAnimationFrame(() => {
-        settleFrameTwo = window.requestAnimationFrame(finish);
-      });
-    };
-
-    const check = () => {
-      if (!hasBlockingDeferredSections(href)) {
-        settle();
-      }
-    };
-
-    if (typeof MutationObserver === "function") {
-      observer = new MutationObserver(check);
-      observer.observe(observerTarget, {
-        childList: true,
-        subtree: true,
-      });
-    }
-
-    timeoutId = window.setTimeout(settle, 720);
-    check();
-  });
-}
-
 export function SmoothAnchor({
   href,
   onClick,
@@ -207,16 +123,6 @@ export function SmoothAnchor({
     event.preventDefault();
 
     const navigationToken = ++currentAnchorNavigationToken;
-
-    if (href !== "#top") {
-      window.dispatchEvent(
-        new CustomEvent("portfolio:anchor-navigation", {
-          detail: { href },
-        }),
-      );
-    }
-
-    await waitForDeferredSectionsToSettle(href);
 
     if (navigationToken !== currentAnchorNavigationToken) {
       return;

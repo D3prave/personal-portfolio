@@ -6,14 +6,97 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
+    <title>Jakub Wiśniewski | Developer Portfolio</title>
     <meta
       name="description"
-      content="Developer portfolio focused on backend systems, data products, graph analytics, and practical machine learning."
+      content="Jakub Wiśniewski is a backend-focused developer building data products, graph analytics systems, ML-enabled workflows, and production-minded web applications."
     />
-    <meta name="robots" content="index,follow" />
+    <meta name="author" content="Jakub Wiśniewski" />
+    <meta name="creator" content="Jakub Wiśniewski" />
+    <meta name="application-name" content="Jakub Wiśniewski Portfolio" />
+    <meta name="apple-mobile-web-app-title" content="Jakub Wiśniewski" />
     <meta name="theme-color" content="#09101f" />
+    <meta name="msapplication-TileColor" content="#09101f" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+    <meta name="color-scheme" content="dark light" />
+    <meta
+      name="format-detection"
+      content="telephone=no, address=no, email=no"
+    />
+    <meta
+      name="robots"
+      content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"
+    />
+    <meta
+      name="googlebot"
+      content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"
+    />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Jakub Wiśniewski Portfolio" />
+    <meta
+      property="og:title"
+      content="Jakub Wiśniewski | Developer Portfolio"
+    />
+    <meta
+      property="og:description"
+      content="Jakub Wiśniewski is a backend-focused developer building data products, graph analytics systems, ML-enabled workflows, and production-minded web applications."
+    />
+    <meta
+      property="og:url"
+      content="https://portfolio.jakub-wisniewski.workers.dev/"
+    />
+    <meta
+      property="og:image"
+      content="https://portfolio.jakub-wisniewski.workers.dev/og-image.png"
+    />
+    <meta
+      property="og:image:secure_url"
+      content="https://portfolio.jakub-wisniewski.workers.dev/og-image.png"
+    />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Jakub Wiśniewski portfolio preview card with graph-inspired visuals and a backend engineering focus."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Jakub Wiśniewski | Developer Portfolio"
+    />
+    <meta
+      name="twitter:description"
+      content="Jakub Wiśniewski is a backend-focused developer building data products, graph analytics systems, ML-enabled workflows, and production-minded web applications."
+    />
+    <meta
+      name="twitter:image"
+      content="https://portfolio.jakub-wisniewski.workers.dev/og-image.png"
+    />
+    <meta
+      name="twitter:image:alt"
+      content="Jakub Wiśniewski portfolio preview card with graph-inspired visuals and a backend engineering focus."
+    />
     <link rel="canonical" href="https://portfolio.jakub-wisniewski.workers.dev/" />
+    <link
+      rel="alternate"
+      href="https://portfolio.jakub-wisniewski.workers.dev/"
+      hreflang="en"
+    />
+    <link
+      rel="alternate"
+      href="https://portfolio.jakub-wisniewski.workers.dev/"
+      hreflang="x-default"
+    />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="sitemap" href="/sitemap.xml" type="application/xml" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
+    <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+    <link rel="me" href="https://github.com/D3prave" />
+    <link rel="me" href="https://linkedin.com/in/wis-jak" />
     <link
       rel="preload"
       href="/fonts/ibm-plex-sans-latin.woff2"
@@ -35,36 +118,104 @@
       type="font/woff2"
       crossorigin
     />
+    <link rel="preload" href="/project-media/pagerank-preview-placeholder.jpg" as="image" type="image/jpeg" />
+    <link rel="preload" href="/project-media/msit-hotel-booking-placeholder.jpg" as="image" type="image/jpeg" />
+    <link rel="preload" href="/project-media/kultour-map-placeholder.jpg" as="image" type="image/jpeg" />
+    <link rel="preload" href="/project-media/movie-recommendation-placeholder.jpg" as="image" type="image/jpeg" />
     <!-- Preload project media so images are cached before sections reveal -->
-    <link rel="preload" href="/project-media/pagerank-preview.webp" as="image" type="image/webp" fetchpriority="low" />
-    <link rel="preload" href="/project-media/msit-hotel-booking.webp" as="image" type="image/webp" fetchpriority="low" />
-    <link rel="preload" href="/project-media/kultour-map.webp" as="image" type="image/webp" fetchpriority="low" />
-    <link rel="preload" href="/project-media/movie-recommendation.webp" as="image" type="image/webp" fetchpriority="low" />
-    <title>Jakub Wiśniewski | Developer Portfolio</title>
+    <link rel="preload" href="/project-media/pagerank-preview.webp" as="image" type="image/webp" />
+    <link rel="preload" href="/project-media/msit-hotel-booking.webp" as="image" type="image/webp" />
+    <link rel="preload" href="/project-media/kultour-map.webp" as="image" type="image/webp" />
+    <link rel="preload" href="/project-media/movie-recommendation.webp" as="image" type="image/webp" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@graph": [
           {
             "@type": "WebSite",
+            "@id": "https://portfolio.jakub-wisniewski.workers.dev/#website",
             "name": "Jakub Wiśniewski Portfolio",
             "url": "https://portfolio.jakub-wisniewski.workers.dev/",
-            "description": "Developer portfolio focused on backend systems, data products, graph analytics, and practical machine learning."
+            "description": "Jakub Wiśniewski is a backend-focused developer building data products, graph analytics systems, ML-enabled workflows, and production-minded web applications.",
+            "inLanguage": "en",
+            "publisher": {
+              "@id": "https://portfolio.jakub-wisniewski.workers.dev/#person"
+            }
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://portfolio.jakub-wisniewski.workers.dev/#webpage",
+            "url": "https://portfolio.jakub-wisniewski.workers.dev/",
+            "name": "Jakub Wiśniewski | Developer Portfolio",
+            "description": "Jakub Wiśniewski is a backend-focused developer building data products, graph analytics systems, ML-enabled workflows, and production-minded web applications.",
+            "isPartOf": {
+              "@id": "https://portfolio.jakub-wisniewski.workers.dev/#website"
+            },
+            "about": {
+              "@id": "https://portfolio.jakub-wisniewski.workers.dev/#person"
+            },
+            "primaryImageOfPage": {
+              "@id": "https://portfolio.jakub-wisniewski.workers.dev/#primaryimage"
+            },
+            "inLanguage": "en"
+          },
+          {
+            "@type": "ImageObject",
+            "@id": "https://portfolio.jakub-wisniewski.workers.dev/#primaryimage",
+            "contentUrl": "https://portfolio.jakub-wisniewski.workers.dev/og-image.png",
+            "url": "https://portfolio.jakub-wisniewski.workers.dev/og-image.png",
+            "caption": "Jakub Wiśniewski developer portfolio social preview"
           },
           {
             "@type": "Person",
+            "@id": "https://portfolio.jakub-wisniewski.workers.dev/#person",
             "name": "Jakub Wiśniewski",
+            "alternateName": "Jakub Wisniewski",
             "url": "https://portfolio.jakub-wisniewski.workers.dev/",
+            "image": "https://portfolio.jakub-wisniewski.workers.dev/og-image.png",
             "jobTitle": "Developer focused on backend engineering, machine learning, and data analytics",
             "description": "Backend-focused developer working across scalable systems, machine learning workflows, analytics tooling, and research infrastructure.",
-            "email": "mailto:jakub.wisniewski.dev@gmail.com"
+            "email": "mailto:jakub.wisniewski.dev@gmail.com",
+            "homeLocation": {
+              "@type": "Place",
+              "name": "Germany"
+            },
+            "sameAs": [
+              "https://github.com/D3prave",
+              "https://linkedin.com/in/wis-jak"
+            ],
+            "knowsAbout": [
+              "Backend engineering",
+              "Machine learning workflows",
+              "Data analytics",
+              "Graph analytics",
+              "Python",
+              "FastAPI",
+              "PostgreSQL",
+              "React"
+            ]
           }
         ]
       }
     </script>
   </head>
   <body>
+    <noscript>
+      <main>
+        <h1>Jakub Wiśniewski</h1>
+        <p>
+          Backend-focused developer working across backend systems, machine learning
+          workflows, analytics tooling, and production-minded web applications.
+        </p>
+        <p>
+          Links:
+          <a href="https://github.com/D3prave">GitHub</a>,
+          <a href="https://linkedin.com/in/wis-jak">LinkedIn</a>,
+          <a href="mailto:jakub.wisniewski.dev@gmail.com">Email</a>
+        </p>
+      </main>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
-  </html>
+</html>
