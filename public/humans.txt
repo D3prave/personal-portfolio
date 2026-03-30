@@ -1,7 +1,7 @@
 /* TEAM */
 Developer: Jakub Wisniewski
 Role: Backend-focused developer
-Site: https://portfolio.jakub-wisniewski.workers.dev/
+Site: https://jakub-wisniewski.com/
 Contact: jakub.wisniewski.dev@gmail.com
 Location: Germany
 

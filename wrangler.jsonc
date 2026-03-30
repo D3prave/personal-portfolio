@@ -2,6 +2,13 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "portfolio",
   "compatibility_date": "2026-03-10",
+  "workers_dev": false,
+  "routes": [
+    {
+      "pattern": "jakub-wisniewski.com",
+      "custom_domain": true
+    }
+  ],
   "assets": {
     "not_found_handling": "single-page-application"
   },
