@@ -91,7 +91,7 @@ npm run preview
 Current setup: Cloudflare Workers with a custom domain
 
 - The repo deploys with Wrangler via `npm run deploy`.
-- [`wrangler.jsonc`](/Users/deprave/Documents/PersonalWebsite/wrangler.jsonc) is configured to attach the Worker to `jakub-wisniewski.com` as a Custom Domain and disable the public `workers.dev` hostname.
+- [`wrangler.jsonc`](/Users/deprave/Documents/PersonalWebsite/wrangler.jsonc) is configured to attach the Worker to `jakub-wisniewski.com` and `www.jakub-wisniewski.com` as Custom Domains and disable the public `workers.dev` hostname.
 - The repo pins Node.js with [`.node-version`](/Users/deprave/Documents/PersonalWebsite/.node-version) and adds Cloudflare static headers in [`public/_headers`](/Users/deprave/Documents/PersonalWebsite/public/_headers).
 
 Deploy with Wrangler:
@@ -103,9 +103,9 @@ npm run deploy
 After deploy, verify in Cloudflare:
 
 1. `Workers & Pages` -> `portfolio` -> `Settings` -> `Domains & Routes`.
-2. Confirm `jakub-wisniewski.com` is listed as a Custom Domain.
+2. Confirm `jakub-wisniewski.com` and `www.jakub-wisniewski.com` are listed as Custom Domains.
 3. Confirm `workers.dev` is disabled.
-4. If you later want `www`, add `www.jakub-wisniewski.com` separately and redirect it to the apex domain to avoid duplicate content.
+4. Add a Redirect Rule from `www.jakub-wisniewski.com/*` to `https://jakub-wisniewski.com/${1}` so the apex domain stays canonical.
 
 Alternative: Cloudflare Pages
 
