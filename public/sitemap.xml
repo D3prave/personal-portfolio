@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://portfolio.jakub-wisniewski.workers.dev/</loc>
+    <loc>https://jakub-wisniewski.com/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://portfolio.jakub-wisniewski.workers.dev/jakub-wisniewski-cv.pdf</loc>
+    <loc>https://jakub-wisniewski.com/jakub-wisniewski-cv.pdf</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>

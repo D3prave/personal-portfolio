@@ -81,23 +81,33 @@ npm run preview
 
 - The site ships with search/discovery assets in [`public/robots.txt`](/Users/deprave/Documents/PersonalWebsite/public/robots.txt), [`public/sitemap.xml`](/Users/deprave/Documents/PersonalWebsite/public/sitemap.xml), [`public/site.webmanifest`](/Users/deprave/Documents/PersonalWebsite/public/site.webmanifest), [`public/browserconfig.xml`](/Users/deprave/Documents/PersonalWebsite/public/browserconfig.xml), [`public/humans.txt`](/Users/deprave/Documents/PersonalWebsite/public/humans.txt), and [`public/.well-known/security.txt`](/Users/deprave/Documents/PersonalWebsite/public/.well-known/security.txt).
 - Social, canonical, and structured-data tags live in [`index.html`](/Users/deprave/Documents/PersonalWebsite/index.html).
+- Workers routing is configured in [`wrangler.jsonc`](/Users/deprave/Documents/PersonalWebsite/wrangler.jsonc) to serve the site on `jakub-wisniewski.com` and disable the public `workers.dev` hostname on deploy.
 - Optional Cloudflare Web Analytics support is wired in [`src/components/CloudflareWebAnalytics.tsx`](/Users/deprave/Documents/PersonalWebsite/src/components/CloudflareWebAnalytics.tsx). Set `VITE_CLOUDFLARE_WEB_ANALYTICS_TOKEN` before `npm run build` if you want Cloudflare's browser-side beacon on a plain static deployment.
 - For a Worker that only serves static assets, the Workers `Metrics` tab is not the right observability surface. Cloudflare serves those static requests at no charge, and the useful measurement layer here is Web Analytics in the browser, not Workers logs/traces.
-- After deployment, add the site to Google Search Console and submit `https://portfolio.jakub-wisniewski.workers.dev/sitemap.xml`. That step cannot be completed from inside the repo, but it is the normal follow-up if you want Google to discover updates faster.
+- After deployment, add the site to Google Search Console and submit `https://jakub-wisniewski.com/sitemap.xml`. That step cannot be completed from inside the repo, but it is the normal follow-up if you want Google to discover updates faster.
 
 ## Deploy For Free
 
-Recommended: Cloudflare Pages
+Current setup: Cloudflare Workers with a custom domain
 
-- Why: best free fit for this site, very fast global edge delivery, simple GitHub integration, and a free `*.pages.dev` URL.
-- Cloudflare Pages supports both private and public GitHub repositories.
+- The repo deploys with Wrangler via `npm run deploy`.
+- [`wrangler.jsonc`](/Users/deprave/Documents/PersonalWebsite/wrangler.jsonc) is configured to attach the Worker to `jakub-wisniewski.com` as a Custom Domain and disable the public `workers.dev` hostname.
 - The repo pins Node.js with [`.node-version`](/Users/deprave/Documents/PersonalWebsite/.node-version) and adds Cloudflare static headers in [`public/_headers`](/Users/deprave/Documents/PersonalWebsite/public/_headers).
-- Build settings for this repo:
-  - Framework preset: `Vite`
-  - Build command: `npm run build`
-  - Build output directory: `dist`
-  - Production branch: `main`
-  - Root directory: leave empty
+
+Deploy with Wrangler:
+
+```bash
+npm run deploy
+```
+
+After deploy, verify in Cloudflare:
+
+1. `Workers & Pages` -> `portfolio` -> `Settings` -> `Domains & Routes`.
+2. Confirm `jakub-wisniewski.com` is listed as a Custom Domain.
+3. Confirm `workers.dev` is disabled.
+4. If you later want `www`, add `www.jakub-wisniewski.com` separately and redirect it to the apex domain to avoid duplicate content.
+
+Alternative: Cloudflare Pages
 
 Repository prep:
 
