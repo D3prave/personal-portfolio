@@ -4,7 +4,7 @@ A single-page portfolio built with React, TypeScript, and Vite. The content is d
 
 ## Live Site
 
-[portfolio.jakub-wisniewski.workers.dev](https://portfolio.jakub-wisniewski.workers.dev)
+[jakub-wisniewski.com](https://jakub-wisniewski.com)
 
 ## Folder Structure
 
