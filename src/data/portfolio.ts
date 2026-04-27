@@ -23,7 +23,7 @@ export const portfolio: PortfolioData = {
     ],
     title: "I build backend systems that make complex data work in the real world.",
     description:
-      "I work across Siemens, university research infrastructure, and conference web operations, building software that has to be reliable, clear, and useful beyond a demo. My focus is backend engineering, ML-enabled workflows, analytics tooling, and product delivery for technical environments.",
+      "I work across Siemens and conference web operations, with recent university research infrastructure experience, building software that has to be reliable, clear, and useful beyond a demo. My focus is backend engineering, ML-enabled workflows, analytics tooling, and product delivery for technical environments.",
     ctas: [
       { label: "View Featured Work", href: "#featured-projects", variant: "primary" },
       { label: "View Experience", href: "#experience", variant: "secondary" },
@@ -38,7 +38,7 @@ export const portfolio: PortfolioData = {
     signals: [
       {
         label: "Current scope",
-        value: "Siemens, HPC, conference web",
+        value: "Siemens, conference web",
       },
       {
         label: "Focus",
@@ -54,19 +54,19 @@ export const portfolio: PortfolioData = {
       },
     ],
     stats: [
-      { value: "3", label: "active technical roles" },
+      { value: "2", label: "active technical roles" },
       { value: "5", label: "selected software builds" },
       { value: "1", label: "technical profile across backend, ML, and analytics" },
     ],
-    highlightsTitle: "Current scope",
+    highlightsTitle: "Current and recent scope",
     highlights: [
       {
         title: "Enterprise IT architecture support",
         text: "Support architecture documentation, landscape analysis, reporting, and technology research inside a large-scale Siemens environment.",
       },
       {
-        title: "Research infrastructure enablement",
-        text: "Help researchers work effectively with Linux and SLURM-based HPC systems, from SSH setup and remote execution to troubleshooting and technical documentation.",
+        title: "Recent research infrastructure support",
+        text: "Helped researchers work effectively with Linux and SLURM-based HPC systems, from SSH setup and remote execution to troubleshooting and technical documentation.",
       },
       {
         title: "Conference website operations",
@@ -81,17 +81,13 @@ export const portfolio: PortfolioData = {
     description:
       "My background combines backend engineering, machine learning workflows, analytics tooling, and hands-on support work in real technical environments.",
     paragraphs: [
-      "My work already spans enterprise architecture support, research infrastructure, and conference website work at the same university, which means documentation quality, technical clarity, operational reliability, and communication with different audiences all matter.",
+      "My work has spanned enterprise architecture support, research infrastructure, and conference website work at the same university, which means documentation quality, technical clarity, operational reliability, and communication with different audiences all matter.",
       "That mix has shaped how I build. I prefer systems that are useful, maintainable, and grounded in real constraints: APIs that handle failure well, analytics interfaces that explain system state, data pipelines that can scale, and user-facing applications that feel structured rather than improvised.",
     ],
     currentContracts: [
       {
         title: "Siemens",
         detail: "Working Student - IT Architecture Support",
-      },
-      {
-        title: "University",
-        detail: "Student Research Assistant",
       },
       {
         title: "University",
@@ -465,7 +461,7 @@ export const portfolio: PortfolioData = {
     eyebrow: "Experience",
     title: "Industry, research, and enterprise exposure already shape how I work.",
     description:
-      "My experience spans three current technical roles across enterprise architecture support, academic infrastructure, and conference web operations, together with previous data and IT work in manufacturing environments.",
+      "My experience spans current technical roles across enterprise architecture support and conference web operations, plus recent academic infrastructure work and previous data and IT work in manufacturing environments.",
   },
   experience: [
     {
@@ -484,13 +480,13 @@ export const portfolio: PortfolioData = {
     {
       title: "Student Research Assistant",
       organization: "University",
-      period: "Current",
+      period: "Previous",
       summary:
-        "Support research workflows, technical enablement, and the practical use of HPC infrastructure.",
+        "Supported research workflows, technical enablement, and the practical use of HPC infrastructure.",
       bullets: [
-        "Help non-technical researchers with SSH setup, remote execution, data transfer, and troubleshooting.",
-        "Write technical guides and documentation for Linux and cluster-based workflows.",
-        "Support computational work on Linux and SLURM environments.",
+        "Helped non-technical researchers with SSH setup, remote execution, data transfer, and troubleshooting.",
+        "Wrote technical guides and documentation for Linux and cluster-based workflows.",
+        "Supported computational work on Linux and SLURM environments.",
       ],
     },
     {
