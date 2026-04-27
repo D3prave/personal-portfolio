@@ -478,18 +478,6 @@ export const portfolio: PortfolioData = {
       ],
     },
     {
-      title: "Student Research Assistant",
-      organization: "University",
-      period: "Previous",
-      summary:
-        "Supported research workflows, technical enablement, and the practical use of HPC infrastructure.",
-      bullets: [
-        "Helped non-technical researchers with SSH setup, remote execution, data transfer, and troubleshooting.",
-        "Wrote technical guides and documentation for Linux and cluster-based workflows.",
-        "Supported computational work on Linux and SLURM environments.",
-      ],
-    },
-    {
       title: "Student Assistant - Conference Website",
       organization: "University",
       period: "Current",
@@ -500,6 +488,18 @@ export const portfolio: PortfolioData = {
         "Implement the core conference website functionality and structure.",
         "Support ongoing content organization and a usable information architecture for the series.",
         "Translate conference requirements into a maintainable web presence rather than a one-off event page.",
+      ],
+    },
+    {
+      title: "Student Research Assistant",
+      organization: "University",
+      period: "Previous",
+      summary:
+        "Supported research workflows, technical enablement, and the practical use of HPC infrastructure.",
+      bullets: [
+        "Helped non-technical researchers with SSH setup, remote execution, data transfer, and troubleshooting.",
+        "Wrote technical guides and documentation for Linux and cluster-based workflows.",
+        "Supported computational work on Linux and SLURM environments.",
       ],
     },
     {
