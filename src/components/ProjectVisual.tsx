@@ -124,7 +124,6 @@ export function ProjectVisual({
         src={media.src}
         alt={media.alt}
         loading="eager"
-        fetchPriority="high"
         decoding={isSafari ? "sync" : "async"}
         draggable={false}
         style={imageStyle}
@@ -274,7 +273,6 @@ export function ProjectVisual({
                         alt={media.dialogAlt ?? media.alt}
                         loading="eager"
                         decoding="async"
-                        fetchPriority="high"
                         draggable={false}
                         style={{
                           objectFit: media.dialogFit ?? "contain",
