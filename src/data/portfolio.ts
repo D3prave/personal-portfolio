@@ -4,7 +4,7 @@ const publicAsset = (path: string) => `${import.meta.env.BASE_URL}${path.replace
 
 export const portfolio: PortfolioData = {
   brand: "Jakub Wi\u015bniewski",
-  roleLabel: "Developer focused on backend engineering, machine learning, and data analytics",
+  roleLabel: "Developer focused on backend engineering, web crawling, machine learning, and data analytics",
   navigation: [
     { label: "About", href: "#about" },
     { label: "Projects", href: "#featured-projects" },
@@ -23,7 +23,7 @@ export const portfolio: PortfolioData = {
     ],
     title: "I build backend systems that make complex data work in the real world.",
     description:
-      "I work across Siemens and conference web operations, with recent university research infrastructure experience, building software that has to be reliable, clear, and useful beyond a demo. My focus is backend engineering, ML-enabled workflows, analytics tooling, and product delivery for technical environments.",
+      "Backend-focused Data Science student with experience in enterprise IT architecture support, web crawling, research computing, and data-intensive software systems. I focus on backend engineering, RAG/analytics pipelines, and practical machine learning.",
     ctas: [
       { label: "View Featured Work", href: "#featured-projects", variant: "primary" },
       { label: "View Experience", href: "#experience", variant: "secondary" },
@@ -38,7 +38,7 @@ export const portfolio: PortfolioData = {
     signals: [
       {
         label: "Current scope",
-        value: "Siemens, conference web",
+        value: "Siemens, KU student assistant",
       },
       {
         label: "Focus",
@@ -55,7 +55,7 @@ export const portfolio: PortfolioData = {
     ],
     stats: [
       { value: "2", label: "active technical roles" },
-      { value: "5", label: "selected software builds" },
+      { value: "6", label: "selected software builds" },
       { value: "1", label: "technical profile across backend, ML, and analytics" },
     ],
     highlightsTitle: "Current and recent scope",
@@ -65,12 +65,12 @@ export const portfolio: PortfolioData = {
         text: "Support architecture documentation, landscape analysis, reporting, and technology research inside a large-scale Siemens environment.",
       },
       {
-        title: "Recent research infrastructure support",
-        text: "Helped researchers work effectively with Linux and SLURM-based HPC systems, from SSH setup and remote execution to troubleshooting and technical documentation.",
+        title: "KU student assistant work",
+        text: "Work across KU's student-facing RAG chatbot crawler, research infrastructure support, technical documentation, and SampTA web operations.",
       },
       {
-        title: "Conference website operations",
-        text: "Run and extend the central SampTA conference website, covering cross-edition structure, implementation, and core information architecture.",
+        title: "Data-intensive systems",
+        text: "Build crawlers, analytics workflows, and backend-heavy projects where reliability, clear state, and usable reporting matter.",
       },
     ],
   },
@@ -79,10 +79,10 @@ export const portfolio: PortfolioData = {
     eyebrow: "About",
     title: "A developer profile grounded in real systems, real users, and real constraints.",
     description:
-      "My background combines backend engineering, machine learning workflows, analytics tooling, and hands-on support work in real technical environments.",
+      "My background combines enterprise IT architecture support, web crawling, research computing, backend engineering, and practical machine learning.",
     paragraphs: [
-      "My work has spanned enterprise architecture support, research infrastructure, and conference website work at the same university, which means documentation quality, technical clarity, operational reliability, and communication with different audiences all matter.",
-      "That mix has shaped how I build. I prefer systems that are useful, maintainable, and grounded in real constraints: APIs that handle failure well, analytics interfaces that explain system state, data pipelines that can scale, and user-facing applications that feel structured rather than improvised.",
+      "My work has spanned enterprise architecture support, university RAG data pipelines, research infrastructure, and conference website work, which means documentation quality, technical clarity, operational reliability, and communication with different audiences all matter.",
+      "That mix has shaped how I build. I prefer systems that are useful, maintainable, and grounded in real constraints: crawlers that can resume cleanly, APIs that handle failure well, analytics interfaces that explain system state, data pipelines that can scale, and user-facing applications that feel structured rather than improvised.",
     ],
     currentContracts: [
       {
@@ -90,20 +90,20 @@ export const portfolio: PortfolioData = {
         detail: "Working Student - IT Architecture Support",
       },
       {
-        title: "University",
-        detail: "Student Assistant - SampTA Conference Website",
+        title: "KU Eichst\u00e4tt-Ingolstadt",
+        detail: "Student Assistant - Crawler, research infrastructure, and web operations",
       },
     ],
     focusAreas: [
       {
         title: "Backend engineering",
         description:
-          "Python-first work across APIs, pipelines, databases, async workflows, monitoring, and reliability-focused processing.",
+          "Python-first work across APIs, crawlers, pipelines, databases, async workflows, monitoring, and reliability-focused processing.",
       },
       {
         title: "Machine learning and analytics",
         description:
-          "Applied ML, recommendation workflows, graph-oriented ranking logic, and analytics systems that support actual decisions and products.",
+          "Applied ML, recommendation workflows, RAG data ingestion, graph-oriented ranking logic, and analytics systems that support actual decisions and products.",
       },
       {
         title: "Enterprise and research systems",
@@ -145,9 +145,45 @@ export const portfolio: PortfolioData = {
     eyebrow: "Featured Projects",
     title: "Selected work that best represents my technical direction.",
     description:
-      "These projects reflect the mix I want to be known for: scalable backends, graph-oriented analysis, practical machine learning, and production-minded product design.",
+      "These projects reflect the mix I want to be known for: scalable backends, crawler pipelines, graph-oriented analysis, practical machine learning, and production-minded product design.",
   },
   featuredProjects: [
+    {
+      name: "KU AI Chatbot Crawler",
+      emphasis:
+        "Current university role. Python web crawler and RAG ingestion pipeline for KU's student-facing chatbot.",
+      summary:
+        "A crawler that maps and extracts roughly 20,200 German and English pages from ku.de into AnythingLLM-ready JSONL records.",
+      description:
+        "As a student assistant at KU Eichst\u00e4tt-Ingolstadt, I build the data pipeline behind the university's student-facing RAG chatbot. The crawler maps the TYPO3-based university website, extracts clean main content, tracks crawl state for incremental refreshes, and produces QA reports that make coverage verifiable.",
+      proof: [
+        { value: "20.2K", label: "pages covered" },
+        { value: "15.5K", label: "German pages" },
+        { value: "4.6K", label: "English pages" },
+        { value: "JSONL", label: "RAG output" },
+      ],
+      highlights: [
+        "Discovers pages through sitemap-index walking plus same-domain link following.",
+        "Extracts clean main content with requests, BeautifulSoup, and lxml, with Playwright kept as an optional JS-rendering fallback.",
+        "Uses a SQLite-backed URL frontier for resumable crawls, change detection, and incremental re-crawls from sitemap lastmod timestamps.",
+        "Produces sitemap-vs-crawled coverage diffs, error/skip audits, and short-page detection reports.",
+        "Replaced AnythingLLM's built-in Puppeteer scraper after it crashed the university container on PDF links.",
+      ],
+      tech: [
+        "Python",
+        "requests",
+        "BeautifulSoup",
+        "lxml",
+        "Playwright",
+        "SQLite",
+        "pytest",
+        "AnythingLLM",
+        "JSONL",
+        "CLI tooling",
+      ],
+      badges: ["Current Role", "RAG Pipeline", "20.2K Pages"],
+      visual: "graph",
+    },
     {
       name: "DataLab-PageRank",
       emphasis:
@@ -414,6 +450,8 @@ export const portfolio: PortfolioData = {
         "pandas",
         "scikit-learn",
         "Optuna",
+        "RAG data pipelines",
+        "Web scraping",
         "Graph analytics",
         "PageRank",
         "NetworkX",
@@ -429,6 +467,7 @@ export const portfolio: PortfolioData = {
       visual: "stack",
       items: [
         "PostgreSQL",
+        "SQLite",
         "Redis",
         "Supabase",
         "Docker",
@@ -436,6 +475,8 @@ export const portfolio: PortfolioData = {
         "SLURM",
         "Vercel",
         "Azure DevOps",
+        "pytest",
+        "CLI tooling",
         "Uvicorn",
       ],
     },
@@ -448,6 +489,7 @@ export const portfolio: PortfolioData = {
         "Architecture documentation",
         "System landscape analysis",
         "Technical reporting",
+        "Coverage and QA reporting",
         "HPC user support",
         "Debugging and troubleshooting",
         "Stakeholder communication",
@@ -461,69 +503,43 @@ export const portfolio: PortfolioData = {
     eyebrow: "Experience",
     title: "Industry, research, and enterprise exposure already shape how I work.",
     description:
-      "My experience spans current technical roles across enterprise architecture support and conference web operations, plus recent academic infrastructure work and previous data and IT work in manufacturing environments.",
+      "My experience spans enterprise architecture support, university RAG data pipelines, research infrastructure, conference web operations, and previous data and IT work in manufacturing environments.",
   },
   experience: [
     {
       title: "Working Student - IT Architecture Support",
       organization: "Siemens",
-      period: "Current",
+      period: "Mar 2026 - Present",
       summary:
         "Support architecture documentation and analysis work inside a large-scale enterprise IT environment.",
       bullets: [
-        "Create and maintain solution architecture overviews and related documentation.",
-        "Assist with analysis of IT system landscapes and business processes to identify optimization opportunities.",
-        "Prepare presentations and reports that support architecture decision-making.",
-        "Research current trends in IT architecture and cloud platforms.",
+        "Maintain solution architecture overviews and documentation in a large-scale enterprise IT environment.",
+        "Analyze IT landscapes and business processes, prepare decision-support reports and presentations, and research cloud and architecture trends.",
       ],
     },
     {
-      title: "Student Assistant - Conference Website",
-      organization: "University",
-      period: "Current",
+      title: "Student Assistant",
+      organization: "KU Eichst\u00e4tt-Ingolstadt",
+      period: "Jan 2026 - Present",
       summary:
-        "Own the setup and operation of the central SampTA conference website as a separate student assistant contract at the same university.",
+        "Support KU work across an AI chatbot crawler, research infrastructure, documentation, and SampTA web operations.",
       bullets: [
-        "Set up and operate a central website that aggregates information across multiple conference editions.",
-        "Implement the core conference website functionality and structure.",
-        "Support ongoing content organization and a usable information architecture for the series.",
-        "Translate conference requirements into a maintainable web presence rather than a one-off event page.",
+        "AI chatbot crawler: Built the Python crawler/data pipeline behind KU's student-facing RAG chatbot, replacing a failing scraper with AnythingLLM-ready JSONL, sitemap discovery, main-content extraction, SQLite crawl state, incremental re-crawls, and QA reports.",
+        "Student research assistant: Supported Geography research workflows on the FAU Linux/SLURM cluster, including access setup, data transfer, execution support, and troubleshooting.",
+        "Documentation: Wrote user-facing guidance for SSH access, remote execution, and cluster usage for non-technical researchers.",
+        "Conference website: Developed and helped maintain the SampTA conference website, supporting content updates, hosting, and ongoing web operations.",
       ],
     },
     {
-      title: "Student Research Assistant",
-      organization: "University",
-      period: "Previous",
-      summary:
-        "Supported research workflows, technical enablement, and the practical use of HPC infrastructure.",
-      bullets: [
-        "Helped non-technical researchers with SSH setup, remote execution, data transfer, and troubleshooting.",
-        "Wrote technical guides and documentation for Linux and cluster-based workflows.",
-        "Supported computational work on Linux and SLURM environments.",
-      ],
-    },
-    {
-      title: "Data Scientist",
+      title: "Data Science Intern",
       organization: "Kimball Electronics",
-      period: "Previous",
+      period: "Aug 2025 - Oct 2025",
       summary:
-        "Worked on database-focused IT support, production-adjacent analytics, and ML proof-of-concept work in an industrial environment.",
+        "Worked on database-focused IT support, production-adjacent analytics, and ML proof-of-concept work in a manufacturing environment.",
       bullets: [
-        "Supported IT operations and database development with SQL optimization, triggers, and stored procedures.",
-        "Analyzed production-related datasets and built decision-support visualizations.",
-        "Developed ML proof-of-concept models and presented results to mixed technical audiences.",
-        "Worked in Agile delivery settings using Azure DevOps.",
-      ],
-    },
-    {
-      title: "IT Intern",
-      organization: "Kimball Electronics",
-      period: "Previous",
-      summary:
-        "Handled internal tooling support and lightweight automation work.",
-      bullets: [
-        "Maintained internal .NET tools used for operational work.",
-        "Automated recurring tasks with Excel and VBA.",
+        "Supported IT operations and database development through SQL optimization, triggers, and stored procedures.",
+        "Analyzed scrap/repair, forecasting, and packaging datasets; built Repair vs. Scrap and TopLineForecast ML prototypes.",
+        "Designed a Repair vs. Scrap prediction app proof of concept, improved trigger/workflow reliability, and presented work in Agile teams using Azure DevOps/Git.",
       ],
     },
   ],
