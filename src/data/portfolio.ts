@@ -4,7 +4,7 @@ const publicAsset = (path: string) => `${import.meta.env.BASE_URL}${path.replace
 
 export const portfolio: PortfolioData = {
   brand: "Jakub Wi\u015bniewski",
-  roleLabel: "Developer focused on backend engineering, web crawling, machine learning, and data analytics",
+  roleLabel: "Developer focused on backend engineering, web crawling, enterprise systems, and data analytics",
   navigation: [
     { label: "About", href: "#about" },
     { label: "Projects", href: "#featured-projects" },
@@ -23,7 +23,7 @@ export const portfolio: PortfolioData = {
     ],
     title: "I build backend systems that make complex data work in the real world.",
     description:
-      "Backend-focused Data Science student with experience in enterprise IT architecture support, web crawling, research computing, and data-intensive software systems. I focus on backend engineering, RAG/analytics pipelines, and practical machine learning.",
+      "Backend-focused Data Science student with experience in enterprise application portfolio governance, web crawling, research computing, and data-intensive software systems. I focus on backend engineering, RAG/analytics pipelines, and practical machine learning.",
     ctas: [
       { label: "View Featured Work", href: "#featured-projects", variant: "primary" },
       { label: "View Experience", href: "#experience", variant: "secondary" },
@@ -61,8 +61,8 @@ export const portfolio: PortfolioData = {
     highlightsTitle: "Current and recent scope",
     highlights: [
       {
-        title: "Enterprise IT architecture support",
-        text: "Support architecture documentation, landscape analysis, reporting, and technology research inside a large-scale Siemens environment.",
+        title: "Enterprise application architecture",
+        text: "Improve LeanIX application portfolio quality, coordinate with Mendix application managers on architecture diagrams, and explore enterprise AI and automation platforms at Siemens.",
       },
       {
         title: "KU student assistant work",
@@ -79,9 +79,9 @@ export const portfolio: PortfolioData = {
     eyebrow: "About",
     title: "A developer profile grounded in real systems, real users, and real constraints.",
     description:
-      "My background combines enterprise IT architecture support, web crawling, research computing, backend engineering, and practical machine learning.",
+      "My background combines enterprise application portfolio governance, web crawling, research computing, backend engineering, and practical machine learning.",
     paragraphs: [
-      "My work has spanned enterprise architecture support, university RAG data pipelines, research infrastructure, and conference website work, which means documentation quality, technical clarity, operational reliability, and communication with different audiences all matter.",
+      "My work has spanned LeanIX application portfolio governance, enterprise architecture documentation, university RAG data pipelines, research infrastructure, and conference website work, which means documentation quality, technical clarity, operational reliability, and communication with different audiences all matter.",
       "That mix has shaped how I build. I prefer systems that are useful, maintainable, and grounded in real constraints: crawlers that can resume cleanly, APIs that handle failure well, analytics interfaces that explain system state, data pipelines that can scale, and user-facing applications that feel structured rather than improvised.",
     ],
     currentContracts: [
@@ -108,7 +108,7 @@ export const portfolio: PortfolioData = {
       {
         title: "Enterprise and research systems",
         description:
-          "Comfortable working with architecture documentation, HPC support, Linux-based workflows, and mixed technical or non-technical stakeholders.",
+          "Comfortable working with LeanIX portfolios, architecture diagrams, enterprise AI tooling, HPC support, Linux-based workflows, and mixed technical or non-technical stakeholders.",
       },
       {
         title: "Product delivery and UX",
@@ -151,11 +151,11 @@ export const portfolio: PortfolioData = {
     {
       name: "KU AI Chatbot Crawler",
       emphasis:
-        "Current university role. Python web crawler and RAG ingestion pipeline for KU's student-facing chatbot.",
+        "Current university role. Sole developer of the Python crawling and ingestion pipeline for KU's student-facing RAG chatbot.",
       summary:
         "A crawler that maps and extracts roughly 20,200 German and English pages from ku.de into AnythingLLM-ready JSONL records.",
       description:
-        "As a student assistant at KU Eichst\u00e4tt-Ingolstadt, I build the data pipeline behind the university's student-facing RAG chatbot. The crawler maps the TYPO3-based university website, extracts clean main content, tracks crawl state for incremental refreshes, and produces QA reports that make coverage verifiable.",
+        "As a student assistant at KU Eichst\u00e4tt-Ingolstadt, I developed and maintain the end-to-end pipeline behind the university's student-facing RAG chatbot. It crawls multilingual web and PDF content, processes scanned documents with OCR, updates AnythingLLM selectively through content hashes, and produces coverage and quality evidence for every run.",
       proof: [
         { value: "20.2K", label: "pages covered" },
         { value: "15.5K", label: "German pages" },
@@ -163,11 +163,12 @@ export const portfolio: PortfolioData = {
         { value: "JSONL", label: "RAG output" },
       ],
       highlights: [
-        "Discovers pages through sitemap-index walking plus same-domain link following.",
-        "Extracts clean main content with requests, BeautifulSoup, and lxml, with Playwright kept as an optional JS-rendering fallback.",
-        "Uses a SQLite-backed URL frontier for resumable crawls, change detection, and incremental re-crawls from sitemap lastmod timestamps.",
-        "Produces sitemap-vs-crawled coverage diffs, error/skip audits, and short-page detection reports.",
-        "Replaced AnythingLLM's built-in Puppeteer scraper after it crashed the university container on PDF links.",
+        "Replaced a failing off-the-shelf scraper with a staged crawl, PDF fetch, OCR, and deduplication pipeline that checkpoints between stages.",
+        "Discovers German and English content through sitemaps and extracts main content through whitelist-based rules, with configurable URL-prefix and language scopes.",
+        "Uses SQLite crawl state and resumable incremental recrawls to handle large refreshes reliably.",
+        "Integrates with the AnythingLLM REST API using content hashes, skipping unchanged pages and replacing only changed documents.",
+        "Audits coverage against both the sitemap and the university CMS page tree, alongside error, render, duplication, and content-quality reports.",
+        "Ships as a documented Docker image with a network-free pytest suite for reproducible deployment and handover.",
       ],
       tech: [
         "Python",
@@ -175,9 +176,12 @@ export const portfolio: PortfolioData = {
         "BeautifulSoup",
         "lxml",
         "Playwright",
+        "OCR",
         "SQLite",
         "pytest",
+        "Docker",
         "AnythingLLM",
+        "REST API",
         "JSONL",
         "CLI tooling",
       ],
@@ -452,6 +456,7 @@ export const portfolio: PortfolioData = {
         "Optuna",
         "RAG data pipelines",
         "Web scraping",
+        "PDF processing and OCR",
         "Graph analytics",
         "PageRank",
         "NetworkX",
@@ -486,10 +491,12 @@ export const portfolio: PortfolioData = {
         "Technical capabilities that matter in enterprise, research, and cross-functional settings.",
       visual: "grid",
       items: [
+        "Application portfolio governance",
         "Architecture documentation",
         "System landscape analysis",
         "Technical reporting",
         "Coverage and QA reporting",
+        "LeanIX portfolio quality",
         "HPC user support",
         "Debugging and troubleshooting",
         "Stakeholder communication",
@@ -503,7 +510,7 @@ export const portfolio: PortfolioData = {
     eyebrow: "Experience",
     title: "Industry, research, and enterprise exposure already shape how I work.",
     description:
-      "My experience spans enterprise architecture support, university RAG data pipelines, research infrastructure, conference web operations, and previous data and IT work in manufacturing environments.",
+      "My experience spans enterprise application portfolio governance, university RAG data pipelines, research infrastructure, conference web operations, and previous data and IT work in manufacturing environments.",
   },
   experience: [
     {
@@ -511,10 +518,11 @@ export const portfolio: PortfolioData = {
       organization: "Siemens",
       period: "Mar 2026 - Present",
       summary:
-        "Support architecture documentation and analysis work inside a large-scale enterprise IT environment.",
+        "Support application portfolio governance, architecture documentation, and technology exploration inside a large-scale enterprise IT environment.",
       bullets: [
-        "Maintain solution architecture overviews and documentation in a large-scale enterprise IT environment.",
-        "Analyze IT landscapes and business processes, prepare decision-support reports and presentations, and research cloud and architecture trends.",
+        "Improve the quality and currency of the LeanIX application portfolio by reviewing and correcting incomplete or outdated architecture information.",
+        "Contact Mendix application managers to create and update architecture diagrams, keeping solution views and dependencies aligned with the current IT landscape.",
+        "Evaluate enterprise AI and automation platforms, including Altair, Microsoft Copilot Studio, UiPath, and KNIME, and document candidate use cases and findings.",
       ],
     },
     {
@@ -524,7 +532,9 @@ export const portfolio: PortfolioData = {
       summary:
         "Support KU work across an AI chatbot crawler, research infrastructure, documentation, and SampTA web operations.",
       bullets: [
-        "AI chatbot crawler: Built the Python crawler/data pipeline behind KU's student-facing RAG chatbot, replacing a failing scraper with AnythingLLM-ready JSONL, sitemap discovery, main-content extraction, SQLite crawl state, incremental re-crawls, and QA reports.",
+        "AI chatbot crawler: Solely developed and maintained the Python crawling and ingestion pipeline behind KU's student-facing RAG chatbot, replacing a failing scraper and producing AnythingLLM-compatible JSONL from German and English ku.de content.",
+        "Pipeline and ingestion: Built a checkpointed crawl, PDF fetch, OCR, and deduplication workflow with sitemap discovery, whitelist-based extraction, SQLite state, resumable incremental recrawls, and content-hash-aware AnythingLLM REST updates.",
+        "QA and delivery: Audited coverage against the sitemap and CMS page tree, generated error and content-quality reports, added render audits and network-free tests, and containerized the documented pipeline with Docker for handover.",
         "Student research assistant: Supported Geography research workflows on the FAU Linux/SLURM cluster, including access setup, data transfer, execution support, and troubleshooting.",
         "Documentation: Wrote user-facing guidance for SSH access, remote execution, and cluster usage for non-technical researchers.",
         "Conference website: Developed and helped maintain the SampTA conference website, supporting content updates, hosting, and ongoing web operations.",

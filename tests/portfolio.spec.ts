@@ -98,6 +98,8 @@ test.describe("portfolio site", () => {
     await expect(
       page.getByRole("heading", { name: "Working Student - IT Architecture Support" }),
     ).toBeVisible();
+    await expect(page.getByText(/LeanIX application portfolio/i).first()).toBeVisible();
+    await expect(page.getByText(/content-hash-aware AnythingLLM REST updates/i)).toBeVisible();
     await expect(page.getByText("jakub.wisniewski.dev@gmail.com").first()).toBeVisible();
 
     await expect(page.locator('img[src$="pagerank-preview.webp"]')).toHaveJSProperty(
