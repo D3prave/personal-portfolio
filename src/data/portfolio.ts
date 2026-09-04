@@ -23,7 +23,7 @@ export const portfolio: PortfolioData = {
     ],
     title: "I build backend systems that make complex data work in the real world.",
     description:
-      "Backend-focused Data Science student with experience in enterprise application portfolio governance, web crawling, research computing, and data-intensive software systems. I focus on backend engineering, RAG/analytics pipelines, and practical machine learning.",
+      "I'm a backend-focused Data Science student with experience in enterprise application portfolio governance, web crawling, research computing, and data-intensive software systems. I focus on backend engineering, RAG/analytics pipelines, and practical machine learning.",
     ctas: [
       { label: "View Featured Work", href: "#featured-projects", variant: "primary" },
       { label: "View Experience", href: "#experience", variant: "secondary" },
