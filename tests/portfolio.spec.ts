@@ -20,6 +20,31 @@ async function expectNoHorizontalOverflow(page: Page) {
   expect(overflow).toBeLessThanOrEqual(2);
 }
 
+async function expectAnchoredSection(page: Page, sectionId: string) {
+  const section = page.locator(`#${sectionId}`);
+
+  await expect(page).toHaveURL(new RegExp(`#${sectionId}$`));
+
+  // Assert the section heading, not the section itself. toBeInViewport measures
+  // the visible area against the element's own area, so a tall section can never
+  // reach a high ratio no matter how correctly it scrolled. Checking the heading
+  // keeps this test independent of how much the section grows.
+  await expect(section.getByRole("heading", { level: 2 })).toBeInViewport({
+    ratio: 1,
+  });
+
+  // The section should also be anchored near the top of the viewport rather than
+  // merely peeking in from the bottom.
+  const viewportHeight = page.viewportSize()?.height ?? 0;
+
+  await expect
+    .poll(
+      async () => (await section.boundingBox())?.y ?? Number.POSITIVE_INFINITY,
+      { timeout: 8_000 },
+    )
+    .toBeLessThan(viewportHeight / 2);
+}
+
 async function countCanvasPixels(page: Page, selector: string) {
   return page.locator(selector).evaluate((canvasElement) => {
     const canvas = canvasElement as HTMLCanvasElement;
@@ -137,12 +162,10 @@ test.describe("portfolio site", () => {
     });
     await primaryNavigation.getByRole("link", { name: "Projects" }).click();
 
-    await expect(page).toHaveURL(/#featured-projects$/);
-    await expect(page.locator("#featured-projects")).toBeInViewport({ ratio: 0.2 });
+    await expectAnchoredSection(page, "featured-projects");
 
     await primaryNavigation.getByRole("link", { name: "Contact" }).click();
-    await expect(page).toHaveURL(/#contact$/);
-    await expect(page.locator("#contact")).toBeInViewport({ ratio: 0.2 });
+    await expectAnchoredSection(page, "contact");
 
     await page.getByRole("button", { name: "Switch to light mode" }).click();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
