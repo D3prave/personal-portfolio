@@ -68,7 +68,7 @@ async function countCanvasPixels(page: Page, selector: string) {
 }
 
 test.describe("portfolio site", () => {
-  let consoleFailures: string[];
+  let consoleFailures: string[] = [];
 
   test.beforeEach(async ({ page }) => {
     consoleFailures = [];
