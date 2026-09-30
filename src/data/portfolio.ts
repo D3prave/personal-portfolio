@@ -351,7 +351,7 @@ export const portfolio: PortfolioData = {
         "LaTeX",
       ],
       badges: ["Bachelor's Thesis", "LLM Research", "HPC"],
-      visual: "analytics",
+      visual: "entropy",
       repoUrl: "https://github.com/D3prave/thesis",
     },
     {

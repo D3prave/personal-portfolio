@@ -370,6 +370,29 @@ export function ProjectVisual({
         </div>
       )}
 
+      {visual === "entropy" && (
+        <svg viewBox="0 0 100 56" className="project-visual-svg project-visual-svg--entropy">
+          {/* Sampled answers (left) grouped by meaning into clusters (right). */}
+          <circle className="entropy-cluster" cx="72" cy="14" r="10" />
+          <circle className="entropy-cluster" cx="86" cy="38" r="7" />
+          <circle className="entropy-cluster" cx="62" cy="46" r="4.5" />
+          <path d="M10 6L62 12" />
+          <path d="M10 14L62 14" />
+          <path d="M10 22L63 17" />
+          <path d="M10 30L64 20" />
+          <path d="M10 38L79 37" />
+          <path d="M10 46L80 40" />
+          <path d="M10 54L58 48" />
+          <circle cx="10" cy="6" r="2" />
+          <circle cx="10" cy="14" r="2" />
+          <circle cx="10" cy="22" r="2" />
+          <circle cx="10" cy="30" r="2" />
+          <circle cx="10" cy="38" r="2" />
+          <circle cx="10" cy="46" r="2" />
+          <circle cx="10" cy="54" r="2" />
+        </svg>
+      )}
+
       {visual === "media" && (
         <div className="project-visual-media">
           <div className="project-visual-posters">
