@@ -101,7 +101,7 @@ export interface Project {
   highlights: string[];
   tech: string[];
   badges: string[];
-  visual: "graph" | "booking" | "route" | "analytics" | "media";
+  visual: "graph" | "booking" | "route" | "analytics" | "media" | "entropy";
   media?: ProjectMedia;
   repoUrl?: string;
   liveUrl?: string;
