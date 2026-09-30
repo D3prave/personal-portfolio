@@ -23,7 +23,7 @@ export const portfolio: PortfolioData = {
     ],
     title: "I build backend systems that make complex data work in the real world.",
     description:
-      "I'm a backend-focused M.Sc. AI student at FAU with a Data Science background and experience in enterprise application portfolio governance, web crawling, research computing, and data-intensive software systems. I focus on backend engineering, RAG/analytics pipelines, and practical machine learning.",
+      "I'm a backend-focused M.Sc. AI student at FAU with a B.Sc. in Data Science and experience in enterprise application portfolio governance, web crawling, research computing, and data-intensive software systems. I focus on backend engineering, RAG/analytics pipelines, and practical machine learning.",
     ctas: [
       { label: "View Featured Work", href: "#featured-projects", variant: "primary" },
       { label: "View Experience", href: "#experience", variant: "secondary" },
