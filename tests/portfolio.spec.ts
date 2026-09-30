@@ -96,7 +96,7 @@ test.describe("portfolio site", () => {
     await expect(page).toHaveTitle("Jakub Wiśniewski | Developer Portfolio");
     await expect(page.locator('meta[name="description"]')).toHaveAttribute(
       "content",
-      /backend-focused Data Science student/i,
+      /backend-focused M\.Sc\. AI student/i,
     );
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
       "href",

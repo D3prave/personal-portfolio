@@ -23,7 +23,7 @@ export const portfolio: PortfolioData = {
     ],
     title: "I build backend systems that make complex data work in the real world.",
     description:
-      "I'm a backend-focused Data Science student with experience in enterprise application portfolio governance, web crawling, research computing, and data-intensive software systems. I focus on backend engineering, RAG/analytics pipelines, and practical machine learning.",
+      "I'm a backend-focused M.Sc. AI student at FAU with a Data Science background and experience in enterprise application portfolio governance, web crawling, research computing, and data-intensive software systems. I focus on backend engineering, RAG/analytics pipelines, and practical machine learning.",
     ctas: [
       { label: "View Featured Work", href: "#featured-projects", variant: "primary" },
       { label: "View Experience", href: "#experience", variant: "secondary" },
@@ -46,7 +46,7 @@ export const portfolio: PortfolioData = {
       },
       {
         label: "Studying",
-        value: "B.Sc. Data Science",
+        value: "M.Sc. AI @ FAU",
       },
       {
         label: "Based in",
@@ -55,7 +55,7 @@ export const portfolio: PortfolioData = {
     ],
     stats: [
       { value: "2", label: "active technical roles" },
-      { value: "6", label: "selected software builds" },
+      { value: "7", label: "selected software builds" },
       { value: "1", label: "technical profile across backend, ML, and analytics" },
     ],
     highlightsTitle: "Current and recent scope",
@@ -81,6 +81,7 @@ export const portfolio: PortfolioData = {
     description:
       "My background combines enterprise application portfolio governance, web crawling, research computing, backend engineering, and practical machine learning.",
     paragraphs: [
+      "I completed my B.Sc. in Data Science at KU Eichst\u00e4tt-Ingolstadt with the thesis \"Detecting Hallucinations in Large Language Models Using Semantic Entropy\", and I am now studying for an M.Sc. in Artificial Intelligence at FAU Erlangen-N\u00fcrnberg.",
       "My work has spanned LeanIX application portfolio governance, enterprise architecture documentation, university RAG data pipelines, research infrastructure, and conference website work, which means documentation quality, technical clarity, operational reliability, and communication with different audiences all matter.",
       "That mix has shaped how I build. I prefer systems that are useful, maintainable, and grounded in real constraints: crawlers that can resume cleanly, APIs that handle failure well, analytics interfaces that explain system state, data pipelines that can scale, and user-facing applications that feel structured rather than improvised.",
     ],
@@ -321,11 +322,38 @@ export const portfolio: PortfolioData = {
   otherProjectsSection: {
     id: "other-projects",
     eyebrow: "Other Projects",
-    title: "Additional work across ML workflows and recommendation interfaces.",
+    title: "Additional work across LLM research, ML workflows, and recommendation interfaces.",
     description:
-      "Supporting projects that reinforce my interest in usable analytics tools, ML-enabled applications, and accessible user interfaces.",
+      "Supporting projects that reinforce my interest in LLM reliability, usable analytics tools, ML-enabled applications, and accessible user interfaces.",
   },
   otherProjects: [
+    {
+      name: "Semantic Entropy Thesis",
+      emphasis:
+        "Bachelor's thesis: Detecting Hallucinations in Large Language Models Using Semantic Entropy.",
+      summary:
+        "A reimplementation of semantic entropy (Farquhar et al., Nature 2024) that tests how well it flags wrong LLM answers compared with simpler uncertainty scores.",
+      description:
+        "The model answers the same question several times, answers with the same meaning are grouped, and the spread across groups signals risk. The public repository holds the LaTeX source, the experiment code, and the measurement files that every table and figure is rebuilt from.",
+      highlights: [
+        "Reimplemented semantic entropy by following the authors' released code.",
+        "Evaluated Mistral-7B-Instruct, Llama-3.1-8B-Instruct, and Llama-3.1-70B-Instruct on TriviaQA, NQ-Open, SVAMP, and a long-form biography task.",
+        "Compared against the original baselines, semantic entropy probes on hidden states, and entropy over normalized answer strings.",
+        "Ran generation and clustering with Slurm on the NHR@FAU Alex and Fritz clusters.",
+      ],
+      tech: [
+        "Python",
+        "PyTorch",
+        "Transformers",
+        "vLLM",
+        "scikit-learn",
+        "Slurm",
+        "LaTeX",
+      ],
+      badges: ["Bachelor's Thesis", "LLM Research", "HPC"],
+      visual: "analytics",
+      repoUrl: "https://github.com/D3prave/thesis",
+    },
     {
       name: "Auto-Analyst",
       emphasis:
