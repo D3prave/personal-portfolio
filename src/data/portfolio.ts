@@ -443,6 +443,7 @@ export const portfolio: PortfolioData = {
       { label: "Vercel", icon: "/icons/cloud/vercel.svg" },
       { label: "Docker", icon: "/icons/cloud/docker.svg" },
       { label: "PyTorch", icon: "/icons/cloud/pytorch.svg" },
+      { label: "Hugging Face", icon: "/icons/cloud/huggingface.svg" },
       { label: "TensorFlow", icon: "/icons/cloud/tensorflow.svg" },
       { label: "AWS", icon: "/icons/cloud/amazonwebservices.svg" },
       { label: "HTML5", icon: "/icons/cloud/html5.svg" },
