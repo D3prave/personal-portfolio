@@ -460,8 +460,8 @@ export function StackCloud({
         return;
       }
 
-      const rotationX = clamp(pendingDragY * 0.0052, -0.22, 0.22);
-      const rotationY = clamp(pendingDragX * 0.0052, -0.22, 0.22);
+      const rotationX = clamp(-pendingDragY * 0.0052, -0.22, 0.22);
+      const rotationY = clamp(-pendingDragX * 0.0052, -0.22, 0.22);
       const normalizedDeltaFactor = Math.max(deltaFactor, 0.7);
 
       baseRotationRef.current.x += rotationX;
