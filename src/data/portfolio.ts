@@ -441,6 +441,7 @@ export const portfolio: PortfolioData = {
       { label: "Redis", icon: "/icons/cloud/redis.svg" },
       { label: "Supabase", icon: "/icons/cloud/supabase.svg" },
       { label: "Vercel", icon: "/icons/cloud/vercel.svg" },
+      { label: "Cloudflare", icon: "/icons/cloud/cloudflare.svg" },
       { label: "Docker", icon: "/icons/cloud/docker.svg" },
       { label: "PyTorch", icon: "/icons/cloud/pytorch.svg" },
       { label: "Hugging Face", icon: "/icons/cloud/huggingface.svg" },
