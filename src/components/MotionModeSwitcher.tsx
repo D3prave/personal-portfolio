@@ -37,17 +37,17 @@ const modes: Array<{
   {
     id: "core",
     label: "Core",
-    note: "Clean grid",
+    note: "Balanced",
   },
   {
     id: "cinematic",
     label: "Cinematic",
-    note: "Warm drift",
+    note: "Editorial",
   },
   {
     id: "experimental",
     label: "Experimental",
-    note: "Sharp neon",
+    note: "High contrast",
   },
 ];
 

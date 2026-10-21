@@ -196,6 +196,10 @@
   --mode-flare-strength: 1;
   --mode-trail-opacity: 0.24;
   --mode-ring-opacity: 0.86;
+  --mode-accent: #7dd3fc;
+  --mode-accent-warm: #f6c177;
+  --mode-glow: rgba(125, 211, 252, 0.18);
+  --mode-surface-glow: rgba(125, 211, 252, 0.12);
   --reveal-offset-x: 0px;
   --reveal-offset-y: 76px;
   --reveal-rotate: 0deg;
@@ -210,6 +214,10 @@
   --mode-flare-strength: 1.22;
   --mode-trail-opacity: 0.18;
   --mode-ring-opacity: 1;
+  --mode-accent: #f6c177;
+  --mode-accent-warm: #f59e0b;
+  --mode-glow: rgba(246, 193, 119, 0.22);
+  --mode-surface-glow: rgba(246, 193, 119, 0.16);
   --reveal-offset-x: -78px;
   --reveal-offset-y: 108px;
   --reveal-rotate: -3deg;
@@ -224,6 +232,10 @@
   --mode-flare-strength: 1.48;
   --mode-trail-opacity: 0.34;
   --mode-ring-opacity: 1.14;
+  --mode-accent: #8be9fd;
+  --mode-accent-warm: #f6c177;
+  --mode-glow: rgba(139, 233, 253, 0.24);
+  --mode-surface-glow: rgba(139, 233, 253, 0.18);
   --reveal-offset-x: 64px;
   --reveal-offset-y: 32px;
   --reveal-rotate: 5deg;
@@ -468,35 +480,35 @@ body[data-motion-mode="core"] {
   background:
     radial-gradient(
       circle at 14% 8%,
-      hsl(var(--section-hue) 82% 62% / calc(0.07 + var(--section-depth, 0) * 0.16)),
-      transparent 34%
+      hsl(var(--section-hue) 82% 62% / calc(0.09 + var(--section-depth, 0) * 0.12)),
+      transparent 32%
     ),
-    radial-gradient(circle at 85% 15%, rgba(246, 193, 119, 0.11), transparent 24%),
-    linear-gradient(180deg, #09101f 0%, #0b1222 48%, #08101d 100%);
+    radial-gradient(circle at 82% 14%, rgba(125, 211, 252, 0.1), transparent 22%),
+    linear-gradient(180deg, #0b1220 0%, #0c1628 46%, #0a1220 100%);
 }
 
 body[data-motion-mode="cinematic"] {
   background:
-    radial-gradient(circle at 16% 14%, rgba(246, 193, 119, 0.16), transparent 26%),
+    radial-gradient(circle at 18% 12%, rgba(246, 193, 119, 0.28), transparent 22%),
     radial-gradient(
       circle at 78% 10%,
-      hsl(var(--section-hue) 88% 72% / calc(0.12 + var(--section-depth, 0) * 0.18)),
-      transparent 30%
+      hsl(var(--section-hue) 88% 72% / calc(0.18 + var(--section-depth, 0) * 0.22)),
+      transparent 28%
     ),
-    linear-gradient(140deg, rgba(255, 255, 255, 0.025), transparent 38%),
-    linear-gradient(180deg, #060b15 0%, #0b1527 44%, #0e1b31 100%);
+    linear-gradient(140deg, rgba(255, 255, 255, 0.04), transparent 38%),
+    linear-gradient(180deg, #0a0d14 0%, #151521 42%, #1f1c1b 100%);
 }
 
 body[data-motion-mode="experimental"] {
   background:
     radial-gradient(
       circle at 18% 10%,
-      hsl(var(--section-hue) 92% 70% / calc(0.16 + var(--section-depth, 0) * 0.2)),
-      transparent 24%
+      hsl(var(--section-hue) 92% 70% / calc(0.22 + var(--section-depth, 0) * 0.22)),
+      transparent 18%
     ),
-    radial-gradient(circle at 86% 18%, rgba(246, 193, 119, 0.16), transparent 22%),
-    linear-gradient(125deg, rgba(125, 211, 252, 0.08), transparent 34%),
-    linear-gradient(180deg, #040913 0%, #07101d 42%, #050b15 100%);
+    radial-gradient(circle at 86% 18%, rgba(139, 233, 253, 0.22), transparent 20%),
+    linear-gradient(125deg, rgba(139, 233, 253, 0.08), transparent 34%),
+    linear-gradient(180deg, #02070d 0%, #07131d 40%, #020912 100%);
 }
 
 :root[data-theme="light"] body[data-motion-mode="core"] {
@@ -1219,8 +1231,12 @@ body[data-motion-mode="experimental"] .cell-node {
   inset: 0;
   border-radius: inherit;
   background:
-    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.18), transparent 52%),
-    linear-gradient(145deg, rgba(125, 211, 252, 0.14), rgba(246, 193, 119, 0.1));
+    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.18), transparent 52%),
+    linear-gradient(
+      145deg,
+      var(--mode-surface-glow),
+      rgba(255, 255, 255, 0.02)
+    );
   opacity: 0.95;
   pointer-events: none;
 }
@@ -1228,7 +1244,7 @@ body[data-motion-mode="experimental"] .cell-node {
 .motion-mode-switcher__trigger:hover {
   transform: translateY(-2px) scale(1.01);
   border-color: hsl(var(--section-hue) 88% 72% / 0.28);
-  background: rgba(125, 211, 252, 0.06);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .motion-mode-switcher__trigger:active {
@@ -1465,10 +1481,12 @@ body[data-motion-mode="experimental"] .cell-node {
   border-color: hsl(var(--section-hue) 88% 72% / 0.44);
   background: linear-gradient(
     145deg,
-    hsl(var(--section-hue) 88% 72% / 0.18),
-    rgba(246, 193, 119, 0.08)
+    var(--mode-glow),
+    rgba(255, 255, 255, 0.06)
   );
-  box-shadow: inset 0 0 0 1px hsl(var(--section-hue) 88% 72% / 0.18);
+  box-shadow:
+    inset 0 0 0 1px hsl(var(--section-hue) 88% 72% / 0.18),
+    0 10px 18px rgba(2, 6, 23, 0.12);
 }
 
 .mobile-sticky-bar {
@@ -1696,13 +1714,15 @@ body[data-motion-mode="experimental"] .scroll-progress-bar {
 }
 
 body[data-motion-mode="cinematic"] .site-header {
-  background: rgba(7, 12, 22, 0.56);
-  border-bottom-color: rgba(246, 193, 119, 0.14);
+  background: rgba(10, 13, 24, 0.68);
+  border-bottom-color: rgba(246, 193, 119, 0.2);
+  box-shadow: inset 0 -1px 0 rgba(246, 193, 119, 0.08);
 }
 
 body[data-motion-mode="experimental"] .site-header {
-  background: rgba(4, 10, 19, 0.84);
+  background: rgba(4, 10, 19, 0.82);
   border-bottom-color: hsl(var(--section-hue) 88% 72% / 0.24);
+  box-shadow: inset 0 -1px 0 rgba(139, 233, 253, 0.1);
 }
 
 .site-header.is-scrolled {
@@ -1799,7 +1819,8 @@ body[data-motion-mode="cinematic"] .theme-toggle,
 body[data-motion-mode="cinematic"] .motion-mode-switcher__panel,
 body[data-motion-mode="cinematic"] .motion-mode-switcher__trigger {
   border-radius: 22px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.012));
+  box-shadow: 0 16px 32px rgba(8, 12, 18, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 body[data-motion-mode="experimental"] .site-nav,
@@ -1810,8 +1831,9 @@ body[data-motion-mode="experimental"] .motion-mode-switcher__trigger {
   border-color: hsl(var(--section-hue) 88% 72% / 0.22);
   background: rgba(6, 12, 24, 0.86);
   box-shadow:
-    inset 0 0 0 1px rgba(125, 211, 252, 0.05),
-    0 20px 40px rgba(2, 6, 23, 0.28);
+    inset 0 0 0 1px rgba(125, 211, 252, 0.06),
+    0 20px 40px rgba(2, 6, 23, 0.28),
+    0 0 28px rgba(139, 233, 253, 0.06);
 }
 
 body[data-motion-mode="cinematic"] .motion-mode-switcher__trigger,
@@ -1849,7 +1871,7 @@ body[data-motion-mode="experimental"] .motion-mode-switcher__trigger {
   border-radius: inherit;
   background:
     radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.18), transparent 52%),
-    linear-gradient(135deg, rgba(125, 211, 252, 0.14), rgba(246, 193, 119, 0.08));
+    linear-gradient(135deg, var(--mode-surface-glow), rgba(255, 255, 255, 0.02));
   opacity: 0.9;
   pointer-events: none;
   transition: opacity 220ms ease;
@@ -1968,34 +1990,35 @@ body[data-motion-mode="experimental"] .motion-mode-switcher__trigger {
   color: var(--text);
   background: linear-gradient(
     135deg,
-    rgba(125, 211, 252, 0.14),
-    rgba(125, 211, 252, 0.08)
+    rgba(125, 211, 252, 0.18),
+    rgba(14, 165, 233, 0.08)
   );
   box-shadow:
-    inset 0 0 0 1px rgba(125, 211, 252, 0.12),
-    0 12px 24px rgba(2, 6, 23, 0.16);
+    inset 0 0 0 1px rgba(125, 211, 252, 0.16),
+    0 12px 28px rgba(2, 6, 23, 0.2);
 }
 
 body[data-motion-mode="cinematic"] .site-nav a.is-active {
   background: linear-gradient(
     135deg,
-    rgba(246, 193, 119, 0.18),
-    rgba(125, 211, 252, 0.08)
+    rgba(246, 193, 119, 0.22),
+    rgba(255, 255, 255, 0.04)
   );
   box-shadow:
-    inset 0 0 0 1px rgba(246, 193, 119, 0.18),
-    0 14px 28px rgba(2, 6, 23, 0.18);
+    inset 0 0 0 1px rgba(246, 193, 119, 0.22),
+    0 16px 30px rgba(87, 53, 16, 0.18);
 }
 
 body[data-motion-mode="experimental"] .site-nav a.is-active {
   background: linear-gradient(
     135deg,
-    hsl(var(--section-hue) 88% 72% / 0.26),
-    rgba(255, 255, 255, 0.04)
+    hsl(var(--section-hue) 88% 72% / 0.28),
+    rgba(139, 233, 253, 0.08)
   );
   box-shadow:
-    inset 0 0 0 1px hsl(var(--section-hue) 88% 72% / 0.24),
-    0 10px 18px rgba(2, 6, 23, 0.18);
+    inset 0 0 0 1px hsl(var(--section-hue) 88% 72% / 0.3),
+    0 0 18px rgba(122, 239, 255, 0.16),
+    0 12px 24px rgba(2, 6, 23, 0.22);
 }
 
 body[data-motion-mode="cinematic"] .stack-cloud-stage {
