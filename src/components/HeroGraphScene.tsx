@@ -72,10 +72,21 @@ export function HeroGraphScene({ isLitePerformance }: { isLitePerformance?: bool
     const startTime = performance.now();
     let rafId = 0;
     let visible = true;
+    let lastPaintTime = 0;
 
-    const animate = () => {
+    const animate = (timestamp: number) => {
+      rafId = requestAnimationFrame(animate);
+
+      // Keep the packet animation smooth without forcing style writes at the
+      // display's full refresh rate when the map is under load.
+      if (timestamp - lastPaintTime < 1000 / 45) {
+        return;
+      }
+
+      lastPaintTime = timestamp;
+
       if (visible) {
-        const elapsed = (performance.now() - startTime) / 1000;
+        const elapsed = (timestamp - startTime) / 1000;
 
         dots.forEach((dot, i) => {
           const packet = packets[i];
@@ -83,7 +94,9 @@ export function HeroGraphScene({ isLitePerformance }: { isLitePerformance?: bool
 
           const adjusted = elapsed - packet.delay;
           if (adjusted < 0) {
-            dot.style.opacity = "0";
+            if (dot.style.opacity !== "0") {
+              dot.style.opacity = "0";
+            }
             return;
           }
 
@@ -110,12 +123,18 @@ export function HeroGraphScene({ isLitePerformance }: { isLitePerformance?: bool
           // converting SVG user-unit deltas via cw/100 and ch/100.
           const dx = (to.x - from.x) / 100 * cw * pos;
           const dy = (to.y - from.y) / 100 * ch * pos;
-          dot.style.transform = `translate(${dx}px, ${dy}px)`;
-          dot.style.opacity   = String(Math.max(0, opacity));
+          const transform = `translate3d(${dx}px, ${dy}px, 0)`;
+          const nextOpacity = String(Math.max(0, opacity));
+
+          if (dot.style.transform !== transform) {
+            dot.style.transform = transform;
+          }
+
+          if (dot.style.opacity !== nextOpacity) {
+            dot.style.opacity = nextOpacity;
+          }
         });
       }
-
-      rafId = requestAnimationFrame(animate);
     };
 
     // Pause rAF when the hero is fully scrolled off screen.
