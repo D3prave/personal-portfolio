@@ -43,7 +43,13 @@ const footerTags = ["Backend systems", "Data analytics", "Applied ML"];
 // Half-size of the packet dot in px — subtract from left/top to visually centre it.
 const DOT_R = 4;
 
-export function HeroGraphScene({ isLitePerformance }: { isLitePerformance?: boolean }) {
+export function HeroGraphScene({
+  isLitePerformance,
+  isSafari,
+}: {
+  isLitePerformance?: boolean;
+  isSafari?: boolean;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -56,9 +62,11 @@ export function HeroGraphScene({ isLitePerformance }: { isLitePerformance?: bool
       container.querySelectorAll<HTMLElement>("[data-packet]"),
     );
 
-    dots.forEach((d) => {
-      d.style.willChange = "transform, opacity";
-    });
+    if (!isSafari) {
+      dots.forEach((d) => {
+        d.style.willChange = "transform, opacity";
+      });
+    }
 
     // Cache container dimensions; update only on resize.
     let cw = container.clientWidth;
@@ -79,7 +87,8 @@ export function HeroGraphScene({ isLitePerformance }: { isLitePerformance?: bool
 
       // Keep the packet animation smooth without forcing style writes at the
       // display's full refresh rate when the map is under load.
-      if (timestamp - lastPaintTime < 1000 / 45) {
+      const targetFps = isSafari ? 30 : 45;
+      if (timestamp - lastPaintTime < 1000 / targetFps) {
         return;
       }
 
@@ -156,7 +165,7 @@ export function HeroGraphScene({ isLitePerformance }: { isLitePerformance?: bool
         d.style.willChange = "";
       });
     };
-  }, [isLitePerformance]);
+  }, [isLitePerformance, isSafari]);
 
   return (
     <article
