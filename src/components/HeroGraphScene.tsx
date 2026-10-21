@@ -74,6 +74,7 @@ export function HeroGraphScene({
     const ro = new ResizeObserver(() => {
       cw = container.clientWidth;
       ch = container.clientHeight;
+      rebuildSafariAnimations();
     });
     ro.observe(container);
 
@@ -81,8 +82,51 @@ export function HeroGraphScene({
     let rafId = 0;
     let visible = true;
     let lastPaintTime = 0;
+    let safariAnimations: Animation[] = [];
+
+    const rebuildSafariAnimations = () => {
+      safariAnimations.forEach((animation) => animation.cancel());
+      safariAnimations = [];
+
+      if (!isSafari) {
+        return;
+      }
+
+      dots.forEach((dot, index) => {
+        const packet = packets[index];
+        if (!packet) {
+          return;
+        }
+
+        const from = nodes[packet.from];
+        const to = nodes[packet.to];
+        const dx = ((to.x - from.x) / 100) * cw;
+        const dy = ((to.y - from.y) / 100) * ch;
+
+        safariAnimations.push(
+          dot.animate(
+            [
+              { transform: "translate3d(0, 0, 0)", opacity: 0 },
+              { transform: "translate3d(0, 0, 0)", opacity: 1, offset: 0.05 },
+              { transform: `translate3d(${dx}px, ${dy}px, 0)`, opacity: 1, offset: 0.9 },
+              { transform: `translate3d(${dx}px, ${dy}px, 0)`, opacity: 0 },
+            ],
+            {
+              duration: packet.duration * 1000,
+              delay: packet.delay * -1000,
+              iterations: Infinity,
+              easing: "linear",
+            },
+          ),
+        );
+      });
+    };
 
     const animate = (timestamp: number) => {
+      if (isSafari) {
+        return;
+      }
+
       rafId = requestAnimationFrame(animate);
 
       // Keep the packet animation smooth without forcing style writes at the
@@ -148,15 +192,31 @@ export function HeroGraphScene({
 
     // Pause rAF when the hero is fully scrolled off screen.
     const io = new IntersectionObserver(
-      ([entry]) => { visible = entry.isIntersecting; },
+      ([entry]) => {
+        visible = entry.isIntersecting;
+
+        if (isSafari) {
+          safariAnimations.forEach((animation) => {
+            if (visible) {
+              void animation.play();
+            } else {
+              animation.pause();
+            }
+          });
+        }
+      },
       { threshold: 0 },
     );
     io.observe(container);
 
-    rafId = requestAnimationFrame(animate);
+    rebuildSafariAnimations();
+    if (!isSafari) {
+      rafId = requestAnimationFrame(animate);
+    }
 
     return () => {
       cancelAnimationFrame(rafId);
+      safariAnimations.forEach((animation) => animation.cancel());
       ro.disconnect();
       io.disconnect();
       dots.forEach((d) => {
