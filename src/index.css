@@ -859,8 +859,8 @@ textarea:focus-visible {
   --cell-scroll-drift-y: 0px;
   --cell-scroll-shimmer: 0;
   transform: translate(-50%, -50%);
-  animation: cellDrift 18s ease-in-out infinite;
   animation-delay: var(--cell-delay, 0s);
+  contain: layout paint;
   will-change: transform;
 }
 
@@ -926,17 +926,13 @@ textarea:focus-visible {
         var(--cell-react, 0) * 0.08
       )
     );
-  filter:
-    blur(calc((1 - var(--cell-scroll-reveal, 0)) * 6px))
-    saturate(calc(0.72 + var(--cell-scroll-reveal, 0) * 0.48 + var(--cell-react, 0) * 0.4));
-  animation:
-    cellFloat 12s ease-in-out infinite,
-    cellPhase 9.5s ease-in-out infinite;
-  animation-delay: var(--cell-delay, 0s), var(--cell-delay, 0s);
+  animation: cellFloat 16s ease-in-out infinite;
+  animation-delay: var(--cell-delay, 0s);
+  contain: layout paint;
+  backface-visibility: hidden;
   transition:
     transform 180ms ease,
-    opacity 220ms ease,
-    filter 180ms ease;
+    opacity 220ms ease;
   will-change: transform, opacity;
 }
 
@@ -5301,39 +5297,11 @@ a.contact-card-value:hover {
 @keyframes cellFloat {
   0%,
   100% {
-    opacity: 0.24;
     transform: translateY(0) scale(1);
   }
 
   50% {
-    opacity: 0.58;
     transform: translateY(-10px) scale(1.04);
-  }
-}
-
-@keyframes cellPhase {
-  0%,
-  100% {
-    opacity: 0.32;
-  }
-
-  48% {
-    opacity: 0.78;
-  }
-
-  62% {
-    opacity: 0.22;
-  }
-}
-
-@keyframes cellDrift {
-  0%,
-  100% {
-    opacity: 0.72;
-  }
-
-  50% {
-    opacity: 1;
   }
 }
 
