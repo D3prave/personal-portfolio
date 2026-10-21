@@ -119,7 +119,9 @@ export function MotionModeSwitcher({
   return (
     <div
       ref={rootRef}
-      className={`motion-mode-switcher ${isOpen ? "is-open" : ""}`}
+      className={`motion-mode-switcher motion-mode-switcher--${mode} ${
+        isOpen ? "is-open" : ""
+      }`}
       aria-label="Quick controls"
     >
       <button
@@ -220,6 +222,7 @@ export function MotionModeSwitcher({
         <span className="motion-mode-switcher__trigger-icon">
           <ControlIcon />
         </span>
+        <span className="motion-mode-switcher__trigger-mode">{mode}</span>
       </button>
     </div>
   );
