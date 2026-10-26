@@ -4705,6 +4705,8 @@ main section[data-offscreen] *::after {
 /* Safari and Chrome render the same effects. The heavy parts (CSS blur      */
 /* filters on large animated layers, background-position scrolling) were    */
 /* made cheap for every browser instead of being removed for Safari only.   */
+/* Two exceptions live in App.tsx: Safari skips the CellField/AmbientField  */
+/* layers and snaps section colours instead of blending them.               */
 /* What stays here are loading fixes that do not change how the page looks. */
 
 /* Safari defers paint for offscreen media under these containment hints,   */

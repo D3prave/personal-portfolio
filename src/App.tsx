@@ -82,7 +82,15 @@ function smootherstep(progress: number) {
   return progress * progress * progress * (progress * (progress * 6 - 15) + 10);
 }
 
-function getGradientStateAtProgress(progress: number, sectionCount: number) {
+// `snapHue` jumps straight to the nearest section's hue instead of blending.
+// Safari repaints the page background on every hue write, so a hue that
+// follows the scroll position costs it ~25 fps; snapping means a handful of
+// writes per full page scroll.
+function getGradientStateAtProgress(
+  progress: number,
+  sectionCount: number,
+  snapHue = false,
+) {
   const clampedProgress = clamp(progress, 0, 1);
 
   if (sectionCount <= 1) {
@@ -96,7 +104,10 @@ function getGradientStateAtProgress(progress: number, sectionCount: number) {
   const scaledProgress = clampedProgress * lastIndex;
   const startIndex = Math.floor(scaledProgress);
   const endIndex = Math.min(startIndex + 1, lastIndex);
-  const localProgress = smootherstep(clamp(scaledProgress - startIndex, 0, 1));
+  const rawLocalProgress = clamp(scaledProgress - startIndex, 0, 1);
+  const localProgress = snapHue
+    ? Math.round(rawLocalProgress)
+    : smootherstep(rawLocalProgress);
 
   return {
     depth: clampedProgress,
@@ -169,6 +180,7 @@ function App() {
   const [motionMode, setMotionMode] = useState<MotionMode>(readInitialMotionMode);
   const [isConstrainedPerformance] = useState(isConstrainedPerformanceEnvironment);
   const [hasCoarseInput] = useState(hasCoarsePointer);
+  const [isSafari] = useState(isSafariBrowser);
   const [performanceMode, setPerformanceMode] = useState<PerformanceMode>(
     readInitialPerformanceMode,
   );
@@ -277,10 +289,10 @@ function App() {
       hasCoarseInput ||
       isConstrainedPerformance ||
       isLitePerformance;
-    // Colours blend smoothly between sections in every desktop browser. Hue is
-    // only written when it moved by at least half a degree, so one section
-    // change costs a handful of repaints instead of one per frame.
-    const useDirectColorSync = useDirectScrollSync;
+    // Chrome blends section colours smoothly (hue is only written when it
+    // moved by at least half a degree). Safari snaps to each section's colour
+    // (see getGradientStateAtProgress).
+    const useDirectColorSync = useDirectScrollSync || isSafari;
     const revealElements = Array.from(document.querySelectorAll<HTMLElement>(".reveal"));
     const sectionElements = Array.from(
       document.querySelectorAll<HTMLElement>("main .section"),
@@ -322,6 +334,7 @@ function App() {
     const initialGradientState = getGradientStateAtProgress(
       initialPageProgress,
       sections.length,
+      isSafari,
     );
     let currentProgress = initialPageProgress;
     let targetProgress = initialPageProgress;
@@ -353,7 +366,11 @@ function App() {
         }
       });
 
-      const gradientState = getGradientStateAtProgress(gradientProgress, sections.length);
+      const gradientState = getGradientStateAtProgress(
+        gradientProgress,
+        sections.length,
+        isSafari,
+      );
       targetDepth = gradientState.depth;
       targetHue = gradientState.hue;
     };
@@ -552,6 +569,7 @@ function App() {
     hasCoarseInput,
     isConstrainedPerformance,
     isLitePerformance,
+    isSafari,
   ]);
 
   useEffect(() => {
@@ -771,8 +789,11 @@ function App() {
 
   return (
     <div className={`site-shell motion-mode-${motionMode}`}>
-      {isConstrainedPerformance || isLitePerformance ? null : <CellField />}
-      {isConstrainedPerformance || isLitePerformance ? null : <AmbientField />}
+      {/* The fixed full-screen cell and ambient layers are the one effect Safari
+          can't afford: measured on a Mac they take Safari from ~70 to ~25 fps
+          while scrolling. Everything else renders the same in both browsers. */}
+      {isConstrainedPerformance || isLitePerformance || isSafari ? null : <CellField />}
+      {isConstrainedPerformance || isLitePerformance || isSafari ? null : <AmbientField />}
       <ScrollProgress />
       <Header
         brand={portfolio.brand}
