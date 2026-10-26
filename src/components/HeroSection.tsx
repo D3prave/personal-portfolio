@@ -7,14 +7,12 @@ interface HeroSectionProps {
   hero: HeroContent;
   contactLinks: ContactItem[];
   isLitePerformance?: boolean;
-  isSafari?: boolean;
 }
 
 export function HeroSection({
   hero,
   contactLinks,
   isLitePerformance,
-  isSafari,
 }: HeroSectionProps) {
   return (
     <section className="hero section" id="top">
@@ -111,10 +109,7 @@ export function HeroSection({
         </div>
 
         <div className="hero-aside">
-          <HeroGraphScene
-            isLitePerformance={isLitePerformance}
-            isSafari={isSafari}
-          />
+          <HeroGraphScene isLitePerformance={isLitePerformance} />
 
           <aside
             className="hero-panel reveal"

@@ -45,10 +45,8 @@ const DOT_R = 4;
 
 export function HeroGraphScene({
   isLitePerformance,
-  isSafari,
 }: {
   isLitePerformance?: boolean;
-  isSafari?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -56,41 +54,23 @@ export function HeroGraphScene({
     const container = containerRef.current;
     if (!container || isLitePerformance) return;
 
-    // HTML div dots — positioned absolute inside hero-visual-canvas.
-    // CSS transform + opacity are both composited; zero paint cost on every browser.
+    // HTML div dots, positioned absolute inside hero-visual-canvas.
     const dots = Array.from(
       container.querySelectorAll<HTMLElement>("[data-packet]"),
     );
 
-    if (!isSafari) {
-      dots.forEach((d) => {
-        d.style.willChange = "transform, opacity";
-      });
-    }
-
-    // Cache container dimensions; update only on resize.
-    let cw = container.clientWidth;
-    let ch = container.clientHeight;
-    const ro = new ResizeObserver(() => {
-      cw = container.clientWidth;
-      ch = container.clientHeight;
-      rebuildSafariAnimations();
-    });
-    ro.observe(container);
-
-    const startTime = performance.now();
-    let rafId = 0;
+    // Packets run as Web Animations (transform + opacity only), so the
+    // browser's compositor plays them at full refresh rate with no per-frame
+    // JS. Same code path in Chrome and Safari.
+    let animations: Animation[] = [];
     let visible = true;
-    let lastPaintTime = 0;
-    let safariAnimations: Animation[] = [];
 
-    const rebuildSafariAnimations = () => {
-      safariAnimations.forEach((animation) => animation.cancel());
-      safariAnimations = [];
+    const buildAnimations = () => {
+      animations.forEach((animation) => animation.cancel());
+      animations = [];
 
-      if (!isSafari) {
-        return;
-      }
+      const cw = container.clientWidth;
+      const ch = container.clientHeight;
 
       dots.forEach((dot, index) => {
         const packet = packets[index];
@@ -100,132 +80,64 @@ export function HeroGraphScene({
 
         const from = nodes[packet.from];
         const to = nodes[packet.to];
+        // left/top are set inline as calc(x% - DOT_R px); the transform moves
+        // from there in CSS px, converting SVG user units via cw/100, ch/100.
         const dx = ((to.x - from.x) / 100) * cw;
         const dy = ((to.y - from.y) / 100) * ch;
 
-        safariAnimations.push(
-          dot.animate(
-            [
-              { transform: "translate3d(0, 0, 0)", opacity: 0 },
-              { transform: "translate3d(0, 0, 0)", opacity: 1, offset: 0.05 },
-              { transform: `translate3d(${dx}px, ${dy}px, 0)`, opacity: 1, offset: 0.9 },
-              { transform: `translate3d(${dx}px, ${dy}px, 0)`, opacity: 0 },
-            ],
-            {
-              duration: packet.duration * 1000,
-              delay: packet.delay * -1000,
-              iterations: Infinity,
-              easing: "linear",
-            },
-          ),
+        // Same timing as the old SMIL keyTimes: fade in over the first 5%,
+        // travel until 90%, fade out over the last 10%.
+        const animation = dot.animate(
+          [
+            { transform: "translate3d(0, 0, 0)", opacity: 0 },
+            { transform: "translate3d(0, 0, 0)", opacity: 1, offset: 0.05 },
+            { transform: `translate3d(${dx}px, ${dy}px, 0)`, opacity: 1, offset: 0.9 },
+            { transform: `translate3d(${dx}px, ${dy}px, 0)`, opacity: 0 },
+          ],
+          {
+            duration: packet.duration * 1000,
+            delay: packet.delay * 1000,
+            iterations: Infinity,
+            easing: "linear",
+            fill: "backwards",
+          },
         );
+
+        if (!visible) {
+          animation.pause();
+        }
+
+        animations.push(animation);
       });
     };
 
-    const animate = (timestamp: number) => {
-      if (isSafari) {
-        return;
-      }
+    const ro = new ResizeObserver(buildAnimations);
+    ro.observe(container);
 
-      rafId = requestAnimationFrame(animate);
-
-      // Keep the packet animation smooth without forcing style writes at the
-      // display's full refresh rate when the map is under load.
-      const targetFps = isSafari ? 30 : 45;
-      if (timestamp - lastPaintTime < 1000 / targetFps) {
-        return;
-      }
-
-      lastPaintTime = timestamp;
-
-      if (visible) {
-        const elapsed = (timestamp - startTime) / 1000;
-
-        dots.forEach((dot, i) => {
-          const packet = packets[i];
-          if (!packet) return;
-
-          const adjusted = elapsed - packet.delay;
-          if (adjusted < 0) {
-            if (dot.style.opacity !== "0") {
-              dot.style.opacity = "0";
-            }
-            return;
-          }
-
-          const t = (adjusted % packet.duration) / packet.duration;
-          const from = nodes[packet.from];
-          const to   = nodes[packet.to];
-
-          // Match SMIL keyTimes: position 0;0.05;0.95;1 — opacity 0;0.05;0.9;1
-          let pos = 0;
-          let opacity = 0;
-          if (t < 0.05) {
-            pos     = 0;
-            opacity = t / 0.05;
-          } else if (t < 0.9) {
-            pos     = (t - 0.05) / (0.9 - 0.05);
-            opacity = 1;
-          } else {
-            pos     = 1;
-            opacity = 1 - (t - 0.9) / 0.1;
-          }
-
-          // left/top set via inline style as calc(x% - DOT_R px).
-          // CSS transform translates from that origin in CSS px,
-          // converting SVG user-unit deltas via cw/100 and ch/100.
-          const dx = (to.x - from.x) / 100 * cw * pos;
-          const dy = (to.y - from.y) / 100 * ch * pos;
-          const transform = `translate3d(${dx}px, ${dy}px, 0)`;
-          const nextOpacity = String(Math.max(0, opacity));
-
-          if (dot.style.transform !== transform) {
-            dot.style.transform = transform;
-          }
-
-          if (dot.style.opacity !== nextOpacity) {
-            dot.style.opacity = nextOpacity;
-          }
-        });
-      }
-    };
-
-    // Pause rAF when the hero is fully scrolled off screen.
+    // Pause when the hero is fully scrolled off screen.
     const io = new IntersectionObserver(
       ([entry]) => {
         visible = entry.isIntersecting;
-
-        if (isSafari) {
-          safariAnimations.forEach((animation) => {
-            if (visible) {
-              void animation.play();
-            } else {
-              animation.pause();
-            }
-          });
-        }
+        animations.forEach((animation) => {
+          if (visible) {
+            animation.play();
+          } else {
+            animation.pause();
+          }
+        });
       },
       { threshold: 0 },
     );
     io.observe(container);
 
-    rebuildSafariAnimations();
-    if (!isSafari) {
-      rafId = requestAnimationFrame(animate);
-    }
+    buildAnimations();
 
     return () => {
-      cancelAnimationFrame(rafId);
-      safariAnimations.forEach((animation) => animation.cancel());
+      animations.forEach((animation) => animation.cancel());
       ro.disconnect();
       io.disconnect();
-      dots.forEach((d) => {
-        d.style.transform  = "";
-        d.style.opacity    = "0";
-        d.style.willChange = "";
-      });
     };
-  }, [isLitePerformance, isSafari]);
+  }, [isLitePerformance]);
 
   return (
     <article

@@ -798,7 +798,6 @@ function App() {
           hero={portfolio.hero}
           contactLinks={portfolio.contactSection.contacts}
           isLitePerformance={isLitePerformance}
-          isSafari={isSafari}
         />
         <AboutSection about={portfolio.about} />
         <ProjectsSection
