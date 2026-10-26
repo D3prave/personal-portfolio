@@ -601,18 +601,17 @@ body[data-motion-mode="experimental"] {
 body::before {
   content: "";
   position: fixed;
-  inset: 0;
+  inset: -144px;
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
   background-size: 72px 72px;
-  background-position:
-    0 calc(var(--page-scroll, 0) * 120px),
-    calc(var(--page-scroll, 0) * -90px) calc(var(--page-scroll, 0) * 120px);
   opacity: calc(0.3 + var(--page-scroll, 0) * 0.26 + var(--pointer-speed, 0) * 0.12);
+  /* Same drift as the old background-position, but as a transform so the
+     grid is painted once and only moved by the compositor while scrolling. */
   transform: translate3d(
-    calc(var(--bg-shift-soft-x) * 0.24),
-    calc(var(--bg-shift-soft-y) * 0.24),
+    calc(var(--page-scroll, 0) * -90px),
+    calc(var(--page-scroll, 0) * 120px),
     0
   );
   -webkit-mask-image: linear-gradient(
@@ -653,7 +652,6 @@ body::after {
     hsl(var(--section-hue) 84% 68% / calc(0.05 * var(--mode-flare-strength, 1))) 34%,
     transparent 74%
   );
-  filter: blur(24px);
   opacity: calc(
     0.62 +
     var(--pointer-speed, 0) * 0.24 +
@@ -826,7 +824,6 @@ textarea:focus-visible {
       transparent 58%
     );
   opacity: calc(0.76 + var(--pointer-speed, 0) * 0.25);
-  filter: blur(6px);
 }
 
 .cell-field::after {
@@ -1070,8 +1067,6 @@ body[data-motion-mode="experimental"] .cell-node {
       rgba(246, 193, 119, 0.12),
       transparent 66%
     );
-  filter: blur(12px);
-  will-change: transform, opacity;
 }
 
 .ambient-field::after {
@@ -1084,7 +1079,6 @@ body[data-motion-mode="experimental"] .cell-node {
     transparent 58%
   );
   opacity: 0.66;
-  filter: blur(8px);
   transform: translate3d(
     calc(var(--bg-shift-soft-x) * 0.4),
     calc(var(--bg-shift-soft-y) * 0.4),
@@ -1102,7 +1096,6 @@ body[data-motion-mode="experimental"] .cell-node {
   transform: translate(-50%, -50%);
   background: radial-gradient(circle, hsl(var(--section-hue) 92% 72% / 0.22), transparent 72%);
   opacity: calc(0.56 + var(--mode-flare-strength, 1) * 0.26 + var(--pointer-speed, 0) * 0.22);
-  filter: blur(14px);
   animation: flarePulse 7.6s ease-in-out infinite;
   will-change: transform, opacity;
 }
@@ -1151,7 +1144,6 @@ body[data-motion-mode="experimental"] .cell-node {
     rgba(246, 193, 119, 0.1) 34%,
     transparent 74%
   );
-  filter: blur(28px);
   opacity: calc(0.4 + var(--section-depth, 0) * 0.34);
   transform: translate3d(
     calc(var(--bg-shift-x) * -0.18),
@@ -1189,7 +1181,8 @@ body[data-motion-mode="experimental"] .cell-node {
     calc(var(--page-scroll, 0) * -140px),
     0
   ) skewX(-14deg);
-  filter: blur(12px);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
   will-change: transform, opacity;
 }
 
@@ -1664,7 +1657,8 @@ body[data-motion-mode="cinematic"] .section::before {
   background:
     radial-gradient(circle at 12% 18%, rgba(246, 193, 119, 0.08), transparent 22%),
     linear-gradient(180deg, transparent, hsl(var(--section-hue) 88% 72% / 0.08), transparent);
-  filter: blur(18px);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
 }
 
 body[data-motion-mode="experimental"] .section::before {
@@ -3009,7 +3003,6 @@ body[data-motion-mode="experimental"] .quick-link {
     rgba(246, 193, 119, 0.06) 58%,
     transparent 100%
   );
-  filter: blur(1px);
   opacity: 0;
   transform: translate3d(0, 0, 0) rotate(8deg);
   transition:
@@ -4606,22 +4599,21 @@ a.contact-card-value:hover {
     )
     rotate(var(--reveal-rotate, 0deg))
     scale(var(--reveal-scale-base, 0.968));
-  filter:
-    blur(var(--reveal-blur-max, 10px))
-    saturate(0.74);
-  backface-visibility: hidden;
-  will-change: opacity, transform, filter;
   transition:
     opacity 0.68s cubic-bezier(0.2, 0, 0.15, 1),
-    transform 0.68s cubic-bezier(0.2, 0, 0.15, 1),
-    filter 0.68s ease;
+    transform 0.68s cubic-bezier(0.2, 0, 0.15, 1);
   transition-delay: var(--reveal-delay, 0ms);
+}
+
+/* Layer hint only while an element is still waiting to come in. Keeping
+   will-change on all 50+ revealed blocks pins them as GPU layers forever. */
+.reveal:not(.is-visible) {
+  will-change: opacity, transform;
 }
 
 .reveal.is-visible {
   opacity: 1;
   transform: none;
-  filter: none;
 }
 
 :root[data-performance="lite"] {
@@ -4701,106 +4693,22 @@ a.contact-card-value:hover {
   transform: none;
 }
 
-/* ─── Safari performance overrides ──────────────────────────────────────── */
-/* backdrop-filter triggers a full repaint on every scroll frame in Safari.  */
-/* Replace with more opaque solid backgrounds — visuals stay nearly identical. */
-
-:root[data-browser="safari"] .site-header {
-  background: rgba(7, 11, 21, 0.92);
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
+/* Sections that are off screen don't need their decorative loops running. */
+/* App.tsx sets data-offscreen with an IntersectionObserver.                */
+main section[data-offscreen] *,
+main section[data-offscreen] *::before,
+main section[data-offscreen] *::after {
+  animation-play-state: paused !important;
 }
 
-:root[data-theme="light"][data-browser="safari"] .site-header {
-  background: rgba(237, 243, 250, 0.96);
-}
+/* ─── Safari ─────────────────────────────────────────────────────────────── */
+/* Safari and Chrome render the same effects. The heavy parts (CSS blur      */
+/* filters on large animated layers, background-position scrolling) were    */
+/* made cheap for every browser instead of being removed for Safari only.   */
+/* What stays here are loading fixes that do not change how the page looks. */
 
-:root[data-browser="safari"] .motion-mode-switcher__trigger,
-:root[data-browser="safari"] .motion-mode-switcher__panel {
-  background: var(--panel-strong);
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-
-:root[data-browser="safari"] .mobile-sticky-bar {
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-
-:root[data-browser="safari"] .project-visual-expand {
-  background: rgba(7, 11, 21, 0.72);
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-
-/* Remove the blur pass from reveal animations. Opacity + translate + scale  */
-/* still produce a clean entrance; Safari can composit them fully on the GPU. */
-/* The :root[data-browser="safari"] .reveal { filter: none } below handles it. */
-
-/* Promoting every .reveal element to a compositor layer via will-change is   */
-/* counterproductive on Safari — 50+ simultaneous GPU textures exhaust video  */
-/* memory. Instead, simplify the transition to just opacity + transform       */
-/* (both GPU-compositable) and drop the filter pass entirely. Use a simpler   */
-/* initial transform so Safari doesn't need to interpolate rotate + scale +   */
-/* translate3d simultaneously.                                                */
-:root[data-browser="safari"] .reveal {
-  filter: none;
-  backface-visibility: visible;
-  will-change: auto;
-  transform: translate3d(0, 28px, 0) scale(0.97);
-  transition:
-    opacity 0.72s cubic-bezier(0.16, 0.6, 0.28, 1),
-    transform 0.72s cubic-bezier(0.16, 0.6, 0.28, 1);
-}
-
-:root[data-browser="safari"] .reveal.is-visible {
-  opacity: 1;
-  transform: translateZ(0);
-  filter: none;
-}
-
-/* These blurred background orbs are the primary remaining GPU/CPU drain.      */
-/* body::after (blur 24px, 48vw circle) and .site-shell::before (blur 28px,    */
-/* 44vw circle) reference --section-hue and must re-rasterize on hue changes.  */
-/* .site-shell::after is worst: blur(12px) on a full-height element whose      */
-/* opacity AND transform both reference --page-scroll, triggering re-raster    */
-/* on every single scroll frame. Removing these entirely on Safari.            */
-:root[data-browser="safari"] body::after,
-:root[data-browser="safari"] .site-shell::before,
-:root[data-browser="safari"] .site-shell::after {
-  display: none;
-}
-
-:root[data-browser="safari"] .hero-visual-canvas::after {
-  animation: none;
-}
-
-/* Stop paint-triggering CSS animations on Safari — same set as lite mode.   */
-:root[data-browser="safari"] .hero-rings span,
-:root[data-browser="safari"] .hero-node-chip,
-:root[data-browser="safari"] .hero-scroll-icon::before,
-:root[data-browser="safari"] .contact-visual-rings span,
-:root[data-browser="safari"] .contact-visual-dot,
-:root[data-browser="safari"] .interest-meter span::after {
-  animation: none;
-}
-
-/* stroke-dashoffset is not GPU-composited on Safari — it forces SVG layer    */
-/* rasterization every frame. Static dash pattern (no movement) looks fine.  */
-:root[data-browser="safari"] .hero-graph-edge,
-:root[data-browser="safari"] .project-visual-svg--route path {
-  animation: none;
-}
-
-/* Each project card::after adds a blur(1px) glow — 6+ separate compositor    */
-/* layers for a subtle shadow that isn't visible on most screens anyway.       */
-:root[data-browser="safari"] .project-card::after {
-  filter: none;
-}
-
-/* Safari is more likely to defer paint for offscreen media when these
-   containment optimizations are enabled, which shows the card chrome before
-   the actual image/icon content after anchor jumps. Prefer fully eager paint. */
+/* Safari defers paint for offscreen media under these containment hints,   */
+/* which shows card chrome before the image after anchor jumps.             */
 :root[data-browser="safari"] .project-card {
   contain: none;
 }
@@ -4815,50 +4723,6 @@ a.contact-card-value:hover {
 :root[data-browser="safari"] .project-visual-image {
   transform: translateZ(0);
   backface-visibility: hidden;
-}
-
-/* The image dialog backdrop: same blur-on-scroll issue as the header.        */
-/* Use a more opaque solid background — visually nearly identical.            */
-:root[data-browser="safari"] .project-media-dialog__backdrop {
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  background: rgba(3, 7, 16, 0.9);
-}
-
-/* body background uses hsl(var(--section-hue) ...) — Safari re-rasterizes   */
-/* the entire document background on every hue change. Replace with a static */
-/* gradient that keeps the same visual character without the per-frame cost.  */
-:root[data-browser="safari"] body {
-  background:
-    radial-gradient(circle at 14% 8%, rgba(56, 189, 248, 0.12), transparent 34%),
-    radial-gradient(circle at 85% 15%, rgba(246, 193, 119, 0.11), transparent 24%),
-    linear-gradient(180deg, #09101f 0%, #0b1222 48%, #08101d 100%);
-}
-
-:root[data-theme="light"][data-browser="safari"] body {
-  background:
-    radial-gradient(circle at top left, rgba(56, 189, 248, 0.08), transparent 34%),
-    radial-gradient(circle at 80% 12%, rgba(217, 119, 6, 0.1), transparent 24%),
-    linear-gradient(180deg, #eef4fb 0%, #e6eef8 52%, #f6f9fd 100%);
-}
-
-/* body::before is a fixed grid that shifts background-position and opacity  */
-/* via --page-scroll on every scroll frame — not worth the repaint cost.     */
-:root[data-browser="safari"] body::before {
-  display: none;
-}
-
-/* cursor-comet uses hsl(var(--section-hue)) in background + box-shadow;     */
-/* cursor-trail adds filter:blur(10px) + mix-blend-mode:screen on top.       */
-/* All three properties are non-compositable and force per-frame repaints.   */
-:root[data-browser="safari"] .cursor-comet,
-:root[data-browser="safari"] .cursor-trail {
-  display: none;
-}
-
-/* scroll-progress-bar box-shadow uses --section-hue — per-frame repaint.    */
-:root[data-browser="safari"] .scroll-progress-bar {
-  box-shadow: none;
 }
 
 .hover-spotlight.reveal:not(.is-visible),

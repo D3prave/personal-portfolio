@@ -1,6 +1,6 @@
 import { ReactLenis, useLenis } from "lenis/react";
 import type { ReactNode } from "react";
-import { isSafariBrowser, shouldUseNativeScroll } from "../utils/performance";
+import { shouldUseNativeScroll } from "../utils/performance";
 
 interface SmoothScrollProviderProps {
   children: ReactNode;
@@ -25,9 +25,8 @@ export function SmoothScrollProvider({
     return <>{children}</>;
   }
 
-  // On Safari, use a slightly higher lerp so the inertia animation settles
-  // in fewer rAF frames, reducing the number of CSS property writes per scroll.
-  const lerp = isSafariBrowser() ? 0.12 : 0.16;
+  // Same feel in every desktop browser.
+  const lerp = 0.16;
 
   return (
     <ReactLenis

@@ -169,7 +169,6 @@ function App() {
   const [motionMode, setMotionMode] = useState<MotionMode>(readInitialMotionMode);
   const [isConstrainedPerformance] = useState(isConstrainedPerformanceEnvironment);
   const [hasCoarseInput] = useState(hasCoarsePointer);
-  const [isSafari] = useState(isSafariBrowser);
   const [performanceMode, setPerformanceMode] = useState<PerformanceMode>(
     readInitialPerformanceMode,
   );
@@ -236,6 +235,39 @@ function App() {
     };
   }, []);
 
+  // Pause decorative CSS loops inside sections that are off screen
+  // (see `main section[data-offscreen]` in index.css).
+  useEffect(() => {
+    if (typeof window.IntersectionObserver !== "function") {
+      return;
+    }
+
+    const sections = Array.from(document.querySelectorAll<HTMLElement>("main section[id]"));
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const section = entry.target as HTMLElement;
+
+          if (entry.isIntersecting) {
+            delete section.dataset.offscreen;
+          } else {
+            section.dataset.offscreen = "";
+          }
+        });
+      },
+      { rootMargin: "200px 0px 200px 0px" },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+
+    return () => {
+      observer.disconnect();
+      sections.forEach((section) => {
+        delete section.dataset.offscreen;
+      });
+    };
+  }, []);
+
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
@@ -245,13 +277,10 @@ function App() {
       hasCoarseInput ||
       isConstrainedPerformance ||
       isLitePerformance;
-    // On Safari, snap color/depth/progress values directly to their targets.
-    // --section-hue is referenced in 40+ CSS rules across the page; interpolating
-    // it over ~50 frames per section causes Safari to run expensive style
-    // recalculation for all those elements on every rAF tick. Since the
-    // background drift animations are already disabled on Safari, smooth
-    // color interpolation provides no visible benefit there.
-    const useDirectColorSync = useDirectScrollSync || isSafari;
+    // Colours blend smoothly between sections in every desktop browser. Hue is
+    // only written when it moved by at least half a degree, so one section
+    // change costs a handful of repaints instead of one per frame.
+    const useDirectColorSync = useDirectScrollSync;
     const revealElements = Array.from(document.querySelectorAll<HTMLElement>(".reveal"));
     const sectionElements = Array.from(
       document.querySelectorAll<HTMLElement>("main .section"),
@@ -426,7 +455,7 @@ function App() {
         writtenDepth = currentDepth;
       }
 
-      if (Number.isNaN(writtenHue) || Math.abs(currentHue - writtenHue) > 0.04) {
+      if (Number.isNaN(writtenHue) || Math.abs(currentHue - writtenHue) > 0.5) {
         rootStyle.setProperty("--section-hue", currentHue.toFixed(2));
         writtenHue = currentHue;
       }
@@ -523,7 +552,6 @@ function App() {
     hasCoarseInput,
     isConstrainedPerformance,
     isLitePerformance,
-    isSafari,
   ]);
 
   useEffect(() => {
@@ -702,6 +730,12 @@ function App() {
     };
 
     const handlePointerMove = (event: PointerEvent) => {
+      // Don't make the background react while something is being dragged
+      // (e.g. the skills globe). It only adds style work during the drag.
+      if (event.buttons !== 0) {
+        return;
+      }
+
       pointerX = event.clientX;
       pointerY = event.clientY;
       queueRender();
@@ -737,8 +771,8 @@ function App() {
 
   return (
     <div className={`site-shell motion-mode-${motionMode}`}>
-      {isConstrainedPerformance || isLitePerformance || isSafari ? null : <CellField />}
-      {isConstrainedPerformance || isLitePerformance || isSafari ? null : <AmbientField />}
+      {isConstrainedPerformance || isLitePerformance ? null : <CellField />}
+      {isConstrainedPerformance || isLitePerformance ? null : <AmbientField />}
       <ScrollProgress />
       <Header
         brand={portfolio.brand}
