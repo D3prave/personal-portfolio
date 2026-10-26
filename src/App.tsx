@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import { AboutSection } from "./components/AboutSection";
-import { AmbientField } from "./components/AmbientField";
-import { CellField } from "./components/CellField";
 import { ContactSection } from "./components/ContactSection";
 import { ExperienceSection } from "./components/ExperienceSection";
 import { Header } from "./components/Header";
@@ -23,24 +21,6 @@ import {
 const MOTION_MODE_STORAGE_KEY = "motion-mode";
 const PERFORMANCE_MODE_STORAGE_KEY = "performance-mode";
 type ThemeMode = "dark" | "light";
-
-const cellConfig = {
-  core: {
-    radius: 284,
-    push: 10,
-    tilt: 5,
-  },
-  cinematic: {
-    radius: 330,
-    push: 9,
-    tilt: 4,
-  },
-  experimental: {
-    radius: 342,
-    push: 13,
-    tilt: 7.5,
-  },
-} as const;
 
 const sectionHueStops = [198, 28, 338, 160, 46, 274, 210];
 const getProjectMediaPlaceholderSrc = (src: string) =>
@@ -78,19 +58,12 @@ function interpolateHue(from: number, to: number, progress: number) {
   return (from + delta * progress + 360) % 360;
 }
 
-function smootherstep(progress: number) {
-  return progress * progress * progress * (progress * (progress * 6 - 15) + 10);
-}
-
-// `snapHue` jumps straight to the nearest section's hue instead of blending.
-// Safari repaints the page background on every hue write, so a hue that
-// follows the scroll position costs it ~25 fps; snapping means a handful of
-// writes per full page scroll.
-function getGradientStateAtProgress(
-  progress: number,
-  sectionCount: number,
-  snapHue = false,
-) {
+// The target hue is the nearest section's own hue, not a value that follows
+// the scroll position. The render loop then eases towards it for about a
+// second. Every hue write repaints the page background, and Safari measured
+// ~25 fps while scrolling when the hue changed on every frame; this way the
+// colour only moves briefly around each section change, in every browser.
+function getGradientStateAtProgress(progress: number, sectionCount: number) {
   const clampedProgress = clamp(progress, 0, 1);
 
   if (sectionCount <= 1) {
@@ -104,10 +77,7 @@ function getGradientStateAtProgress(
   const scaledProgress = clampedProgress * lastIndex;
   const startIndex = Math.floor(scaledProgress);
   const endIndex = Math.min(startIndex + 1, lastIndex);
-  const rawLocalProgress = clamp(scaledProgress - startIndex, 0, 1);
-  const localProgress = snapHue
-    ? Math.round(rawLocalProgress)
-    : smootherstep(rawLocalProgress);
+  const localProgress = Math.round(clamp(scaledProgress - startIndex, 0, 1));
 
   return {
     depth: clampedProgress,
@@ -180,7 +150,6 @@ function App() {
   const [motionMode, setMotionMode] = useState<MotionMode>(readInitialMotionMode);
   const [isConstrainedPerformance] = useState(isConstrainedPerformanceEnvironment);
   const [hasCoarseInput] = useState(hasCoarsePointer);
-  const [isSafari] = useState(isSafariBrowser);
   const [performanceMode, setPerformanceMode] = useState<PerformanceMode>(
     readInitialPerformanceMode,
   );
@@ -289,10 +258,9 @@ function App() {
       hasCoarseInput ||
       isConstrainedPerformance ||
       isLitePerformance;
-    // Chrome blends section colours smoothly (hue is only written when it
-    // moved by at least half a degree). Safari snaps to each section's colour
-    // (see getGradientStateAtProgress).
-    const useDirectColorSync = useDirectScrollSync || isSafari;
+    // Colours ease towards each section's hue (see getGradientStateAtProgress
+    // and the stepped hue writes in render).
+    const useDirectColorSync = useDirectScrollSync;
     const revealElements = Array.from(document.querySelectorAll<HTMLElement>(".reveal"));
     const sectionElements = Array.from(
       document.querySelectorAll<HTMLElement>("main .section"),
@@ -310,14 +278,6 @@ function App() {
       center: 0,
       progress: -1,
     }));
-    const cellItems = Array.from(
-      document.querySelectorAll<HTMLElement>(".cell-node-shell"),
-    ).map((node) => ({
-      node,
-      reveal: -1,
-      driftY: Number.NaN,
-      shimmer: -1,
-    }));
     const rootStyle = document.documentElement.style;
     let isMounted = true;
     let animationFrame = 0;
@@ -334,7 +294,6 @@ function App() {
     const initialGradientState = getGradientStateAtProgress(
       initialPageProgress,
       sections.length,
-      isSafari,
     );
     let currentProgress = initialPageProgress;
     let targetProgress = initialPageProgress;
@@ -369,7 +328,6 @@ function App() {
       const gradientState = getGradientStateAtProgress(
         gradientProgress,
         sections.length,
-        isSafari,
       );
       targetDepth = gradientState.depth;
       targetHue = gradientState.hue;
@@ -404,44 +362,14 @@ function App() {
       isRevealInitialized = true;
       targetProgress = pageProgress;
 
-      const cellDelta = targetProgress - currentProgress;
+      const progressDelta = targetProgress - currentProgress;
 
-      if (useDirectColorSync || Math.abs(cellDelta) < 0.0015) {
+      if (useDirectColorSync || Math.abs(progressDelta) < 0.0015) {
         currentProgress = targetProgress;
       } else {
-        currentProgress += cellDelta * 0.18;
+        currentProgress += progressDelta * 0.18;
         hasPendingAnimation = true;
       }
-
-      cellItems.forEach((item, index) => {
-        const revealProgress = clamp(
-          currentProgress * 2.95 - index * 0.055 + 0.22,
-          0,
-          1,
-        );
-        const driftY =
-          Math.sin(currentProgress * 8 + index * 0.72) * 9 * revealProgress;
-        const shimmer = clamp(
-          currentProgress * 1.82 - index * 0.036 + 0.14,
-          0,
-          1,
-        );
-
-        if (Math.abs(revealProgress - item.reveal) > 0.0012) {
-          item.node.style.setProperty("--cell-scroll-reveal", revealProgress.toFixed(3));
-          item.reveal = revealProgress;
-        }
-
-        if (Math.abs(driftY - item.driftY) > 0.08) {
-          item.node.style.setProperty("--cell-scroll-drift-y", `${driftY.toFixed(2)}px`);
-          item.driftY = driftY;
-        }
-
-        if (Math.abs(shimmer - item.shimmer) > 0.0012) {
-          item.node.style.setProperty("--cell-scroll-shimmer", shimmer.toFixed(3));
-          item.shimmer = shimmer;
-        }
-      });
 
       updateSectionTargets(scrollY, currentProgress);
 
@@ -472,7 +400,15 @@ function App() {
         writtenDepth = currentDepth;
       }
 
-      if (Number.isNaN(writtenHue) || Math.abs(currentHue - writtenHue) > 0.5) {
+      // Each hue write repaints the page background. Writing in 8 degree steps
+      // (plus the final value) keeps the colour easing visible while costing
+      // Safari only a few fps; writing every frame cost it ~20 fps.
+      const hueArrived = Math.abs(currentHue - targetHue) < 0.08;
+      if (
+        Number.isNaN(writtenHue) ||
+        Math.abs(currentHue - writtenHue) >= 8 ||
+        (hueArrived && currentHue !== writtenHue)
+      ) {
         rootStyle.setProperty("--section-hue", currentHue.toFixed(2));
         writtenHue = currentHue;
       }
@@ -569,7 +505,6 @@ function App() {
     hasCoarseInput,
     isConstrainedPerformance,
     isLitePerformance,
-    isSafari,
   ]);
 
   useEffect(() => {
@@ -663,137 +598,8 @@ function App() {
     };
   }, [isConstrainedPerformance, isLitePerformance]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const modeConfig = cellConfig[motionMode];
-    const reducedMotion = prefersReducedMotion();
-    const supportsHover =
-      !hasCoarsePointer() &&
-      window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-    const cellItems = Array.from(
-      document.querySelectorAll<HTMLElement>(".cell-node-shell"),
-    ).map((node) => ({
-      node,
-      centerX: 0,
-      centerY: 0,
-      react: -1,
-      shiftX: Number.NaN,
-      shiftY: Number.NaN,
-      tilt: Number.NaN,
-    }));
-
-    if (
-      isConstrainedPerformance ||
-      isLitePerformance ||
-      reducedMotion ||
-      !supportsHover ||
-      cellItems.length === 0
-    ) {
-      return;
-    }
-
-    let pointerX = window.innerWidth * 0.62;
-    let pointerY = window.innerHeight * 0.38;
-    let frame = 0;
-
-    const render = () => {
-      cellItems.forEach((item) => {
-        const deltaX = pointerX - item.centerX;
-        const deltaY = pointerY - item.centerY;
-        const distance = Math.hypot(deltaX, deltaY);
-        const proximity = clamp(1 - distance / modeConfig.radius, 0, 1);
-        const strength = proximity * proximity;
-        const normalizedX = distance > 0 ? deltaX / distance : 0;
-        const normalizedY = distance > 0 ? deltaY / distance : 0;
-        const shift = strength * modeConfig.push;
-        const tilt = strength * modeConfig.tilt;
-
-        if (Math.abs(strength - item.react) > 0.0012) {
-          item.node.style.setProperty("--cell-react", strength.toFixed(3));
-          item.react = strength;
-        }
-
-        const shiftX = normalizedX * shift;
-        const shiftY = normalizedY * shift;
-        const tiltValue = normalizedX * tilt;
-
-        if (Math.abs(shiftX - item.shiftX) > 0.08) {
-          item.node.style.setProperty("--cell-shift-x", `${shiftX.toFixed(2)}px`);
-          item.shiftX = shiftX;
-        }
-
-        if (Math.abs(shiftY - item.shiftY) > 0.08) {
-          item.node.style.setProperty("--cell-shift-y", `${shiftY.toFixed(2)}px`);
-          item.shiftY = shiftY;
-        }
-
-        if (Math.abs(tiltValue - item.tilt) > 0.05) {
-          item.node.style.setProperty("--cell-tilt", `${tiltValue.toFixed(3)}deg`);
-          item.tilt = tiltValue;
-        }
-      });
-
-      frame = 0;
-    };
-
-    const queueRender = () => {
-      if (frame !== 0) {
-        return;
-      }
-
-      frame = window.requestAnimationFrame(render);
-    };
-
-    const handlePointerMove = (event: PointerEvent) => {
-      // Don't make the background react while something is being dragged
-      // (e.g. the skills globe). It only adds style work during the drag.
-      if (event.buttons !== 0) {
-        return;
-      }
-
-      pointerX = event.clientX;
-      pointerY = event.clientY;
-      queueRender();
-    };
-
-    const measureCells = () => {
-      cellItems.forEach((item) => {
-        item.centerX = item.node.offsetLeft;
-        item.centerY = item.node.offsetTop;
-      });
-
-      queueRender();
-    };
-
-    measureCells();
-    queueRender();
-    window.addEventListener("pointermove", handlePointerMove, { passive: true });
-    window.addEventListener("resize", measureCells);
-
-    return () => {
-      window.cancelAnimationFrame(frame);
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("resize", measureCells);
-
-      cellItems.forEach(({ node }) => {
-        node.style.removeProperty("--cell-react");
-        node.style.removeProperty("--cell-shift-x");
-        node.style.removeProperty("--cell-shift-y");
-        node.style.removeProperty("--cell-tilt");
-      });
-    };
-  }, [isConstrainedPerformance, isLitePerformance, motionMode]);
-
   return (
     <div className={`site-shell motion-mode-${motionMode}`}>
-      {/* The fixed full-screen cell and ambient layers are the one effect Safari
-          can't afford: measured on a Mac they take Safari from ~70 to ~25 fps
-          while scrolling. Everything else renders the same in both browsers. */}
-      {isConstrainedPerformance || isLitePerformance || isSafari ? null : <CellField />}
-      {isConstrainedPerformance || isLitePerformance || isSafari ? null : <AmbientField />}
       <ScrollProgress />
       <Header
         brand={portfolio.brand}
