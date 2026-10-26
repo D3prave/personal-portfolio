@@ -110,7 +110,19 @@ export function Header({
       return entries;
     }, []);
 
+    // The last section (Contact) is short, so at the bottom of the page it
+    // can never scroll far enough up to win on position or visibility.
+    // When the page can't scroll further, the last nav item is active.
+    const lastHref = sectionEntries[sectionEntries.length - 1]?.href;
+    const isAtPageBottom = () =>
+      window.innerHeight + window.scrollY >=
+      document.documentElement.scrollHeight - 4;
+
     const pickActiveHrefFromScrollPosition = () => {
+      if (lastHref && isAtPageBottom()) {
+        return lastHref;
+      }
+
       const scrollPosition = window.scrollY + 140;
       let nextHref = navigation[0]?.href ?? "#about";
 
@@ -176,7 +188,7 @@ export function Header({
     const updateActiveItem = () => {
       let nextHref = pickActiveHrefFromScrollPosition();
 
-      if (visibleSections.size > 0) {
+      if (visibleSections.size > 0 && !(lastHref && isAtPageBottom())) {
         nextHref = [...visibleSections.entries()]
           .sort(([, left], [, right]) => {
             if (right.ratio !== left.ratio) {
@@ -233,12 +245,19 @@ export function Header({
     });
     queueUpdate();
 
+    // Reaching the page bottom doesn't always change any intersection, so
+    // also re-check on scroll (rAF-throttled by queueUpdate).
+    window.addEventListener("scroll", queueUpdate, { passive: true });
+    window.addEventListener("lenis-scroll", queueUpdate);
+
     return () => {
       if (animationFrame !== 0) {
         window.cancelAnimationFrame(animationFrame);
       }
 
       observer.disconnect();
+      window.removeEventListener("scroll", queueUpdate);
+      window.removeEventListener("lenis-scroll", queueUpdate);
     };
   }, [navigation]);
 

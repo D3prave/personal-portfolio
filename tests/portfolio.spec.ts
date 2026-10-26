@@ -175,6 +175,35 @@ test.describe("portfolio site", () => {
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   });
 
+  test("highlights Contact in the nav at the bottom of the page on large screens", async ({
+    page,
+  }, testInfo: TestInfo) => {
+    test.skip(
+      !desktopProjectNames.has(testInfo.project.name),
+      "Desktop navigation is covered by desktop browser projects.",
+    );
+
+    // On tall windows the short Contact section can't scroll up into the
+    // nav's detection band, so the nav used to stay on Experience.
+    await page.setViewportSize({ width: 2560, height: 1440 });
+    await openPortfolio(page);
+
+    const primaryNavigation = page.getByRole("navigation", {
+      name: "Primary navigation",
+    });
+    const contactLink = primaryNavigation.getByRole("link", { name: "Contact" });
+
+    await contactLink.click();
+    await expect(contactLink).toHaveClass(/is-active/);
+
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await expect(contactLink).not.toHaveClass(/is-active/);
+    await page.evaluate(() =>
+      window.scrollTo(0, document.documentElement.scrollHeight),
+    );
+    await expect(contactLink).toHaveClass(/is-active/);
+  });
+
   test("switches quick controls and keeps the selected modes", async ({ page }) => {
     await openPortfolio(page);
 
