@@ -4,7 +4,6 @@ import type { PerformanceMode } from "../types/ui";
 import {
   hasCoarsePointer,
   isConstrainedPerformanceEnvironment,
-  isSafariBrowser,
 } from "../utils/performance";
 
 interface StackCloudProps {
@@ -43,6 +42,75 @@ interface ProjectedOrbitalItem extends OrbitalItem {
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
+}
+
+// Orientation is kept as a 3x3 rotation matrix (row-major), not as Euler angles.
+// Screen space: x right, y down, z toward the viewer. Every drag / spin / wobble is
+// applied as a rotation around a SCREEN axis (premultiplied), so the ball reacts the
+// same way no matter how it is currently oriented: no poles, no gimbal flip.
+type Mat3 = [number, number, number, number, number, number, number, number, number];
+
+const SPRITE_ICON = 56;
+const SPRITE_PAD = 18;
+const SPRITE_TOTAL = SPRITE_ICON + SPRITE_PAD * 2;
+
+function identity(): Mat3 {
+  return [1, 0, 0, 0, 1, 0, 0, 0, 1];
+}
+
+function multiply(a: Mat3, b: Mat3): Mat3 {
+  return [
+    a[0] * b[0] + a[1] * b[3] + a[2] * b[6],
+    a[0] * b[1] + a[1] * b[4] + a[2] * b[7],
+    a[0] * b[2] + a[1] * b[5] + a[2] * b[8],
+    a[3] * b[0] + a[4] * b[3] + a[5] * b[6],
+    a[3] * b[1] + a[4] * b[4] + a[5] * b[7],
+    a[3] * b[2] + a[4] * b[5] + a[5] * b[8],
+    a[6] * b[0] + a[7] * b[3] + a[8] * b[6],
+    a[6] * b[1] + a[7] * b[4] + a[8] * b[7],
+    a[6] * b[2] + a[7] * b[5] + a[8] * b[8],
+  ];
+}
+
+// Rotation matrix for rotation vector (wx, wy, wz): axis = w / |w|, angle = |w|.
+function rotationFromVector(wx: number, wy: number, wz: number): Mat3 {
+  const angle = Math.hypot(wx, wy, wz);
+
+  if (angle < 1e-9) {
+    return identity();
+  }
+
+  const ux = wx / angle;
+  const uy = wy / angle;
+  const uz = wz / angle;
+  const c = Math.cos(angle);
+  const s = Math.sin(angle);
+  const t = 1 - c;
+
+  return [
+    t * ux * ux + c, t * ux * uy - s * uz, t * ux * uz + s * uy,
+    t * ux * uy + s * uz, t * uy * uy + c, t * uy * uz - s * ux,
+    t * ux * uz - s * uy, t * uy * uz + s * ux, t * uz * uz + c,
+  ];
+}
+
+// Gram-Schmidt on the rows, keeps the matrix a pure rotation after many small steps.
+function orthonormalize(m: Mat3): Mat3 {
+  let ax = m[0], ay = m[1], az = m[2];
+  let len = Math.hypot(ax, ay, az) || 1;
+  ax /= len; ay /= len; az /= len;
+
+  let bx = m[3], by = m[4], bz = m[5];
+  const dot = ax * bx + ay * by + az * bz;
+  bx -= dot * ax; by -= dot * ay; bz -= dot * az;
+  len = Math.hypot(bx, by, bz) || 1;
+  bx /= len; by /= len; bz /= len;
+
+  return [
+    ax, ay, az,
+    bx, by, bz,
+    ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx,
+  ];
 }
 
 function traceRoundedTile(
@@ -102,9 +170,13 @@ export function StackCloud({
   const frameRef = useRef(0);
   const staticFrameRef = useRef(0);
   const lastTickRef = useRef<number | null>(null);
-  const baseRotationRef = useRef({ x: -0.34, y: 0.52 });
-  const displayRotationRef = useRef({ x: -0.34, y: 0.52 });
-  const autoOrbitRef = useRef({ spinY: 0, wobbleX: 0, wobbleY: 0 });
+  // Same starting pose as the old Euler setup (x = -0.34, y = 0.52).
+  const orientationRef = useRef<Mat3>(
+    multiply(rotationFromVector(-0.34, 0, 0), rotationFromVector(0, -0.52, 0)),
+  );
+  const displayMatrixRef = useRef<Mat3>(identity());
+  const stepCountRef = useRef(0);
+  const autoOrbitRef = useRef({ wobbleX: 0, wobbleY: 0 });
   const velocityRef = useRef({ x: 0, y: 0 });
   const dragDeltaRef = useRef({ x: 0, y: 0 });
   const pointerTargetRef = useRef({ x: 0, y: 0 });
@@ -153,7 +225,6 @@ export function StackCloud({
     }
 
     let disposed = false;
-    const skipShadow = isSafariBrowser();
     const loadedIcons = new Array(items.length).fill(false);
     const images = items.map((item) => {
       const image = new Image();
@@ -161,6 +232,77 @@ export function StackCloud({
       image.src = item.icon;
       return image;
     });
+
+    // Each SVG icon is rasterised once (with its drop shadow baked in) into an
+    // offscreen canvas. Per frame we only blit bitmaps. Before, every frame re-scaled
+    // 31 SVGs and ran a Gaussian shadow blur on each, which is what made Chrome lag
+    // (Safari skipped the shadow, so it looked flatter but ran smoother).
+    const sprites: (HTMLCanvasElement | null)[] = new Array(items.length).fill(null);
+    let spriteDpr = 0;
+    let spriteShadow = "";
+
+    const bakeSprite = (index: number) => {
+      if (!loadedIcons[index]) {
+        return;
+      }
+
+      const dpr = sizeRef.current.dpr;
+      const sprite = sprites[index] ?? document.createElement("canvas");
+      const pixelSize = Math.ceil(SPRITE_TOTAL * dpr);
+      sprite.width = pixelSize;
+      sprite.height = pixelSize;
+      const spriteContext = sprite.getContext("2d");
+
+      if (!spriteContext) {
+        return;
+      }
+
+      spriteContext.setTransform(dpr, 0, 0, dpr, 0, 0);
+      spriteContext.clearRect(0, 0, SPRITE_TOTAL, SPRITE_TOTAL);
+      spriteContext.shadowColor = paletteRef.current.shadow;
+      spriteContext.shadowBlur = 12 * dpr;
+      spriteContext.drawImage(images[index], SPRITE_PAD, SPRITE_PAD, SPRITE_ICON, SPRITE_ICON);
+      sprites[index] = sprite;
+    };
+
+    const bakeAllSprites = () => {
+      spriteDpr = sizeRef.current.dpr;
+      spriteShadow = paletteRef.current.shadow;
+      items.forEach((_, index) => bakeSprite(index));
+    };
+
+    const bakeIfStale = () => {
+      if (spriteDpr !== sizeRef.current.dpr || spriteShadow !== paletteRef.current.shadow) {
+        bakeAllSprites();
+      }
+    };
+
+    let coreGlowCache: CanvasGradient | null = null;
+
+    const projected: ProjectedOrbitalItem[] = orbitalItems.map((item) => ({
+      ...item,
+      screenX: 0,
+      screenY: 0,
+      depthZ: 0,
+      scale: 1,
+      opacity: 1,
+      size: 0,
+      plateSize: 0,
+      plateRadius: 0,
+    }));
+
+    const rotateOrientation = (wx: number, wy: number) => {
+      if (Math.abs(wx) < 1e-7 && Math.abs(wy) < 1e-7) {
+        return;
+      }
+
+      orientationRef.current = multiply(rotationFromVector(wx, wy, 0), orientationRef.current);
+      stepCountRef.current += 1;
+
+      if (stepCountRef.current % 120 === 0) {
+        orientationRef.current = orthonormalize(orientationRef.current);
+      }
+    };
 
     const updatePalette = () => {
       const styles = window.getComputedStyle(stage);
@@ -218,10 +360,8 @@ export function StackCloud({
 
     const drawItem = (item: ProjectedOrbitalItem, isHovered: boolean) => {
       const palette = paletteRef.current;
-      const image = images[item.id];
-      const isLoaded = loadedIcons[item.id];
+      const sprite = sprites[item.id];
       const scaleMultiplier = isHovered ? 1.14 : 1;
-      const glowMultiplier = isHovered ? 1.45 : 1;
       const size = item.size * scaleMultiplier;
       const plateSize = item.plateSize * scaleMultiplier;
       const plateRadius = item.plateRadius * scaleMultiplier;
@@ -244,12 +384,9 @@ export function StackCloud({
       context.strokeStyle = isHovered ? palette.highlightLine : palette.plateLine;
       context.stroke();
 
-      if (isLoaded) {
-        if (!skipShadow) {
-          context.shadowColor = palette.shadow;
-          context.shadowBlur = item.scale * 12 * glowMultiplier;
-        }
-        context.drawImage(image, -size / 2, -size / 2, size, size);
+      if (sprite) {
+        const total = size * (SPRITE_TOTAL / SPRITE_ICON);
+        context.drawImage(sprite, -total / 2, -total / 2, total, total);
       } else {
         context.beginPath();
         context.arc(0, 0, size * 0.2, 0, Math.PI * 2);
@@ -300,7 +437,7 @@ export function StackCloud({
     const resizeCanvas = () => {
       const width = Math.max(canvas.offsetWidth, 260);
       const height = Math.max(canvas.offsetHeight, 280);
-      const dprMax = isSafariBrowser() ? 1.0 : isConstrained || isLitePerformance || hasCoarseInput ? 1.15 : 1.55;
+      const dprMax = isConstrained || isLitePerformance || hasCoarseInput ? 1.15 : 1.55;
       const dpr = clamp(window.devicePixelRatio || 1, 1, dprMax);
 
       sizeRef.current = {
@@ -313,6 +450,8 @@ export function StackCloud({
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
       context.setTransform(dpr, 0, 0, dpr, 0, 0);
+      coreGlowCache = null;
+      bakeIfStale();
     };
 
     const drawScene = () => {
@@ -323,51 +462,49 @@ export function StackCloud({
 
       context.clearRect(0, 0, width, height);
 
-      const coreGlow = context.createRadialGradient(
-        centerX,
-        centerY * 0.92,
-        0,
-        centerX,
-        centerY * 0.92,
-        radius * 1.15,
-      );
-      coreGlow.addColorStop(0, palette.coreGlow);
-      coreGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
-      context.fillStyle = coreGlow;
+      if (!coreGlowCache) {
+        coreGlowCache = context.createRadialGradient(
+          centerX,
+          centerY * 0.92,
+          0,
+          centerX,
+          centerY * 0.92,
+          radius * 1.15,
+        );
+        coreGlowCache.addColorStop(0, palette.coreGlow);
+        coreGlowCache.addColorStop(1, "rgba(0, 0, 0, 0)");
+      }
+      context.fillStyle = coreGlowCache;
       context.beginPath();
       context.arc(centerX, centerY * 0.92, radius * 1.1, 0, Math.PI * 2);
       context.fill();
 
-      const projected = orbitalItems
-        .map((item) => {
-          const cosY = Math.cos(displayRotationRef.current.y);
-          const sinY = Math.sin(displayRotationRef.current.y);
-          const cosX = Math.cos(displayRotationRef.current.x);
-          const sinX = Math.sin(displayRotationRef.current.x);
+      const m = displayMatrixRef.current;
 
-          const baseX = item.x * radius;
-          const baseY = item.y * radius;
-          const baseZ = item.z * radius;
+      // Reuse the same objects every frame instead of allocating 31 new ones.
+      for (let index = 0; index < projected.length; index += 1) {
+        const item = projected[index];
+        const px = item.x;
+        const py = item.y;
+        const pz = item.z;
+        const rotatedX = (m[0] * px + m[1] * py + m[2] * pz) * radius;
+        const rotatedY = (m[3] * px + m[4] * py + m[5] * pz) * radius;
+        const depthZ = (m[6] * px + m[7] * py + m[8] * pz) * radius;
+        const depth = (depthZ + radius) / (radius * 2);
+        const scale = 0.54 + depth * 0.74;
+        const size = clamp(16 + scale * 24, 16, 46);
 
-          const rotatedX = baseX * cosY - baseZ * sinY;
-          const rotatedZ = baseX * sinY + baseZ * cosY;
-          const rotatedY = baseY * cosX - rotatedZ * sinX;
-          const depthZ = baseY * sinX + rotatedZ * cosX;
-          const depth = (depthZ + radius) / (radius * 2);
+        item.screenX = centerX + rotatedX;
+        item.screenY = centerY + rotatedY * 0.95;
+        item.depthZ = depthZ;
+        item.scale = scale;
+        item.opacity = 0.2 + depth * 0.8;
+        item.size = size;
+        item.plateSize = size * 1.34;
+        item.plateRadius = size * 1.34 * 0.24;
+      }
 
-          return {
-            ...item,
-            screenX: centerX + rotatedX,
-            screenY: centerY + rotatedY * 0.95,
-            depthZ,
-            scale: 0.54 + depth * 0.74,
-            opacity: 0.2 + depth * 0.8,
-            size: clamp(16 + (0.54 + depth * 0.74) * 24, 16, 46),
-            plateSize: clamp(16 + (0.54 + depth * 0.74) * 24, 16, 46) * 1.34,
-            plateRadius: clamp(16 + (0.54 + depth * 0.74) * 24, 16, 46) * 1.34 * 0.24,
-          };
-        })
-        .sort((left, right) => left.depthZ - right.depthZ);
+      projected.sort((left, right) => left.depthZ - right.depthZ);
       const hoveredItem = dragRef.current.active ? null : pickHoveredItem(projected);
 
       projected.forEach((item) => {
@@ -429,21 +566,26 @@ export function StackCloud({
           ? pointerRef.current.x * (isLitePerformance ? 0.032 : 0.052)
           : 0;
 
-      displayRotationRef.current.x =
-        baseRotationRef.current.x +
+      // Wobble and hover parallax are small, bounded screen-space tilts layered on
+      // top of the real orientation. They never accumulate into it.
+      const offsetX =
         (Math.sin(autoOrbitRef.current.wobbleX) * orbitProfile.wobbleXAmplitude +
           Math.cos(autoOrbitRef.current.wobbleY * 0.72) *
             orbitProfile.wobbleXAmplitude *
             0.24) *
           motionScale +
         pointerRotationX;
-      displayRotationRef.current.y =
-        baseRotationRef.current.y +
-        autoOrbitRef.current.spinY +
+      const offsetY = -(
         Math.sin(autoOrbitRef.current.wobbleY) *
           orbitProfile.wobbleYAmplitude *
           motionScale +
-        pointerRotationY;
+        pointerRotationY
+      );
+
+      displayMatrixRef.current = multiply(
+        rotationFromVector(offsetX, offsetY, 0),
+        orientationRef.current,
+      );
     };
 
     const applyPendingDrag = (deltaFactor: number) => {
@@ -460,12 +602,13 @@ export function StackCloud({
         return;
       }
 
+      // Drag right -> front of the ball moves right. Drag down -> front moves down.
+      // Always around the screen axes, so it feels identical from any orientation.
       const rotationX = clamp(-pendingDragY * 0.0052, -0.22, 0.22);
-      const rotationY = clamp(-pendingDragX * 0.0052, -0.22, 0.22);
+      const rotationY = clamp(pendingDragX * 0.0052, -0.22, 0.22);
       const normalizedDeltaFactor = Math.max(deltaFactor, 0.7);
 
-      baseRotationRef.current.x += rotationX;
-      baseRotationRef.current.y += rotationY;
+      rotateOrientation(rotationX, rotationY);
       velocityRef.current.x =
         velocityRef.current.x * 0.34 + (rotationX / normalizedDeltaFactor) * 0.66;
       velocityRef.current.y =
@@ -516,12 +659,15 @@ export function StackCloud({
       applyPendingDrag(deltaFactor);
 
       if (!isPausedByInteraction) {
-        autoOrbitRef.current.spinY += orbitProfile.speedY * motionScale * deltaSeconds;
         autoOrbitRef.current.wobbleX += orbitProfile.wobbleXSpeed * deltaSeconds;
         autoOrbitRef.current.wobbleY += orbitProfile.wobbleYSpeed * deltaSeconds;
 
-        baseRotationRef.current.x += velocityRef.current.x * deltaFactor;
-        baseRotationRef.current.y += velocityRef.current.y * deltaFactor;
+        // Idle spin around the screen's vertical axis + leftover drag momentum.
+        rotateOrientation(
+          velocityRef.current.x * deltaFactor,
+          velocityRef.current.y * deltaFactor -
+            orbitProfile.speedY * motionScale * deltaSeconds,
+        );
         velocityRef.current.x *= damping;
         velocityRef.current.y *= damping;
       }
@@ -553,6 +699,7 @@ export function StackCloud({
         }
 
         loadedIcons[index] = true;
+        bakeSprite(index);
         if (shouldAnimate) {
           drawScene();
           startLoop();
@@ -747,11 +894,14 @@ export function StackCloud({
 
     const mutationObserver = new MutationObserver(() => {
       updatePalette();
+      coreGlowCache = null;
+      bakeIfStale();
       drawScene();
     });
 
     updatePalette();
     resizeCanvas();
+    updateDisplayRotation();
     drawScene();
     pageVisibleRef.current = document.visibilityState !== "hidden";
 
